@@ -5,6 +5,11 @@ import SendMessage from "../components/SendMessage";
 import { userServices } from "../services/user.services";
 import { UserContext } from "../context/userContext";
 import { DarkModeContext } from "../context/darkModeContext";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import PersonIcon from "@mui/icons-material/Person";
+import InputField from "../components/InputField";
+import Button from "../components/Button";
 
 function HomePage() {
   const { darkMode, setDarkMode } = useContext(DarkModeContext);
@@ -16,7 +21,7 @@ function HomePage() {
   const [activeUser, setActiveUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // SOCKET EVENTS
+  // ================= SOCKET EVENTS =================
   useEffect(() => {
     socket.on("connect", () => {
       console.log("Socket:", socket.id);
@@ -61,16 +66,19 @@ function HomePage() {
     };
   }, [activeUser, setUsers]);
 
-  // ADD USER
+  // ================= ADD USER =================
   const startSession = async () => {
-    if (!inputPhone) return alert("Enter phone");
+    if (!inputPhone) {
+      alert("Enter phone");
+      return;
+    }
 
     setLoading(true);
 
     const newUser = await userServices.addUser(
       inputPhone,
       inputPhone,
-      socket.id,
+      socket.id
     );
 
     if (newUser) {
@@ -84,82 +92,95 @@ function HomePage() {
 
   const handleSwitchUser = (user) => {
     setActiveUser(user);
-
-    // reset UI for new session
     setQr(null);
     setStatus(`Switched to ${user}`);
     setLoading(false);
   };
-  
-  // REMOVE USER
+
   const removeSession = async (phone) => {
     await userServices.removeUser(phone, socket.id);
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* SIDEBAR */}
-      <div className="w-64 bg-(--sidebar) text-(--sidebar-text) p-4 flex flex-col">
-        <h2 className="text-xl mb-4 font-semibold">Users</h2>
+    <div className="flex h-screen overflow-hidden bg-(--bg) text-(--text-primary)">
+      
+      <div className="w-64 bg-(--sidebar) border-r border-(--border) p-4 flex flex-col">
+        
+        <h2 className="text-xl mb-4 font-semibold text-center flex items-center gap-2 justify-center">
+          <PersonIcon />
+          Users
+        </h2>
 
-        <input
-          className="p-2 rounded text-white bg-(--input) border border-(--border) focus:outline-none focus:ring-2 focus:ring-green-500"
+        <InputField
+          type="text"
+          name="phone"
           placeholder="Enter phone"
           value={inputPhone}
-          onChange={(e) => setInputPhone(e.target.value)}
+          onChange={(name, value) => setInputPhone(value)}
         />
 
-        <button
+        <Button
           onClick={startSession}
-          className="bg-green-500 hover:bg-green-600 mt-2 p-2 rounded"
+          variant="primary"
+          className="mt-2"
         >
           Add User
-        </button>
+        </Button>
 
         <div className="mt-4 flex-1 overflow-auto">
           {users.map((user) => (
             <div
               key={user}
-              className={`p-2 mt-2 rounded flex justify-between cursor-pointer ${
+              className={`p-2 mt-2 rounded flex justify-between items-center cursor-pointer transition ${
                 activeUser === user
-                  ? "bg-green-600"
-                  : "bg-gray-700 hover:bg-gray-600"
+                  ? "bg-(--primary) text-(--text-inverse)"
+                  : "bg-(--bg-secondary) hover:bg-(--border)"
               }`}
             >
-              <span onClick={() => handleSwitchUser(user)}>{user}</span>
+              <span onClick={() => handleSwitchUser(user)}>
+                {user}
+              </span>
 
-              <button
+              <Button
                 onClick={() => removeSession(user)}
-                className="text-red-400"
+                variant="danger"
+                className="px-2 py-1 text-xs"
               >
                 ✕
-              </button>
+              </Button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* MAIN */}
+      {/* ================= MAIN ================= */}
       <div className="flex-1 flex flex-col">
+        
         {/* HEADER */}
         <div className="bg-(--card) border-b border-(--border) p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">WhatsApp Dashboard</h1>
+          
+          <h1 className="text-2xl font-bold">
+            WhatsApp Dashboard
+          </h1>
 
           <button
             onClick={() => setDarkMode((prev) => !prev)}
-            className="bg-gray-700 text-white px-4 py-2 rounded"
+            className="p-2 rounded-lg hover:bg-(--bg-secondary) transition"
           >
-            {darkMode ? "Light Mode" : "Dark Mode"}
+            {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
           </button>
         </div>
 
         {/* CONTENT */}
         <div className="flex-1 p-6 overflow-auto">
-          <h3 className="text-lg mb-4">Status: {status}</h3>
+          
+          <h3 className="text-lg mb-4">
+            Status: {status}
+          </h3>
 
           {loading && (
             <div className="flex justify-center mt-10">
-              <div className="w-10 h-10 border-4 border-gray-300 border-t-green-500 rounded-full animate-spin"></div>
+              <div className="w-10 h-10 border-4 border-(--border) border-t-(--primary) rounded-full animate-spin"></div>
             </div>
           )}
 
