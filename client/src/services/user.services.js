@@ -1,0 +1,38 @@
+import API from "./api.services.js";
+
+export const userServices = {
+  getUsers: async () => {
+    try {
+      const res = await API.get("/api/user/getAllUsers");
+      return res.data.users;
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  },
+
+  addUser: async (name, phone, socketId) => {
+    try {
+      const res = await API.post("/api/user/add", {
+        name,
+        phone,
+        socketId,
+      });
+
+      return phone; 
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  },
+
+  removeUser: async (phone, socketId) => {
+    try {
+      await API.delete("/api/user/remove", {
+        data: { phone, socketId },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  },
+};
