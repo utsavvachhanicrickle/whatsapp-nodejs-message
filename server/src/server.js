@@ -42,3 +42,13 @@ io.on("connection", (socket) => {
 server.listen(process.env.PORT, () => {
   console.log(`Server running on http://localhost:${process.env.PORT}`);
 });
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.log("Unhandled Rejection at:", promise, "reason:", reason);
+  // Prevent nodemon/server crash
+});
+
+process.on("uncaughtException", (err) => {
+  console.log("Uncaught Exception:", err);
+  // Prevent nodemon/server crash
+});

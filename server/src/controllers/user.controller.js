@@ -53,14 +53,40 @@ export const addUser = async (req, res) => {
   });
 
   // 🔥 STEP 4: DISCONNECTED
-  client.on("disconnected", async () => {
+  client.on("disconnected", async (reason) => {
+    console.log("Client was logged out or disconnected. Reason:", reason);
     delete clients[sessionId];
-    await client.destroy();
-
-    io.to(socketId).emit("disconnected", { sessionId });
+    try {
+      await client.destroy();
+    } catch (e) {
+      console.log("Error destroying client:", e.message);
+    }
+    
+    // Notify frontend to remove the session so they get the sign-in option again
+    io.emit("session-removed", { sessionId });
   });
 
-  await client.initialize();
+  // 🔥 STEP 5: AUTH FAILURE
+  client.on("auth_failure", async (msg) => {
+    console.log("Auth failure:", msg);
+    delete clients[sessionId];
+    try {
+      await client.destroy();
+    } catch (e) {
+      console.log("Error destroying client on auth failure:", e.message);
+    }
+    
+    // Notify frontend
+    io.emit("session-removed", { sessionId });
+  });
+
+  try {
+    await client.initialize();
+  } catch (err) {
+    console.log("Error initializing client:", err.message);
+    delete clients[sessionId];
+    io.emit("session-removed", { sessionId });
+  }
 
   res.json({ message: "Session started", users: { name, phone, socketId } });
 };

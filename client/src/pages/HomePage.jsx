@@ -93,9 +93,16 @@ function HomePage() {
   const handleSwitchUser = (user) => {
     setActiveUser(user);
     setQr(null);
-    setStatus(`Switched to ${user}`);
+    setStatus(`Connected: ${user} ✅`);
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (users && users.length > 0 && !activeUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      handleSwitchUser(users[0]);
+    }
+  }, [users, activeUser]);
 
   const removeSession = async (phone) => {
     await userServices.removeUser(phone, socket.id);

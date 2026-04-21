@@ -13,7 +13,7 @@ export const userServices = {
 
   addUser: async (name, phone, socketId) => {
     try {
-      const res = await API.post("/api/user/add", {
+      await API.post("/api/user/add", {
         name,
         phone,
         socketId,
