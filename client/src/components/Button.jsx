@@ -4,6 +4,7 @@ function Button({
   onClick,
   variant = "primary",
   className = "",
+  disabled = false,
   ...props
 }) {
   const baseStyle =
@@ -29,6 +30,7 @@ function Button({
       onClick={onClick}
       className={`${baseStyle} ${variants[variant]} ${className}`}
       {...props}
+      disabled={disabled}
     >
       {children}
     </button>

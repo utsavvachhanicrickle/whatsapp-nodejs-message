@@ -1,3 +1,4 @@
+// services/user.services.js
 import API from "./api.services.js";
 
 export const userServices = {
@@ -13,13 +14,8 @@ export const userServices = {
 
   addUser: async (name, phone, socketId) => {
     try {
-      await API.post("/api/user/add", {
-        name,
-        phone,
-        socketId,
-      });
-
-      return phone; 
+      await API.post("/api/user/add", { name, phone, socketId });
+      return phone;
     } catch (err) {
       console.error(err);
       return null;
@@ -34,5 +30,17 @@ export const userServices = {
     } catch (err) {
       console.error(err);
     }
+  },
+
+  login: async (formData) => {
+    const { data } = await API.post("/api/user/login", formData);
+    console.log(data);
+    
+    return data.user;
+  },
+
+  signup: async (formData) => {
+    const { data } = await API.post("/api/user/signup", formData);
+    return data;
   },
 };

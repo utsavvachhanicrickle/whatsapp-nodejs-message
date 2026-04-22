@@ -6,6 +6,7 @@ import cors from "cors";
 import coonectionDB from "../config/db.js";
 import apiRoute from "./routes/index.routes.js";
 import cookieParser from "cookie-parser";
+import { startWhatsAppSession } from "./socket.js";
 
 dotenv.config();
 const app = express();
@@ -13,6 +14,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL,
+    credentials: true,
     methods: ["GET", "POST"],
   },
 });
@@ -39,6 +41,14 @@ coonectionDB();
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
+  socket.join(socket.id);
+  socket.on("start-session", async ({ sessionId, socketId }) => {
+    try {
+      await startWhatsAppSession({ sessionId, socketId, io });
+    } catch (err) {
+      console.log("Start session error:", err.message);
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);

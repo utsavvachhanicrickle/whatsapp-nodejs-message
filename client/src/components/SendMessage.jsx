@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { messageServices } from "../services/message.services";
-import InputField from "./InputField";
+import InputField from "./Forms/InputField";
 import Button from "./Button";
 
 function SendMessage({ sessionId }) {
@@ -10,15 +10,14 @@ function SendMessage({ sessionId }) {
   const [loading, setLoading] = useState(false);
 
   const [data, setData] = useState(
-    JSON.parse(localStorage.getItem("messageData")) || []
+    JSON.parse(localStorage.getItem("messageData")) || [],
   );
 
   const [defaultMessage, setDefaultMessage] = useState("");
   const [defaultMessagesOptions, setDefaultMessagesOptions] = useState(
-    JSON.parse(localStorage.getItem("defaultMessages")) || []
+    JSON.parse(localStorage.getItem("defaultMessages")) || [],
   );
 
-  // ================= SEND MESSAGE =================
   const sendMessage = async () => {
     if (!number || !message) {
       alert("Fill all fields");
@@ -39,7 +38,7 @@ function SendMessage({ sessionId }) {
       await messageServices.SendMessageServices(
         sessionId,
         number,
-        message
+        `\n- Sent via WhatsApp Web Automation Tool - session: ${sessionId} \n\n - ${message} \n -- ${new Date().toLocaleString()}`,
       );
 
       setNumber("");
@@ -52,21 +51,14 @@ function SendMessage({ sessionId }) {
     }
   };
 
-  // ================= UI =================
   return (
     <div className="w-full max-w-5xl mx-auto p-4">
-
-      {/* ================= MAIN GRID ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {/* ================= SEND MESSAGE ================= */}
         <div className="bg-(--card) p-6 rounded-2xl shadow-md border border-(--border)">
-
           <h3 className="text-xl font-semibold mb-4 text-(--text-primary)">
             Send Message
           </h3>
 
-          {/* Contact Select (fixed height + scroll) */}
           <div className="max-h-40 overflow-y-auto border border-(--border) rounded-lg mb-3">
             <InputField
               type="select"
@@ -117,14 +109,11 @@ function SendMessage({ sessionId }) {
           </button>
         </div>
 
-        {/* ================= DEFAULT MESSAGE ================= */}
         <div className="bg-(--card) p-6 rounded-2xl shadow-md border border-(--border)">
-
           <h3 className="text-xl font-semibold mb-4 text-(--text-primary)">
             Default Messages
           </h3>
 
-          {/* Scrollable dropdown */}
           <div className="max-h-40 overflow-y-auto border border-(--border) rounded-lg mb-3">
             <InputField
               type="select"
@@ -134,7 +123,7 @@ function SendMessage({ sessionId }) {
               options={defaultMessagesOptions}
               onChange={(n, v) => {
                 const selected = defaultMessagesOptions.find(
-                  (item) => item.value === v
+                  (item) => item.value === v,
                 );
                 setMessage(selected ? selected.value : "");
                 setDefaultMessage(v);
@@ -155,7 +144,7 @@ function SendMessage({ sessionId }) {
               if (!defaultMessage) return;
 
               const exists = defaultMessagesOptions.some(
-                (item) => item.value === defaultMessage
+                (item) => item.value === defaultMessage,
               );
 
               const updated = exists
@@ -166,10 +155,7 @@ function SendMessage({ sessionId }) {
                   ];
 
               setDefaultMessagesOptions(updated);
-              localStorage.setItem(
-                "defaultMessages",
-                JSON.stringify(updated)
-              );
+              localStorage.setItem("defaultMessages", JSON.stringify(updated));
 
               setDefaultMessage("");
             }}

@@ -1,5 +1,3 @@
-import pkg from "whatsapp-web.js";
-import qrcode from "qrcode";
 import User from "../modules/user.module.js";
 import { MESSAGES } from "../utils/Messages.js";
 import {
@@ -11,96 +9,42 @@ import {
   setCookies,
   clearAuthCookies,
 } from "../utils/schema/index.js";
-import { set } from "mongoose";
-
-const { Client, LocalAuth } = pkg;
-export const clients = {};
+import { startWhatsAppSession } from "../socket.js";
+import { clients } from "../socket.js";
 
 export const addUser = async (req, res) => {
-  const io = req.app.get("io");
-
-  const { name, phone, socketId } = req.body;
-
-  if (!name || !phone || !socketId) {
-    return res.status(400).json({ error: MESSAGES.MISSING_FIELDS });
-  }
-
-  const sessionId = phone;
-
-  if (clients[sessionId]) {
-    return res.json({ message: MESSAGES.USER_ALRADY_EXISTS });
-  }
-
-  const client = new Client({
-    authStrategy: new LocalAuth({ clientId: sessionId }),
-    puppeteer: {
-      headless: false,
-      args: ["--no-sandbox"],
-    },
-  });
-
-  clients[sessionId] = client;
-
-  // 🔥 STEP 1: QR
-  client.on("qr", async (qr) => {
-    const qrImage = await qrcode.toDataURL(qr);
-
-    io.to(socketId).emit("qr", {
-      sessionId,
-      qr: qrImage,
-    });
-  });
-
-  // 🔥 STEP 2: AUTHENTICATED
-  client.on("authenticated", () => {
-    io.to(socketId).emit("authenticated", { sessionId });
-  });
-
-  // 🔥 STEP 3: READY
-  client.on("ready", () => {
-    io.to(socketId).emit("ready", {
-      sessionId,
-      message: MESSAGES.WHATSAPP_CONNEXTED,
-    });
-  });
-
-  // 🔥 STEP 4: DISCONNECTED
-  client.on("disconnected", async (reason) => {
-    console.log("Client was logged out or disconnected. Reason:", reason);
-    delete clients[sessionId];
-    try {
-      await client.destroy();
-    } catch (e) {
-      console.log("Error destroying client:", e.message);
-    }
-
-    // Notify frontend to remove the session so they get the sign-in option again
-    io.emit("session-removed", { sessionId });
-  });
-
-  // 🔥 STEP 5: AUTH FAILURE
-  client.on("auth_failure", async (msg) => {
-    console.log("Auth failure:", msg);
-    delete clients[sessionId];
-    try {
-      await client.destroy();
-    } catch (e) {
-      console.log("Error destroying client on auth failure:", e.message);
-    }
-
-    // Notify frontend
-    io.emit("session-removed", { sessionId });
-  });
-
   try {
-    await client.initialize();
-  } catch (err) {
-    console.log("Error initializing client:", err.message);
-    delete clients[sessionId];
-    io.emit("session-removed", { sessionId });
-  }
+    const io = req.app.get("io");
 
-  res.json({ message: "Session started", users: { name, phone, socketId } });
+    const { name, phone, socketId } = req.body;
+
+    if (!name || !phone || !socketId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+
+    const sessionId = phone;
+
+    await startWhatsAppSession({ sessionId, socketId, io });
+
+    return res.json({
+      success: true,
+      message: "Session started",
+      user: {
+        name,
+        phone,
+      },
+    });
+  } catch (error) {
+    console.log("addUser error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
 };
 
 export const getAllUsers = async (req, res) => {
@@ -151,18 +95,17 @@ export const removeUser = async (req, res) => {
 
 export const signUpController = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    const { name, email, password, confirmPassword } = req.body;
+    if (!name || !email || !password || !confirmPassword) {
       return res
         .status(400)
         .json({ success: false, message: MESSAGES.MISSING_FIELDS });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (password !== confirmPassword) {
       return res
         .status(400)
-        .json({ success: false, message: USER_ALRADY_EXISTS });
+        .json({ success: false, message: MESSAGES.PASSWORDS_DO_NOT_MATCH });
     }
 
     const newUser = new User({
@@ -276,8 +219,11 @@ export const logoutController = async (req, res) => {
 
 export const refreshTokenController = async (req, res) => {
   try {
-    const userId = req.userId;
-    const user = await User.findOne({ refreshToken });
+    const token = req.cookies.refreshToken;
+    if (!token)
+      return res.status(401).json({ message: MESSAGES.ACCESS_DENIED });
+
+    const user = await User.findOne({ refreshToken :token });
 
     if (!user)
       return res
@@ -296,7 +242,7 @@ export const refreshTokenController = async (req, res) => {
       res,
     });
 
-    res.status(200).json({ message: MESSAGES.REFRESH_TOKEN });
+    res.status(200).json({ sucess: true, message: MESSAGES.REFRESH_TOKEN });
   } catch (error) {
     console.error("Refresh token error:", error);
     res.status(500).json({

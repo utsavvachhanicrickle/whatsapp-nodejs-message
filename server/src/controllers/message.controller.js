@@ -1,4 +1,4 @@
-import { clients } from "./user.controller.js";
+import { clients } from "../socket.js";
 
 
 export const messageSendController = async (req, res) => {

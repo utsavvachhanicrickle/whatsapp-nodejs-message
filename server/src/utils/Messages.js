@@ -2,6 +2,7 @@ export const MESSAGES = {
   SESSION_STARTED: "Session started",
   SESSION_REMOVED: "Session removed successfully",
   ERROR_REMOVING_SESSION: "Error removing session",
+  REFRESH_TOKEN :"Refresh token issued successfully",
   REFRESH_TOKEN_EXPIRED: "Refresh token expired",
   MISSING_FIELDS: "Missing fields",
   ACCESS_DENIED: "Access denied",
