@@ -6,7 +6,7 @@ const users = {}; // store socket connections
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "http://localhost:5174",
+      origin: process.env.FRONTEND_URL,
     },
   });
 
