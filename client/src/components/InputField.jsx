@@ -12,6 +12,7 @@ function InputField({
   required = false,
   options = [],
   onKeyDown = () => {},
+  rows = 0,
 }) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -113,6 +114,7 @@ function InputField({
         required={required}
         placeholder={placeholder}
         onKeyDown={onKeyDown}
+        rows={rows}
       />
 
       {type === "password" && (
