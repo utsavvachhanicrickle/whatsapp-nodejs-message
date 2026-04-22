@@ -40,24 +40,16 @@ function HomePage() {
       setLoading(false);
     };
 
-    const handleAuthenticated = ({ sessionId }) => {
-      setStatus(`Authenticated: ${sessionId}`);
-    };
-
     const handleReady = ({ sessionId }) => {
       setQr(null);
       setStatus(`Connected: ${sessionId} ✅`);
       setLoading(false);
     };
 
-    const handleDisconnected = ({ sessionId }) => {
-      setStatus(`Disconnected: ${sessionId} ❌`);
-    };
-
     const handleSessionRemoved = ({ sessionId }) => {
       dispatch(removeUser(sessionId));
 
-      if (activeUser === sessionId) {
+      if (activeUser?.id === sessionId) {
         setActiveUser(null);
         setQr(null);
         setStatus("Idle");
@@ -65,26 +57,19 @@ function HomePage() {
     };
 
     socket.on("qr", handleQR);
-    socket.on("authenticated", handleAuthenticated);
     socket.on("ready", handleReady);
-    socket.on("disconnected", handleDisconnected);
     socket.on("session-removed", handleSessionRemoved);
 
     return () => {
       socket.off("qr", handleQR);
-      socket.off("authenticated", handleAuthenticated);
       socket.off("ready", handleReady);
-      socket.off("disconnected", handleDisconnected);
       socket.off("session-removed", handleSessionRemoved);
     };
   }, [activeUser, dispatch]);
 
   // ================= ADD USER =================
   const startSession = () => {
-    if (!inputPhone.trim()) {
-      alert("Enter phone");
-      return;
-    }
+    if (!inputPhone.trim()) return alert("Enter phone");
 
     setLoading(true);
 
@@ -102,19 +87,21 @@ function HomePage() {
     setInputPhone("");
     setLoading(false);
   };
-  console.log("users", users);
+
   // ================= SWITCH USER =================
   const handleSwitchUser = (user) => {
     setActiveUser(user);
     setQr(null);
-    setStatus(`Connected: ${user} ✅`);
+    setStatus(`Connected: ${user.phone} ✅`);
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-(--bg) text-(--text-primary)">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-(--bg) text-(--text-primary)">
+
       {/* ================= SIDEBAR ================= */}
-      <div className="w-64 bg-(--sidebar) border-r border-(--border) p-4 flex flex-col">
-        <h2 className="text-xl mb-4 font-semibold text-center flex items-center gap-2 justify-center">
+      <div className="w-full md:w-64 bg-(--sidebar) border-b md:border-b-0 md:border-r border-(--border) p-3 md:p-4 flex flex-col">
+
+        <h2 className="text-lg md:text-xl mb-3 md:mb-4 font-semibold flex items-center gap-2 justify-center">
           <PersonIcon />
           Users
         </h2>
@@ -124,24 +111,31 @@ function HomePage() {
           name="phone"
           placeholder="Enter phone"
           value={inputPhone}
-          onChange={(name, value) => setInputPhone(value)}
+          onChange={(n, v) => setInputPhone(v)}
         />
 
         <Button onClick={startSession} variant="primary" className="mt-2">
           {loading ? "Adding..." : "Add User"}
         </Button>
 
-        <div className="mt-4 flex-1 overflow-auto">
+        {/* ================= USER LIST ================= */}
+        <div className="mt-4 flex-1 overflow-y-auto max-h-40 md:max-h-none">
+
           {users?.map((user) => (
             <div
               key={user.id}
-              className={`p-2 mt-2 rounded flex justify-between items-center cursor-pointer transition ${
+              className={`p-2 mt-2 rounded flex justify-between items-center cursor-pointer transition text-sm md:text-base ${
                 activeUser?.id === user.id
                   ? "bg-(--primary) text-(--text-inverse)"
                   : "bg-(--bg-secondary) hover:bg-(--border)"
               }`}
             >
-              <span onClick={() => handleSwitchUser(user)}>{user}</span>
+              <span
+                className="truncate max-w-37.5"
+                onClick={() => handleSwitchUser(user)}
+              >
+                {user}
+              </span>
 
               <Button
                 onClick={() => dispatch(removeUser(user.id))}
@@ -156,40 +150,48 @@ function HomePage() {
       </div>
 
       {/* ================= MAIN ================= */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
+
         {/* HEADER */}
-        <div className="bg-(--card) border-b border-(--border) p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">WhatsApp Dashboard</h1>
+        <div className="bg-(--card) border-b border-(--border) p-3 md:p-4 flex justify-between items-center">
+
+          <h1 className="text-lg md:text-2xl font-bold">
+            WhatsApp Dashboard
+          </h1>
 
           <button
-            onClick={() => setDarkMode((prev) => !prev)}
-            className="p-2 rounded-lg hover:bg-(--bg-secondary) transition"
+            onClick={() => setDarkMode((p) => !p)}
+            className="p-2 rounded-lg hover:bg-(--bg-secondary)"
           >
             {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
           </button>
         </div>
 
         {/* CONTENT */}
-        <div className="flex-1 p-6 overflow-auto">
-          <h3 className="text-lg mb-4">Status: {status}</h3>
+        <div className="flex-1 p-3 md:p-6 overflow-auto">
+
+          <h3 className="text-sm md:text-lg mb-4">
+            Status: {status}
+          </h3>
 
           {loading && (
             <div className="flex justify-center mt-10">
-              <div className="w-10 h-10 border-4 border-(--border) border-t-(--primary) rounded-full animate-spin"></div>
+              <div className="w-8 h-8 md:w-10 md:h-10 border-4 border-(--border) border-t-(--primary) rounded-full animate-spin"></div>
             </div>
           )}
 
           {qr && (
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center mt-4 md:mt-6">
               <QR qr={qr} />
             </div>
           )}
 
           {status.includes("Connected") && activeUser && (
-            <div className="mt-6 flex justify-center">
+            <div className="mt-4 md:mt-6 flex justify-center">
               <SendMessage sessionId={activeUser} />
             </div>
           )}
+
         </div>
       </div>
     </div>
