@@ -4,7 +4,6 @@ const defaultMessageSchema = mongoose.Schema({
   title: {
     type: String,
     required: true,
-    trim: true,
   },
   message: {
     type: String,

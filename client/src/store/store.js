@@ -3,11 +3,14 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlices";
 import userReducer from "./slices/userSlice";
 import contactReducer from "./slices/contactSlices"
+import defaultMessagesReducer from "./slices/defaultMessagesSlices"
+
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     user: userReducer,
     contact: contactReducer,
+    defaultMessages: defaultMessagesReducer
   },
 });

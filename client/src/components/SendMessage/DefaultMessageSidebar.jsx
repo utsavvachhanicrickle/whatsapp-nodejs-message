@@ -1,16 +1,6 @@
 import { useEffect, useState } from "react";
 
-function DefaultMessageSidebar({ onSelect, onEdit, onDelete, refresh }) {
-  const [messages, setMessages] = useState([]);
-
-  useEffect(() => {
-    load();
-  }, [refresh]); // ✅ reload on parent change
-
-  const load = () => {
-    const data = JSON.parse(localStorage.getItem("defaultMessages")) || [];
-    setMessages(data);
-  };
+function DefaultMessageSidebar({ onSelect, onEdit, onDelete, defaulMessages }) {
 
   return (
     <div className="w-72 p-4 bg-(--sidebar) border-l border-(--border) overflow-auto">
@@ -18,23 +8,23 @@ function DefaultMessageSidebar({ onSelect, onEdit, onDelete, refresh }) {
         Templates
       </h3>
 
-      {messages.length === 0 && (
+      {defaulMessages.length === 0 && (
         <p className="text-sm text-(--text-secondary)">
           No templates found
         </p>
       )}
 
-      {messages.map((m, i) => (
+      {defaulMessages.map((m, i) => (
         <div
           key={i}
           className="p-3 mb-3 rounded-lg border border-(--border) hover:bg-(--bg-secondary)"
         >
-          <div onClick={() => onSelect(m.value)} className="cursor-pointer">
+          <div onClick={() => onSelect(m.message)} className="cursor-pointer">
             <p className="font-medium text-(--text-primary)">
-              {m.label}
+              {m.title}
             </p>
             <p className="text-sm text-(--text-secondary) line-clamp-2">
-              {m.value}
+              {m.message}
             </p>
           </div>
 
@@ -47,7 +37,7 @@ function DefaultMessageSidebar({ onSelect, onEdit, onDelete, refresh }) {
             </button>
 
             <button
-              onClick={() => onDelete(i)} // ✅ parent handles
+              onClick={() => onDelete(m._id)} 
               className="text-red-500 text-sm hover:underline"
             >
               Delete

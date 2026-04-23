@@ -12,6 +12,12 @@ import {
   updateContactSlice,
   deleteContactSlice,
 } from "../../store/slices/contactSlices";
+import {
+  fetchDefaultMessage,
+  addDefaultMessage,
+  updateDefaultMessage,
+  deleteDefaultMessage,
+} from "../../store/slices/defaultMessagesSlices";
 
 import ContactSidebar from "./ContactSidebar";
 import DefaultMessageSidebar from "./DefaultMessageSidebar";
@@ -37,10 +43,11 @@ function SendMessage({ sessionId }) {
   const [contactDetails, setContactDetails] = useState({});
   const [templateDetails, setTemplateDetails] = useState({});
 
-  const [refresh, setRefresh] = useState(0);
-
   const dispatch = useDispatch();
   const contacts = useSelector((state) => state.contact.contacts);
+  const defaulMessages = useSelector(
+    (state) => state.defaultMessages.defaultMessages,
+  );
 
   const sendMessage = async () => {
     if (!number || !message) return alert("Fill all fields");
@@ -48,7 +55,7 @@ function SendMessage({ sessionId }) {
     await messageServices.SendMessageServices(
       sessionId,
       number,
-      `${message} \n\n this message is sends from Utsav and this will be Part of the autmation of messages sending`,
+      `${message} \n\n ------------------------------ \n\n  *this* message is sends from *Utsav Vachhani* and this will be Part of the autmation of messages sending`,
     );
 
     setMessageSEnding(false);
@@ -59,7 +66,7 @@ function SendMessage({ sessionId }) {
 
   useEffect(() => {
     dispatch(fetchContactSlice());
-    console.log(contacts);
+    dispatch(fetchDefaultMessage());
   }, [dispatch]);
 
   const handleAddedContect = () => {
@@ -97,32 +104,18 @@ function SendMessage({ sessionId }) {
   };
 
   const handleMessageTempleteSubmit = (formData) => {
-    let data = JSON.parse(localStorage.getItem("defaultMessages")) || [];
+    console.log(formData);
 
     if (editTemplateId !== null) {
-      data[editTemplateId] = {
-        label: formData.title,
-        value: formData.message,
-      };
+      dispatch(updateDefaultMessage({ id: editTemplateId, formData }));
     } else {
-      data.push({
-        label: formData.title,
-        value: formData.message,
-      });
+      dispatch(addDefaultMessage(formData));
     }
-
-    localStorage.setItem("defaultMessages", JSON.stringify(data));
     handleCancle();
   };
 
-  const handleDeleteDefaultMessage = (index) => {
-    let data = JSON.parse(localStorage.getItem("defaultMessages")) || [];
-
-    data.splice(index, 1);
-
-    localStorage.setItem("defaultMessages", JSON.stringify(data));
-
-    setRefresh((prev) => prev + 1); // 🔥 trigger reload
+  const handleDeleteDefaultMessage = (id) => {
+    dispatch(deleteDefaultMessage(id));
   };
 
   return (
@@ -226,12 +219,12 @@ function SendMessage({ sessionId }) {
       </div>
 
       <DefaultMessageSidebar
-        refresh={refresh}
+        defaulMessages={defaulMessages}
         onSelect={(msg) => setMessage(msg)}
         onEdit={(index, item) => {
           setOpenBox(true);
           setAddContact(false);
-          setEditTemplateId(index);
+          setEditTemplateId(item._id);
           setTemplateDetails({
             title: item.label,
             message: item.value,
