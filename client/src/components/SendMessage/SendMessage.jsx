@@ -12,11 +12,13 @@ import AddEntityForm from "./AddEntityForm";
 
 import AddIcCallIcon from "@mui/icons-material/AddIcCall";
 import AddBoxIcon from "@mui/icons-material/AddBox";
+import SendIcon from "@mui/icons-material/Send";
 
 function SendMessage({ sessionId }) {
   const [number, setNumber] = useState("");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [messageSending, setMessageSEnding] = useState(false);
 
   const [openBox, setOpenBox] = useState(false);
   const [addContact, setAddContact] = useState(true);
@@ -31,13 +33,14 @@ function SendMessage({ sessionId }) {
 
   const sendMessage = async () => {
     if (!number || !message) return alert("Fill all fields");
-
+    setMessageSEnding(true);
     await messageServices.SendMessageServices(
       sessionId,
       number,
       `${message} \n\n this message is sends from Utsav and this will be Part of the autmation of messages sending`,
     );
 
+    setMessageSEnding(false);
     setMessage("");
     setNumber("");
     setName("");
@@ -136,14 +139,14 @@ function SendMessage({ sessionId }) {
         <div className="flex justify-between items-center p-4 border-b border-(--border) bg-(--card)">
           <Button className="gap-2 flex" onClick={handleAddedContect}>
             <AddIcCallIcon />
-            Add Contact
+            <p className="hidden xl:block">Add Contact</p>
           </Button>
 
-          <h2 className="text-xl font-semibold">Send Message</h2>
+          <h2 className="text-xl font-semibold ">Send Message</h2>
 
           <Button className="gap-2 flex" onClick={handleAddMessageTemplete}>
             <AddBoxIcon />
-            Add Template
+            <p className="hidden xl:block">Add Template</p>
           </Button>
         </div>
 
@@ -199,9 +202,16 @@ function SendMessage({ sessionId }) {
 
               <button
                 onClick={sendMessage}
-                className="py-3 bg-(--btn-primary-bg) text-white rounded"
+                className="py-3 bg-(--btn-primary-bg) text-white rounded flex gap-4 justify-center"
               >
-                Send Message
+                {!messageSending ? (
+                  <>
+                    <SendIcon />
+                    <p>Send Message</p>
+                  </>
+                ) : (
+                  <div className="h-8 w-8 border-4 border-(--border) border-t-(--primary) rounded-full animate-spin"></div>
+                )}
               </button>
             </>
           )}

@@ -38,9 +38,9 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
     puppeteer: {
       headless: false,
       args: ["--no-sandbox"],
-      userDataDir: `./.wwebjs_auth/session-${sessionId}`, 
     },
   });
+
   clients[sessionId] = client;
 
   bindClientEvents(client, sessionId, socketId, io);
@@ -110,3 +110,4 @@ const bindClientEvents = (client, sessionId, socketId, io) => {
     io.emit("session-removed", { sessionId });
   });
 };
+
