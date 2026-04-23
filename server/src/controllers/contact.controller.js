@@ -4,7 +4,8 @@ import { MESSAGES } from "../utils/Messages.js";
 export const addContectController = async (req, res) => {
   try {
     const { name, phoneNumber } = req.body;
-    const userId = req.user._id;
+    const userId = req.userId;
+
     if (!name || !phoneNumber) {
       return res.status(400).json({
         success: false,
@@ -12,14 +13,14 @@ export const addContectController = async (req, res) => {
       });
     }
 
-    Contact.findOne({ phoneNumber, userId }).then((existingContact) => {
-      if (existingContact) {
-        return res.status(400).json({
-          success: false,
-          message: MESSAGES.CONTECTEXIST,
-        });
-      }
-    });
+    const existingContact = await Contact.findOne({ phoneNumber, userId });
+
+    if (existingContact) {
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.CONTECTEXIST,
+      });
+    }
 
     const newContact = new Contact({ name, phoneNumber, userId });
     await newContact.save();
@@ -27,10 +28,10 @@ export const addContectController = async (req, res) => {
     res.status(200).json({
       success: true,
       message: MESSAGES.ADDCONTECTSUCCESS,
-      contact: newContact,
+      newContact,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("added contact error:", error);
     res.status(500).json({
       success: false,
       message: MESSAGES.ADDCONTECTERROR,
@@ -41,7 +42,9 @@ export const addContectController = async (req, res) => {
 
 export const getContectController = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.userId;
+    console.log("userId", userId);
+
     const contacts = await Contact.find({ userId }).sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -49,8 +52,9 @@ export const getContectController = async (req, res) => {
       message: MESSAGES.GETCONTECTSUCCESS,
       contacts,
     });
+    console.log("fetch called ");
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("fetch contact error:", error);
     res.status(500).json({
       success: false,
       message: MESSAGES.GETCONTECTERROR,
@@ -62,7 +66,7 @@ export const getContectController = async (req, res) => {
 export const deleteContectController = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id;
+    const userId = req.userId;
     const contact = await Contact.findOneAndDelete({ _id: id, userId });
 
     if (!contact) {
@@ -75,9 +79,10 @@ export const deleteContectController = async (req, res) => {
     res.status(200).json({
       success: true,
       message: MESSAGES.DELETECONTECTSUCCESS,
+      deletedId: id,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("delete contact error:", error);
     res.status(500).json({
       success: false,
       message: MESSAGES.DELETECONTECTERROR,
@@ -90,25 +95,25 @@ export const updateContectController = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, phoneNumber } = req.body;
-    const userId = req.user._id;
+    const userId = req.userId;
     const contact = await Contact.findOneAndUpdate(
-        { _id: id, userId },
-        { name, phoneNumber },
-        { new: true }
+      { _id: id, userId },
+      { name, phoneNumber },
+      { new: true },
     );
     if (!contact) {
-        return res.status(404).json({
-            success: false,
-            message: MESSAGES.CONTECTNOTEXIST,
-        });
+      return res.status(404).json({
+        success: false,
+        message: MESSAGES.CONTECTNOTEXIST,
+      });
     }
     res.status(200).json({
-        success: true,
-        message: MESSAGES.UPDATECONTECTSUCCESS,
-        contact,
+      success: true,
+      message: MESSAGES.UPDATECONTECTSUCCESS,
+      updatedContact: contact,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("update login error error:", error);
     res.status(500).json({
       success: false,
       message: MESSAGES.UPDATECONTECTERROR,

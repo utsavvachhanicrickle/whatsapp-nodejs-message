@@ -5,6 +5,14 @@ import {
   messageTempleteFormData,
 } from "../../utils/constants/sendMessageFields";
 
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchContactSlice,
+  addContactSlice,
+  updateContactSlice,
+  deleteContactSlice,
+} from "../../store/slices/contactSlices";
+
 import ContactSidebar from "./ContactSidebar";
 import DefaultMessageSidebar from "./DefaultMessageSidebar";
 import Button from "../Button";
@@ -31,6 +39,9 @@ function SendMessage({ sessionId }) {
 
   const [refresh, setRefresh] = useState(0);
 
+  const dispatch = useDispatch();
+  const contacts = useSelector((state) => state.contact.contacts);
+
   const sendMessage = async () => {
     if (!number || !message) return alert("Fill all fields");
     setMessageSEnding(true);
@@ -45,6 +56,11 @@ function SendMessage({ sessionId }) {
     setNumber("");
     setName("");
   };
+
+  useEffect(() => {
+    dispatch(fetchContactSlice());
+    console.log(contacts);
+  }, [dispatch]);
 
   const handleAddedContect = () => {
     setOpenBox(true);
@@ -67,16 +83,17 @@ function SendMessage({ sessionId }) {
   };
 
   const handleContectSubmit = (formData) => {
-    let data = JSON.parse(localStorage.getItem("contacts")) || [];
-
     if (editContactId !== null) {
-      data[editContactId] = formData;
+      dispatch(updateContactSlice({ id: editContactId, formData }));
     } else {
-      data.push(formData);
+      dispatch(addContactSlice(formData));
     }
 
-    localStorage.setItem("contacts", JSON.stringify(data));
     handleCancle();
+  };
+
+  const handleDeleteContect = (id) => {
+    dispatch(deleteContactSlice(id));
   };
 
   const handleMessageTempleteSubmit = (formData) => {
@@ -98,16 +115,6 @@ function SendMessage({ sessionId }) {
     handleCancle();
   };
 
-  const handleDeleteContect = (index) => {
-    let data = JSON.parse(localStorage.getItem("contacts")) || [];
-
-    data.splice(index, 1);
-
-    localStorage.setItem("contacts", JSON.stringify(data));
-
-    setRefresh((prev) => prev + 1); // 🔥 trigger reload
-  };
-
   const handleDeleteDefaultMessage = (index) => {
     let data = JSON.parse(localStorage.getItem("defaultMessages")) || [];
 
@@ -121,7 +128,7 @@ function SendMessage({ sessionId }) {
   return (
     <div className="flex h-full">
       <ContactSidebar
-        refresh={refresh}
+        contacts={contacts}
         onSelect={(c) => {
           setName(c.name);
           setNumber(c.phoneNumber);
@@ -129,7 +136,7 @@ function SendMessage({ sessionId }) {
         onEdit={(index, item) => {
           setOpenBox(true);
           setAddContact(true);
-          setEditContactId(index);
+          setEditContactId(item._id);
           setContactDetails(item);
         }}
         onDelete={handleDeleteContect}

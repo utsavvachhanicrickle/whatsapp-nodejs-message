@@ -8,6 +8,7 @@ import {
   COOKIESSCHEMA,
   setCookies,
   clearAuthCookies,
+  verifyRefreshToken,
 } from "../utils/schema/index.js";
 import { startWhatsAppSession } from "../socket.js";
 import { clients } from "../socket.js";
@@ -108,7 +109,7 @@ export const removeUser = async (req, res) => {
   const sessionId = phone;
   const sessionPath = path.join(
     process.cwd(),
-    `.wwebjs_auth/session-${sessionId}`
+    `.wwebjs_auth/session-${sessionId}`,
   );
 
   try {
@@ -282,16 +283,21 @@ export const refreshTokenController = async (req, res) => {
     if (!token)
       return res.status(401).json({ message: MESSAGES.ACCESS_DENIED });
 
-    const user = verifyRefreshToken(token);
-    if (!user)
+    const userRefresh = await verifyRefreshToken(token);
+    if (!userRefresh)
       return res
         .status(403)
         .json({ success: true, message: MESSAGES.REFRESH_TOKEN_INVALID });
 
+    console.log("Refrensh Called ",userRefresh.id);
+
+    const user = await User.findById(userRefresh.id);
+
     const newAccessToken = await genrateAccessToken({
       email: user.email,
-      id: user._id,
+      id: user.id,
     });
+
     await setCookies({
       type: COOKIESSCHEMA.ACCESSTOKEN,
       token: newAccessToken,

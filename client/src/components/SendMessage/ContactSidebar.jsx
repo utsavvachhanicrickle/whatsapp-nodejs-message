@@ -1,17 +1,6 @@
 import { useEffect, useState } from "react";
 
-function ContactSidebar({ onSelect, onEdit, onDelete, refresh }) {
-  const [contacts, setContacts] = useState([]);
-
-  useEffect(() => {
-    load();
-  }, [refresh]); // ✅ reload when parent updates
-
-  const load = () => {
-    const data = JSON.parse(localStorage.getItem("contacts")) || [];
-    setContacts(data);
-  };
-
+function ContactSidebar({ contacts, onSelect, onEdit, onDelete }) {
   return (
     <div className="w-72 p-4 bg-(--sidebar) border-r border-(--border) overflow-auto">
       <h3 className="mb-3 font-semibold text-(--text-primary)">Contacts</h3>
@@ -27,9 +16,7 @@ function ContactSidebar({ onSelect, onEdit, onDelete, refresh }) {
         >
           <div onClick={() => onSelect(c)} className="cursor-pointer">
             <p className="font-medium text-(--text-primary)">{c.name}</p>
-            <p className="text-sm text-(--text-secondary)">
-              {c.phoneNumber}
-            </p>
+            <p className="text-sm text-(--text-secondary)">{c.phoneNumber}</p>
           </div>
 
           <div className="flex justify-end gap-3 mt-2">
@@ -41,7 +28,7 @@ function ContactSidebar({ onSelect, onEdit, onDelete, refresh }) {
             </button>
 
             <button
-              onClick={() => onDelete(i)} // ✅ parent handles
+              onClick={() => onDelete(c._id)} 
               className="text-red-500 text-sm hover:underline"
             >
               Delete

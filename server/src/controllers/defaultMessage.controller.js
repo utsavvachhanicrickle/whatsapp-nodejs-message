@@ -4,7 +4,7 @@ import { MESSAGES } from "../utils/Messages.js";
 export const addDefaultMessageController = async (req, res) => {
   try {
     const { message } = req.body;
-    const userId = req.user._id;
+    const userId = req.userId;
 
     const defaultMessage = new DefaultMessage({
       message,
@@ -30,7 +30,7 @@ export const addDefaultMessageController = async (req, res) => {
 
 export const getDefaultMessagesController = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.userId;
     const defaultMessages = await DefaultMessage.find({ userId }).sort({
       createdAt: -1,
     });
@@ -38,7 +38,7 @@ export const getDefaultMessagesController = async (req, res) => {
       success: true,
       message: MESSAGES.GETDEFAULTMESSAGESUCCESS,
       defaultMessage: defaultMessages,
-    });
+    });    
   } catch (error) {
     console.error("Error fetching default messages:", error);
     res.status(500).json({
@@ -52,7 +52,7 @@ export const getDefaultMessagesController = async (req, res) => {
 export const deleteDefaultMessageController = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id;
+    const userId = req.userId;
     const defaultMessage = await DefaultMessage.findOneAndDelete({
       _id: id,
       userId,
@@ -81,7 +81,7 @@ export const updateDefaultMessageController = async (req, res) => {
   try {
     const { id } = req.params;
     const { message } = req.body;
-    const userId = req.user._id;
+    const userId = req.userId;
     const defaultMessage = await DefaultMessage.findOneAndUpdate(
       { _id: id, userId },
       { message },

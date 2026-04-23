@@ -12,13 +12,12 @@ export const COOKIESSCHEMA = {
   PRODUCTION: "production",
 };
 
-
 export const JWTSCHEMA = {
   expiresIn: {
     ACCESS_TOKEN: "15m",
     REFRESH_TOKEN: "7d",
   },
-}
+};
 
 export const createPassword = async (password) => {
   return bcrypt.hash(password, Number(process.env.BCRYPT));
@@ -45,6 +44,14 @@ export const verifyRefreshToken = async (refreshToken) => {
   try {
     return jwt.verify(refreshToken, process.env.REFRESHTOKEN_SECRET);
   } catch (err) {
+    throw new Error(MESSAGES.REFRESH_TOKEN_EXPIRED);
+  }
+};
+
+export const verifyAccessToken = async (accessToken) => {
+  try {
+    return jwt.verify(accessToken, process.env.ACCESSTOKEN_SECRET);
+  } catch (error) {
     throw new Error(MESSAGES.REFRESH_TOKEN_EXPIRED);
   }
 };

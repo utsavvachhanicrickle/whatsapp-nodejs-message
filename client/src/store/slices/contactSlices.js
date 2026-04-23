@@ -1,0 +1,94 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { contactServices } from "../../services/contact.services";
+
+export const fetchContactSlice = createAsyncThunk(
+  "contact/fetchContact",
+  async (_, thunkAPI) => {
+    try {
+      const res = await contactServices.getContact();
+      return res;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Failed to fetch contacts");
+    }
+  },
+);
+
+export const addContactSlice = createAsyncThunk(
+  "contact/addContact",
+  async (formData, thunkAPI) => {
+    try {
+      const res = await contactServices.addContact(formData);
+      return res;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Failed to add contact");
+    }
+  },
+);
+
+export const updateContactSlice = createAsyncThunk(
+  "contact/updateContact",
+  async ({ id, formData }, thunkAPI) => {
+    try {
+      const res = await contactServices.updateContact(id, formData);
+      return res;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Failed to update contact");
+    }
+  },
+);
+
+export const deleteContactSlice = createAsyncThunk(
+  "contact/deleteContact",
+  async (id, thunkAPI) => {
+    try {
+      await contactServices.deleteContact(id);
+      return id;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Failed to delete contact");
+    }
+  },
+);
+
+const contactSlice = createSlice({
+  name: "contact",
+  initialState: {
+    contacts: [],
+    loading: false,
+    error: null,
+  },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+
+      .addCase(fetchContactSlice.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchContactSlice.fulfilled, (state, action) => {
+        state.loading = false;
+        state.contacts = action.payload;
+      })
+      .addCase(fetchContactSlice.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(addContactSlice.fulfilled, (state, action) => {
+        state.contacts.push(action.payload);
+      })
+
+      .addCase(updateContactSlice.fulfilled, (state, action) => {
+        const index = state.contacts.findIndex(
+          (c) => c._id === action.payload._id,
+        );
+        if (index !== -1) {
+          state.contacts[index] = action.payload;
+        }
+      })
+
+      .addCase(deleteContactSlice.fulfilled, (state, action) => {
+        state.contacts = state.contacts.filter((c) => c._id !== action.payload);
+      });
+  },
+});
+
+export default contactSlice.reducer;

@@ -17,10 +17,7 @@ export const addUser = createAsyncThunk(
   async ({ phone, socketId, onSuccess }, thunkAPI) => {
     try {
       const newUser = await userServices.addUser(phone, phone, socketId);
-
-      // optional callback for UI (you used this in HomePage)
       if (onSuccess) onSuccess(newUser);
-
       return newUser;
     } catch (err) {
       return thunkAPI.rejectWithValue("Failed to add user");
