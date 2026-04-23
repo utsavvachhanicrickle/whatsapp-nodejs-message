@@ -3,7 +3,7 @@ import { SocketContext } from "../context/scoketContext";
 import { DarkModeContext } from "../context/darkModeContext";
 
 import QR from "../components/QR";
-import SendMessage from "../components/SendMessage";
+import SendMessage from "../components/SendMessage/SendMessage";
 
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -36,13 +36,12 @@ function HomePage() {
   const { users } = useSelector((state) => state.user);
 
   const [inputPhone, setInputPhone] = useState("");
+  const [deletingUser, setDeletingUser] = useState(null);
 
-  // ================= LOAD USERS =================
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  // ================= AUTO SELECT FIRST USER =================
   useEffect(() => {
     if (users?.length > 0 && !activeUser) {
       const user = users[0];
@@ -59,36 +58,41 @@ function HomePage() {
     }
   }, [users, activeUser, socketId]);
 
-  const startSession = () => {
+  const startSession = async () => {
     if (!inputPhone.trim()) return alert("Enter phone");
-    console.log(socketId);
 
-    if (!socketId) {
-      return alert("Socket not connected yet");
-    }
+    if (!socketId) return alert("Socket not connected yet");
 
     setLoading(true);
 
-    dispatch(
-      addUser({
-        phone: inputPhone,
+    try {
+      const res = await dispatch(
+        addUser({
+          phone: inputPhone,
+          socketId,
+        }),
+      ).unwrap();
+
+      const user = res;
+      console.log("✅ USER ADDED:", user);
+
+      switchUser(user);
+
+      setStatus(`Connecting: ${user}...`);
+      setQr(null);
+
+      console.log("🚀 emitting start-session", user, socketId);
+
+      socket.emit("start-session", {
+        sessionId: user,
         socketId,
-        onSuccess: (user) => {
-          switchUser(user);
-
-          setStatus(`Connecting: ${user}...`);
-          setQr(null);
-          setLoading(true);
-
-          socket.emit("start-session", {
-            sessionId: user,
-            socketId,
-          });
-        },
-      }),
-    );
+      });
+    } catch (err) {
+      console.error("❌ Add user failed:", err);
+    }
 
     setInputPhone("");
+    setLoading(false);
   };
 
   const handleSwitchUser = (user) => {
@@ -105,9 +109,26 @@ function HomePage() {
       socketId,
     });
   };
-  console.log(
-    `qr : ${qr}, status: ${status}, activeUser: ${activeUser}, socketId: ${socketId}`,
-  );
+
+  const handledeleteUser = async (user) => {
+    if (deletingUser === user) return;
+
+    setDeletingUser(user);
+    setLoading(true);
+    // does not connectes with backends please wait for few periodes
+    try {
+      // await dispatch(removeUser({ phone: user, socketId })).unwrap();
+    } catch (err) {
+      console.error(err);
+    }
+
+    setDeletingUser(null);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    console.log({ qr, status, activeUser, socketId });
+  }, [qr, status, activeUser, socketId]);
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-(--bg) text-(--text-primary)">
@@ -138,15 +159,19 @@ function HomePage() {
               }`}
             >
               <span onClick={() => handleSwitchUser(user)}>{user}</span>
-
-              <Button onClick={() => dispatch(removeUser(user))}>✕</Button>
+              <Button
+                disabled={deletingUser === user}
+                onClick={() => handledeleteUser(user)}
+              >
+                ✕
+              </Button>
             </div>
           ))}
         </div>
       </div>
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ">
         {/* HEADER */}
         <div className="p-4 flex justify-between items-center border-b border-(--border)">
           <h1 className="text-xl font-semibold">WhatsApp Dashboard</h1>
@@ -165,7 +190,7 @@ function HomePage() {
 
           {loading && (
             <div className="flex justify-center mt-10">
-              <div className="w-8 h-8 border-4 border-(--border) border-t-(--primary) rounded-full animate-spin"></div>
+              <div className="h-8 w-8 border-4 border-(--border) border-t-(--primary) rounded-full animate-spin"></div>
             </div>
           )}
 
@@ -176,9 +201,10 @@ function HomePage() {
           )}
 
           {status.includes("Connected") && activeUser && (
-            <div className="mt-6 flex justify-center">
-              <SendMessage key={activeUser} sessionId={activeUser} />
-              {/* ✅ key forces re-render on switch */}
+            <div className="mt-6 w-full flex justify-center">
+              <div className="w-full max-w-7xl">
+                <SendMessage key={activeUser} sessionId={activeUser} />
+              </div>
             </div>
           )}
         </div>

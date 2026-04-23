@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { userServices } from "../../services/user.services";
 
-
 export const fetchUsers = createAsyncThunk(
   "user/fetchUsers",
   async (_, thunkAPI) => {
@@ -10,7 +9,7 @@ export const fetchUsers = createAsyncThunk(
     } catch (err) {
       return thunkAPI.rejectWithValue("Failed to fetch users");
     }
-  }
+  },
 );
 
 export const addUser = createAsyncThunk(
@@ -26,19 +25,21 @@ export const addUser = createAsyncThunk(
     } catch (err) {
       return thunkAPI.rejectWithValue("Failed to add user");
     }
-  }
+  },
 );
 
 export const removeUser = createAsyncThunk(
   "user/removeUser",
   async (phone, thunkAPI) => {
+    console.log("delete called", phone);
+
     try {
       await userServices.removeUser(phone);
-      return phone; 
+      return phone;
     } catch (err) {
       return thunkAPI.rejectWithValue("Failed to remove user");
     }
-  }
+  },
 );
 
 const userSlice = createSlice({
@@ -69,9 +70,7 @@ const userSlice = createSlice({
       })
 
       .addCase(removeUser.fulfilled, (state, action) => {
-        state.users = state.users.filter(
-          (u) => u.phone !== action.payload
-        );
+        state.users = state.users.filter((u) => u.phone !== action.payload);
       });
   },
 });

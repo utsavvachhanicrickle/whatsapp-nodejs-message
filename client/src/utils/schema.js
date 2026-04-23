@@ -10,6 +10,7 @@ export const buttonInputTypes = {
   SELECT: "select",
   SUBMIT: "submit",
   TEXT: "text",
+  TEXTAREA: "textarea",
 };
 
 export const buttonVariants = {

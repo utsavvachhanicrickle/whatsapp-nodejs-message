@@ -13,6 +13,7 @@ function InputField({
   required = false,
   options = [],
   onKeyDown = () => {},
+  row = 0,
 }) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -94,6 +95,19 @@ function InputField({
           ))}
         </div>
       </div>
+    );
+  }
+
+  if (type === buttonInputTypes.TEXTAREA) {
+    return (
+      <textarea
+        className={`${baseInputStyle} pr-10 ${className}`}
+        placeholder={placeholder}
+        value={value}
+        name={name}
+        onChange={(e) => onChange(name, e.target.value, type)}
+        row={row}
+      />
     );
   }
 

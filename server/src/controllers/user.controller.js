@@ -11,6 +11,8 @@ import {
 } from "../utils/schema/index.js";
 import { startWhatsAppSession } from "../socket.js";
 import { clients } from "../socket.js";
+import fs from "fs";
+import path from "path";
 
 export const addUser = async (req, res) => {
   try {
@@ -47,50 +49,107 @@ export const addUser = async (req, res) => {
   }
 };
 
-export const getAllUsers = async (req, res) => {
-  res.json({ users: Object.keys(clients) });
-};
+// export const removeUser = async (req, res) => {
+//   const io = req.app.get("io");
+//   const { phone, socketId } = req.body;
+
+//   const sessionId = phone;
+
+//   if (!sessionId) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "Session ID required",
+//     });
+//   }
+
+//   const client = clients[sessionId];
+
+//   try {
+//     if (client) {
+//       console.log("🗑 Removing session:", sessionId);
+
+//       try {
+//         await client.destroy();
+//         await client.pupBrowser?.close();
+//       } catch (err) {
+//         console.warn("Destroy issue:", err.message);
+//       }
+
+//       delete clients[sessionId];
+//       delete initializing[sessionId];
+//     }
+
+//     // ✅ Always notify frontend
+//     if (socketId) {
+//       io.to(socketId).emit("session-removed", { sessionId });
+//     } else {
+//       io.emit("session-removed", { sessionId });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Session removed successfully",
+//     });
+//   } catch (error) {
+//     console.error("❌ Remove error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Error removing session",
+//       error: error.message,
+//     });
+//   }
+// };
 
 export const removeUser = async (req, res) => {
   const io = req.app.get("io");
-
   const { phone, socketId } = req.body;
 
   const sessionId = phone;
-
-  if (!sessionId) {
-    return res.status(400).json({ error: MESSAGES.SESSIONID_IS_REQUIRED });
-  }
-
-  const client = clients[sessionId];
-
-  if (!client) {
-    return res.status(404).json({ error: MESSAGES.CLIENT_NOT_FOUND });
-  }
+  const sessionPath = path.join(
+    process.cwd(),
+    `.wwebjs_auth/session-${sessionId}`
+  );
 
   try {
-    // 🔥 Destroy WhatsApp session
-    await client.destroy();
+    const client = clients[sessionId];
 
-    // 🔥 Remove from memory
-    delete clients[sessionId];
+    // ✅ If client exists → destroy properly
+    if (client) {
+      try {
+        await client.destroy();
+      } catch (err) {
+        console.warn("Client destroy error:", err.message);
+      }
 
-    // 🔥 Notify frontend
-    if (socketId) {
-      io.to(socketId).emit("session-removed", { sessionId });
-    } else {
-      io.emit("session-removed", { sessionId });
+      delete clients[sessionId];
     }
 
-    res.status(200).json({ success: true, message: MESSAGES.SESSION_REMOVED });
+    // ✅ FORCE CLEAN SESSION FILE (VERY IMPORTANT)
+    if (fs.existsSync(sessionPath)) {
+      fs.rmSync(sessionPath, { recursive: true, force: true });
+      console.log("🧹 Session folder deleted:", sessionId);
+    }
+
+    // ✅ EMIT EVENT
+    io.emit("session-removed", { sessionId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Session removed completely",
+    });
   } catch (error) {
-    console.error("Error removing session:", error);
-    res.status(500).json({
+    console.error("Remove error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: MESSAGES.ERROR_REMOVING_SESSION,
-      error: error.message,
+      message: error.message,
     });
   }
+};
+
+export const getAllUsers = async (req, res) => {
+  res.json({ users: Object.keys(clients) });
 };
 
 export const signUpController = async (req, res) => {
@@ -223,8 +282,7 @@ export const refreshTokenController = async (req, res) => {
     if (!token)
       return res.status(401).json({ message: MESSAGES.ACCESS_DENIED });
 
-    const user = await User.findOne({ refreshToken :token });
-
+    const user = verifyRefreshToken(token);
     if (!user)
       return res
         .status(403)
@@ -234,7 +292,6 @@ export const refreshTokenController = async (req, res) => {
       email: user.email,
       id: user._id,
     });
-
     await setCookies({
       type: COOKIESSCHEMA.ACCESSTOKEN,
       token: newAccessToken,

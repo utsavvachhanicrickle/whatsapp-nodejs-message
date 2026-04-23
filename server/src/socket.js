@@ -4,30 +4,43 @@ import qrcode from "qrcode";
 const { Client, LocalAuth } = pkg;
 
 export const clients = {};
+const initializing = {}; // 🔥 prevent duplicate init
 
+// ================= START SESSION =================
 export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
   let client = clients[sessionId];
 
-  // ✅ IF EXISTS → REUSE CLIENT (DON'T EMIT READY)
+  // ✅ REUSE EXISTING CLIENT
   if (client) {
-    console.log("Reusing existing session:", sessionId);
+    console.log("♻️ Reusing existing session:", sessionId);
 
-    // 🔥 re-bind events to THIS socket
     bindClientEvents(client, sessionId, socketId, io);
-    console.log("resuponse done ", sessionId);
+
+    // ✅ IMPORTANT: if already logged in → emit ready
+    if (client.info) {
+      io.to(socketId).emit("ready", { sessionId });
+    }
 
     return;
   }
 
-  // ✅ CREATE NEW CLIENT
+  // ❌ prevent duplicate initialize
+  if (initializing[sessionId]) {
+    console.log("⚠️ Already initializing:", sessionId);
+    return;
+  }
+
+  initializing[sessionId] = true;
+
+  // ✅ CREATE CLIENT
   client = new Client({
     authStrategy: new LocalAuth({ clientId: sessionId }),
     puppeteer: {
       headless: false,
       args: ["--no-sandbox"],
+      userDataDir: `./.wwebjs_auth/session-${sessionId}`, 
     },
   });
-
   clients[sessionId] = client;
 
   bindClientEvents(client, sessionId, socketId, io);
@@ -35,17 +48,21 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
   try {
     await client.initialize();
   } catch (err) {
-    console.log("Init error:", err.message);
+    console.log("❌ Init error:", err.message);
     delete clients[sessionId];
+  } finally {
+    delete initializing[sessionId];
   }
 };
 
-// 🔥 EVENT BINDING (IMPORTANT)
+// ================= EVENTS =================
 const bindClientEvents = (client, sessionId, socketId, io) => {
   client.removeAllListeners();
 
   client.on("qr", async (qr) => {
     const qrImage = await qrcode.toDataURL(qr);
+
+    console.log("📲 QR sent:", sessionId);
 
     io.to(socketId).emit("qr", {
       sessionId,
@@ -54,22 +71,42 @@ const bindClientEvents = (client, sessionId, socketId, io) => {
   });
 
   client.on("authenticated", () => {
+    console.log("🔐 Authenticated:", sessionId);
+
     io.to(socketId).emit("authenticated", { sessionId });
   });
 
   client.on("ready", () => {
+    console.log("✅ Ready:", sessionId);
+
     io.to(socketId).emit("ready", { sessionId });
   });
 
   client.on("disconnected", async () => {
+    console.log("❌ Disconnected:", sessionId);
+
+    try {
+      await client.destroy();
+      await client.pupBrowser?.close();
+    } catch (err) {
+      console.warn("Destroy error:", err.message);
+    }
+
     delete clients[sessionId];
-    await client.destroy();
+
     io.emit("session-removed", { sessionId });
   });
 
   client.on("auth_failure", async () => {
+    console.log("❌ Auth failure:", sessionId);
+
+    try {
+      await client.destroy();
+      await client.pupBrowser?.close();
+    } catch (err) {}
+
     delete clients[sessionId];
-    await client.destroy();
+
     io.emit("session-removed", { sessionId });
   });
 };

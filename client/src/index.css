@@ -1,25 +1,22 @@
 @import "tailwindcss";
+
 /* ================= LIGHT THEME ================= */
 :root {
-  /* Backgrounds */
   --bg: #efeae2;
   --bg-primary: #ffffff;
   --bg-secondary: #f0f2f5;
 
-  /* Cards / Surfaces */
   --card: #ffffff;
   --sidebar: #ffffff;
 
-  /* Text */
   --text-primary: #111b21;
   --text-secondary: #667781;
   --text-inverse: #ffffff;
 
-  /* Brand (WhatsApp style) */
   --primary: #25d366;
   --primary-hover: #1ebc57;
+  --secondary-hover: #ffffff;
 
-  /* Buttons */
   --btn-primary-bg: var(--primary);
   --btn-primary-text: #ffffff;
   --btn-primary-hover: var(--primary-hover);
@@ -27,35 +24,28 @@
   --btn-outline-text: var(--primary);
   --btn-outline-border: var(--primary);
 
-  /* Borders */
   --border: #e9edef;
 
-  /* Shadows */
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-
 /* ================= DARK THEME ================= */
 [data-theme="dark"] {
-  /* Backgrounds */
   --bg: #0b141a;
   --bg-primary: #111b21;
   --bg-secondary: #202c33;
 
-  /* Cards / Surfaces */
   --card: #111b21;
   --sidebar: #111b21;
 
-  /* Text */
   --text-primary: #e9edef;
   --text-secondary: #8696a0;
   --text-inverse: #111b21;
 
-  /* Brand */
   --primary: #25d366;
   --primary-hover: #1ebc57;
+  --secondary-hover: #0c0b0b;
 
-  /* Buttons */
   --btn-primary-bg: var(--primary);
   --btn-primary-text: #ffffff;
   --btn-primary-hover: var(--primary-hover);
@@ -63,14 +53,14 @@
   --btn-outline-text: var(--primary);
   --btn-outline-border: var(--primary);
 
-  /* Borders */
   --border: #2a3942;
 
-  /* Shadows */
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
+
+/* ================= BASE ================= */
 body {
   background-color: var(--bg);
-  color: var(--text-primary);
+  color: var(--text-primary); 
   transition: all 0.3s ease;
 }

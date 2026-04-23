@@ -1,64 +1,4 @@
-import { useEffect, useState } from "react";
-
-function DefaultMessageSidebar({ onSelect, onEdit, onDelete }) {
-  const [messages, setMessages] = useState([]);
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const load = () => {
-    const data = JSON.parse(localStorage.getItem("defaultMessages")) || [];
-    setMessages(data);
-  };
-
-  const deleteTemplate = (index) => {
-    let data = [...messages];
-    data.splice(index, 1);
-    localStorage.setItem("defaultMessages", JSON.stringify(data));
-    load();
-  };
-
-  return (
-    <div className="w-72 p-4 bg-[var(--sidebar)] border-l border-[var(--border)] overflow-auto">
-
-      <h3 className="mb-3 font-semibold">Templates</h3>
-
-      {messages.map((m, i) => (
-        <div
-          key={i}
-          className="p-3 mb-3 rounded-lg border border-[var(--border)] hover:bg-[var(--bg-secondary)]"
-        >
-          <div onClick={() => onSelect(m.value)} className="cursor-pointer">
-            <p className="font-medium">{m.label}</p>
-            <p className="text-sm text-[var(--text-secondary)] line-clamp-2">
-              {m.value}
-            </p>
-          </div>
-
-          {/* ACTIONS */}
-          <div className="flex justify-end gap-2 mt-2">
-            <button
-              onClick={() => onEdit(i, m)}
-              className="text-blue-500 text-sm"
-            >
-              Edit
-            </button>
-
-            <button
-              onClick={() => onDelete(i)}
-              className="text-red-500 text-sm"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default DefaultMessageSidebar;    import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { messageServices } from "../../services/message.services";
 import {
   contectFormData,
@@ -87,10 +27,16 @@ function SendMessage({ sessionId }) {
   const [contactDetails, setContactDetails] = useState({});
   const [templateDetails, setTemplateDetails] = useState({});
 
+  const [refresh, setRefresh] = useState(0);
+
   const sendMessage = async () => {
     if (!number || !message) return alert("Fill all fields");
 
-    await messageServices.SendMessageServices(sessionId, number, message);
+    await messageServices.SendMessageServices(
+      sessionId,
+      number,
+      `${message} \n\n this message is sends from Utsav and this will be Part of the autmation of messages sending`,
+    );
 
     setMessage("");
     setNumber("");
@@ -149,11 +95,30 @@ function SendMessage({ sessionId }) {
     handleCancle();
   };
 
-  const handleDeleteContect = (id) => {};
-  const handleDeleteDefaultMessage = (id) => {};
+  const handleDeleteContect = (index) => {
+    let data = JSON.parse(localStorage.getItem("contacts")) || [];
+
+    data.splice(index, 1);
+
+    localStorage.setItem("contacts", JSON.stringify(data));
+
+    setRefresh((prev) => prev + 1); // 🔥 trigger reload
+  };
+
+  const handleDeleteDefaultMessage = (index) => {
+    let data = JSON.parse(localStorage.getItem("defaultMessages")) || [];
+
+    data.splice(index, 1);
+
+    localStorage.setItem("defaultMessages", JSON.stringify(data));
+
+    setRefresh((prev) => prev + 1); // 🔥 trigger reload
+  };
+
   return (
     <div className="flex h-full">
       <ContactSidebar
+        refresh={refresh}
         onSelect={(c) => {
           setName(c.name);
           setNumber(c.phoneNumber);
@@ -244,6 +209,7 @@ function SendMessage({ sessionId }) {
       </div>
 
       <DefaultMessageSidebar
+        refresh={refresh}
         onSelect={(msg) => setMessage(msg)}
         onEdit={(index, item) => {
           setOpenBox(true);
@@ -260,67 +226,4 @@ function SendMessage({ sessionId }) {
   );
 }
 
-export default SendMessage;    import { useEffect, useState } from "react";
-
-function ContactSidebar({ onSelect, onEdit, onDelete }) {
-  const [contacts, setContacts] = useState([]);
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const load = () => {
-    const data = JSON.parse(localStorage.getItem("contacts")) || [];
-    setContacts(data);
-  };
-
-  const deleteContact = (index) => {
-    let data = [...contacts];
-    data.splice(index, 1);
-    localStorage.setItem("contacts", JSON.stringify(data));
-    load();
-  };
-
-  return (
-    <div className="w-72 p-4 bg-(--sidebar) border-r border-(--border) overflow-auto">
-      <h3 className="mb-3 font-semibold text-(--text-primary)">Contacts</h3>
-
-      {contacts.length === 0 && (
-        <p className="text-sm text-(--text-secondary)">No contacts found</p>
-      )}
-
-      {contacts.map((c, i) => (
-        <div
-          key={i}
-          className="p-3 mb-3 rounded-lg border border-(--border) hover:bg-(--bg-secondary) transition"
-        >
-          {/* SELECT CONTACT */}
-          <div onClick={() => onSelect(c)} className="cursor-pointer">
-            <p className="font-medium text-(--text-primary)">{c.name}</p>
-            <p className="text-sm text-(--text-secondary)">{c.phoneNumber}</p>
-          </div>
-
-          {/* ACTIONS */}
-          <div className="flex justify-end gap-3 mt-2">
-            <button
-              onClick={() => onEdit(i, c)}
-              className="text-blue-500 text-sm hover:underline"
-            >
-              Edit
-            </button>
-
-            <button
-              onClick={() => onDelete(i)}
-              className="text-red-500 text-sm hover:underline"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default ContactSidebar;
-    just ued this three files and given me final 2 fie contactSidebar and the defaulyMessage sidebar and given me only two functioon ued in this sendMessage files and makes sure it all works smooth
+export default SendMessage;
