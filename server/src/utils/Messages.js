@@ -2,12 +2,11 @@ export const MESSAGES = {
   SESSION_STARTED: "Session started",
   SESSION_REMOVED: "Session removed successfully",
   ERROR_REMOVING_SESSION: "Error removing session",
-  REFRESH_TOKEN :"Refresh token issued successfully",
+  REFRESH_TOKEN: "Refresh token issued successfully",
   REFRESH_TOKEN_EXPIRED: "Refresh token expired",
   MISSING_FIELDS: "Missing fields",
   ACCESS_DENIED: "Access denied",
   USER_UNVERIFIED: "User unverified",
-
 
   // Sign-up related messages
   USER_ALRADY_EXISTS: "User already exists",
@@ -31,4 +30,27 @@ export const MESSAGES = {
   WHATSAPP_CONNEXTED: "WhatsApp connected",
   SESSIONID_IS_REQUIRED: "Session ID is required",
   SESSION_REMOVED: "Session removed successfully",
+
+  // contect related messages
+  ADDCONTECTERROR: "Error adding contact",
+  CONTECTEXIST: "Contact with this phone number already exists",
+  ADDCONTECTSUCCESS: "Contact added successfully",
+  UPDATECONTECTERROR: "Error updating contact",
+  UPDATECONTECTSUCCESS: "Contact updated successfully",
+  DELETECONTECTERROR: "Error deleting contact",
+  CONTECTNOTEXIST: "Contact not found",
+  DELETECONTECTSUCCESS: "Contact deleted successfully",
+  GETCONTECTERROR: "Error fetching contacts",
+  GETCONTECTSUCCESS: "Contacts fetched successfully",
+
+  // default message related messages
+  ADDDEFAULTMESSAGEERROR: "Error adding default message",
+  ADDDEFAULTMESSAGESUCCESS: "Default message added successfully",
+  GETDEFAULTMESSAGESUCCESS: "Default messages fetched successfully",
+  GETDEFAULTMESSAGEERROR: "Error fetching default messages",
+  UPDATEDEFAULTMESSAGEERROR: "Error updating default message",
+  UPDATEDEFAULTMESSAGESUCCESS: "Default message updated successfully",
+  DELETEDEFAULTMESSAGEERROR: "Error deleting default message",
+  DELETEDEFAULTMESSAGESUCCESS: "Default message deleted successfully",
+
 };

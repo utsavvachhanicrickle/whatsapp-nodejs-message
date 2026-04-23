@@ -82,7 +82,7 @@ export const removeUser = async (req, res) => {
       io.emit("session-removed", { sessionId });
     }
 
-    res.json({ success: true, message: MESSAGES.SESSION_REMOVED });
+    res.status(200).json({ success: true, message: MESSAGES.SESSION_REMOVED });
   } catch (error) {
     console.error("Error removing session:", error);
     res.status(500).json({
@@ -172,7 +172,7 @@ export const loginController = async (req, res) => {
       res,
     });
 
-    res.json({
+    res.status(201).json({
       success: true,
       message: MESSAGES.LOGIN_SUCCESS,
       user: {
@@ -242,7 +242,7 @@ export const refreshTokenController = async (req, res) => {
       res,
     });
 
-    res.status(200).json({ sucess: true, message: MESSAGES.REFRESH_TOKEN });
+    res.status(200).json({ success: true, message: MESSAGES.REFRESH_TOKEN });
   } catch (error) {
     console.error("Refresh token error:", error);
     res.status(500).json({
