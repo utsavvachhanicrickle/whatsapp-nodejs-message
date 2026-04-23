@@ -86,15 +86,15 @@ frontend/
 
 ## 📸 Dashboard
 
-![Dashboard](./screenshots/version02/dashboard.png)
+![Dashboard](./screenshots/version-02/dashboard.png)
 
 ### 📱 QR Connection Screen
 
-![QR](./screenshots/version02/qr%20code%20screen.png)
+![QR](./screenshots/version-02/qr%20code%20screen.png)
 
 ### 💬 Messaging UI
 
-![MESSAGING](./screenshots/version02/fullscreenwithoptions.png)
+![MESSAGING](./screenshots/version-02/fullscreenwithoptions.png)
 
 
 ---
