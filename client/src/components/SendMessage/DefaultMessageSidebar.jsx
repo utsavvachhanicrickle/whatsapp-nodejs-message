@@ -1,7 +1,13 @@
-import { useEffect, useState } from "react";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Button from "../Button";
 
-function DefaultMessageSidebar({ onSelect, onEdit, onDelete, defaulMessages }) {
-
+function DefaultMessageSidebar({
+  onSelect,
+  onEdit,
+  onDelete,
+  defaulMessages,
+}) {
   return (
     <div className="w-72 p-4 bg-(--sidebar) border-l border-(--border) overflow-auto">
       <h3 className="mb-3 font-semibold text-(--text-primary)">
@@ -17,31 +23,46 @@ function DefaultMessageSidebar({ onSelect, onEdit, onDelete, defaulMessages }) {
       {defaulMessages.map((m, i) => (
         <div
           key={i}
-          className="p-3 mb-3 rounded-lg border border-(--border) hover:bg-(--bg-secondary)"
+          className="group relative p-3 mb-3 rounded-xl border border-(--border)
+                     hover:bg-(--bg-secondary) transition-all duration-200"
         >
-          <div onClick={() => onSelect(m.message)} className="cursor-pointer">
-            <p className="font-medium text-(--text-primary)">
+          {/* TEMPLATE CONTENT */}
+          <div
+            onClick={() => onSelect(m.message)}
+            className="cursor-pointer pr-16"
+          >
+            <p className="font-medium text-(--text-primary) truncate">
               {m.title}
             </p>
+
             <p className="text-sm text-(--text-secondary) line-clamp-2">
               {m.message}
             </p>
           </div>
 
-          <div className="flex justify-end gap-2 mt-2">
-            <button
+          {/* ACTION BUTTONS (HOVER ONLY) */}
+          <div
+            className="absolute top-2 right-2 flex gap-1 opacity-0
+                       group-hover:opacity-100 transition duration-200"
+          >
+            <Button
+              variant="ghost"
               onClick={() => onEdit(i, m)}
-              className="text-blue-500 text-sm hover:underline"
+              className="p-1 hover:bg-(--btn-primary-hover)"
             >
-              Edit
-            </button>
+              <EditIcon fontSize="small" />
+            </Button>
 
-            <button
-              onClick={() => onDelete(m._id)} 
-              className="text-red-500 text-sm hover:underline"
+            <Button
+              variant="ghost"
+              onClick={() => onDelete(i)}
+              className="p-1 hover:bg-red-500/20"
             >
-              Delete
-            </button>
+              <DeleteIcon
+                fontSize="small"
+                className="text-red-500"
+              />
+            </Button>
           </div>
         </div>
       ))}

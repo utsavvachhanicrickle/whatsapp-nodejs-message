@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Button from "../Button";
 
 function ContactSidebar({ contacts, onSelect, onEdit, onDelete }) {
   return (
@@ -12,27 +14,40 @@ function ContactSidebar({ contacts, onSelect, onEdit, onDelete }) {
       {contacts.map((c, i) => (
         <div
           key={i}
-          className="p-3 mb-3 rounded-lg border border-(--border) hover:bg-(--bg-secondary) transition"
+          className="group relative p-3 mb-3 rounded-xl border border-(--border) 
+                     hover:bg-(--bg-secondary) transition-all duration-200"
         >
-          <div onClick={() => onSelect(c)} className="cursor-pointer">
-            <p className="font-medium text-(--text-primary)">{c.name}</p>
-            <p className="text-sm text-(--text-secondary)">{c.phoneNumber}</p>
+          <div
+            onClick={() => onSelect(c)}
+            className="cursor-pointer pr-16"
+          >
+            <p className="font-medium text-(--text-primary) truncate">
+              {c.name}
+            </p>
+            <p className="text-sm text-(--text-secondary) truncate">
+              {c.phoneNumber}
+            </p>
           </div>
 
-          <div className="flex justify-end gap-3 mt-2">
-            <button
+          <div
+            className="absolute top-2 right-2 flex gap-1 opacity-0 
+                       group-hover:opacity-100 transition duration-200"
+          >
+            <Button
+              variant="ghost"
               onClick={() => onEdit(i, c)}
-              className="text-blue-500 text-sm hover:underline"
+              className="p-1 hover:bg-(--btn-primary-hover)"
             >
-              Edit
-            </button>
+              <EditIcon fontSize="small" />
+            </Button>
 
-            <button
-              onClick={() => onDelete(c._id)} 
-              className="text-red-500 text-sm hover:underline"
+            <Button
+              variant="ghost"
+              onClick={() => onDelete(i)}
+              className="p-1 hover:bg-red-500/20"
             >
-              Delete
-            </button>
+              <DeleteIcon fontSize="small" className="text-red-500" />
+            </Button>
           </div>
         </div>
       ))}
