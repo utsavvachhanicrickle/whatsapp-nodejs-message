@@ -14,4 +14,16 @@ export const messageServices = {
       console.error(err);
     }
   },
+  SendMultipleMessagesServices: async (sessionId, multipleNumber, message) => {
+    try {
+      await API.post("api/message/multiple-send", {
+        sessionId,
+        multipleNumber,
+        message,
+      });
+      alert("Messages sends ");
+    } catch (error) {
+      console.error(error);
+    }
+  },
 };

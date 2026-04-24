@@ -34,11 +34,13 @@ import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
 function SendMessage({ sessionId }) {
   const [number, setNumber] = useState("");
   const [name, setName] = useState("");
+  const [multipleNumber, setMultipleNumber] = useState([]);
   const [message, setMessage] = useState("");
   const [messageSending, setMessageSEnding] = useState(false);
 
   const [openBox, setOpenBox] = useState(false);
   const [addContact, setAddContact] = useState(true);
+  const [isMultiple, setIsMultiple] = useState(false);
 
   const [multipleContentAdd, setMutltipleContentAdd] = useState(false);
   const [parsedContacts, setParsedContacts] = useState([]);
@@ -70,6 +72,20 @@ function SendMessage({ sessionId }) {
     setMessage("");
     setNumber("");
     setName("");
+  };
+
+  const sendMultipleMessages = async () => {
+    if (multipleNumber.length === 0 || !message)
+      return alert("fill all fields");
+    setMessageSEnding(true);
+    await messageServices.SendMultipleMessagesServices(
+      sessionId,
+      multipleNumber,
+      `${message} \n\n ------------------------------ \n\n  *this* message is sends from *Utsav Vachhani* and this will be Part of the autmation of messages sending`,
+    );
+    setMessage(null);
+    setMultipleNumber([]);
+    setMessageSEnding(false);
   };
 
   useEffect(() => {
@@ -115,8 +131,6 @@ function SendMessage({ sessionId }) {
   };
 
   const handleDeleteContect = (id) => {
-    console.log(id);
-    
     dispatch(deleteContactSlice(id));
   };
 
@@ -178,6 +192,8 @@ function SendMessage({ sessionId }) {
     <div className="flex h-full">
       <ContactSidebar
         contacts={contacts}
+        multipleNumber={multipleNumber}
+        setMultipleNumber={setMultipleNumber}
         onSelect={(c) => {
           setName(c.name);
           setNumber(c.phoneNumber);
@@ -267,40 +283,138 @@ function SendMessage({ sessionId }) {
               )
             ) : (
               <>
-                <input
-                  placeholder="Contact Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="p-3 border border-(--border) rounded bg-(--bg-primary)"
-                />
+                <div className="p-6 flex flex-col gap-6">
+                  {/* TOGGLE MODE */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setIsMultiple(false)}
+                      className={`px-4 py-2 rounded-lg ${
+                        !isMultiple
+                          ? "bg-(--btn-primary-bg) text-white"
+                          : "bg-(--bg-secondary)"
+                      }`}
+                    >
+                      Single
+                    </button>
 
-                <input
-                  placeholder="Phone Number"
-                  value={number}
-                  onChange={(e) => setNumber(e.target.value)}
-                  className="p-3 border border-(--border) rounded bg-(--bg-primary)"
-                />
+                    <button
+                      onClick={() => setIsMultiple(true)}
+                      className={`px-4 py-2 rounded-lg ${
+                        isMultiple
+                          ? "bg-(--btn-primary-bg) text-white"
+                          : "bg-(--bg-secondary)"
+                      }`}
+                    >
+                      Multiple
+                    </button>
+                  </div>
 
-                <textarea
-                  placeholder="Message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="p-3 border border-(--border) rounded bg-(--bg-primary)"
-                />
+                  {/* ================= SINGLE ================= */}
+                  {!isMultiple && (
+                    <div className="bg-(--card) p-5 rounded-xl border border-(--border) flex flex-col gap-4 shadow-sm">
+                      <h2 className="text-lg font-semibold">
+                        Send to Single Contact
+                      </h2>
 
-                <button
-                  onClick={sendMessage}
-                  className="py-3 bg-(--btn-primary-bg) text-white rounded flex gap-4 justify-center"
-                >
-                  {!messageSending ? (
-                    <>
-                      <SendIcon />
-                      <p>Send Message</p>
-                    </>
-                  ) : (
-                    <div className="h-8 w-8 border-4 border-(--border) border-t-(--primary) rounded-full animate-spin"></div>
+                      <input
+                        placeholder="Contact Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="p-3 border rounded bg-(--bg-primary)"
+                      />
+
+                      <input
+                        placeholder="Phone Number"
+                        value={number}
+                        onChange={(e) => setNumber(e.target.value)}
+                        className="p-3 border rounded bg-(--bg-primary)"
+                      />
+
+                      <textarea
+                        placeholder="Message"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        className="p-3 border rounded bg-(--bg-primary) min-h-[120px]"
+                      />
+
+                      <button
+                        onClick={sendMessage}
+                        className="py-3 bg-(--btn-primary-bg) text-white rounded-lg flex items-center justify-center gap-3"
+                      >
+                        {!messageSending ? (
+                          <>
+                            <SendIcon />
+                            Send Message
+                          </>
+                        ) : (
+                          <div className="h-6 w-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                        )}
+                      </button>
+                    </div>
                   )}
-                </button>
+
+                  {/* ================= MULTIPLE ================= */}
+                  {isMultiple && (
+                    <div className="bg-(--card) p-5 rounded-xl border border-(--border) flex flex-col gap-4 shadow-sm">
+                      <h2 className="text-lg font-semibold">
+                        Send to Multiple Contacts
+                      </h2>
+
+                      {/* SELECTED CONTACTS */}
+                      <div className="border rounded-lg p-3 bg-(--bg-secondary)">
+                        {multipleNumber.length === 0 ? (
+                          <p className="text-sm text-(--text-secondary)">
+                            No contacts selected
+                          </p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {multipleNumber.map((c) => (
+                              <div
+                                key={c._id}
+                                className="px-3 py-1 rounded-full bg-(--btn-primary-bg) text-white text-sm flex items-center gap-2"
+                              >
+                                {c.name}
+                                <span
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    setMultipleNumber((prev) =>
+                                      prev.filter((p) => p._id !== c._id),
+                                    )
+                                  }
+                                >
+                                  ✕
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* MESSAGE */}
+                      <textarea
+                        placeholder="Message"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        className="p-3 border rounded bg-(--bg-primary) min-h-[120px]"
+                      />
+
+                      <button
+                        onClick={sendMultipleMessages}
+                        disabled={multipleNumber.length === 0}
+                        className="py-3 bg-(--btn-primary-bg) text-white rounded-lg flex items-center justify-center gap-3 disabled:opacity-50"
+                      >
+                        {!messageSending ? (
+                          <>
+                            <SendIcon />
+                            Send to {multipleNumber.length} Contacts
+                          </>
+                        ) : (
+                          <div className="h-6 w-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
