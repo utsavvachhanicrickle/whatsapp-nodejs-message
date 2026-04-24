@@ -4,7 +4,7 @@ import Button from "../Button";
 
 function ContactSidebar({ contacts, onSelect, onEdit, onDelete }) {
   return (
-    <div className="w-72 p-4 bg-(--sidebar) border-r border-(--border) overflow-auto">
+    <div className="w-72 min-h-screen max-h-screen p-4 bg-(--sidebar) border-r border-(--border) overflow-y-auto">
       <h3 className="mb-3 font-semibold text-(--text-primary)">Contacts</h3>
 
       {contacts.length === 0 && (
@@ -17,10 +17,7 @@ function ContactSidebar({ contacts, onSelect, onEdit, onDelete }) {
           className="group relative p-3 mb-3 rounded-xl border border-(--border) 
                      hover:bg-(--bg-secondary) transition-all duration-200"
         >
-          <div
-            onClick={() => onSelect(c)}
-            className="cursor-pointer pr-16"
-          >
+          <div onClick={() => onSelect(c)} className="cursor-pointer pr-16">
             <p className="font-medium text-(--text-primary) truncate">
               {c.name}
             </p>
