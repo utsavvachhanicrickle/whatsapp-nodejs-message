@@ -23,7 +23,7 @@ export const contactServices = {
   updateContact: async (id, formData) => {
     try {
       const res = await API.put(`/api/contact/update/${id}`, formData);
-      return res.data.updatedContact ;
+      return res.data.updatedContact;
     } catch (error) {
       console.log(error);
       throw error;
@@ -33,6 +33,17 @@ export const contactServices = {
     try {
       const res = await API.delete(`/api/contact/delete/${id}`);
       return res.data.deletedId || id;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  },
+  bulkUploadPDF: async (formData) => {
+    try {
+      const res = await API.post("/api/user/bulk-upload-pdf", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
     } catch (error) {
       console.log(error);
       throw error;

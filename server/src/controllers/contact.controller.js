@@ -13,7 +13,12 @@ export const addContectController = async (req, res) => {
       });
     }
 
-    const existingContact = await Contact.findOne({ phoneNumber, userId });
+    const trimePhoneNumber = String(phoneNumber).replace(/[\s-]/g, "");
+
+    const existingContact = await Contact.findOne({
+      phoneNumber: trimePhoneNumber,
+      userId,
+    });
 
     if (existingContact) {
       return res.status(400).json({
@@ -22,7 +27,11 @@ export const addContectController = async (req, res) => {
       });
     }
 
-    const newContact = new Contact({ name, phoneNumber, userId });
+    const newContact = new Contact({
+      name,
+      phoneNumber: trimePhoneNumber,
+      userId,
+    });
     await newContact.save();
 
     res.status(200).json({

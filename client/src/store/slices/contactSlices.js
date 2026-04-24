@@ -49,6 +49,22 @@ export const deleteContactSlice = createAsyncThunk(
   },
 );
 
+export const bulkUploadPDFSlice = createAsyncThunk(
+  "contact/bulkUploadPDF",
+  async (file, thunkAPI) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await contactServices.bulkUploadPDF(formData);
+
+      return res;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Failed to upload PDF");
+    }
+  },
+);
+
 const contactSlice = createSlice({
   name: "contact",
   initialState: {
@@ -87,7 +103,20 @@ const contactSlice = createSlice({
 
       .addCase(deleteContactSlice.fulfilled, (state, action) => {
         state.contacts = state.contacts.filter((c) => c._id !== action.payload);
-      });
+      })
+
+      .addCase(bulkUploadPDFSlice.fulfilled, (state, action) => {
+        state.contacts = [...state.contacts, ...action.payload.createdContacts];
+      })
+
+      .addCase(bulkUploadPDFSlice.pending, (state) => {
+        state.loading = true;
+      })
+
+      .addCase(bulkUploadPDFSlice.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
   },
 });
 
