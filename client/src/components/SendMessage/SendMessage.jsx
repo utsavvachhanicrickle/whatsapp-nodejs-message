@@ -262,7 +262,6 @@ Thank you for your cooperation.`;
                 loading={loading}
                 onUpload={handleUpload}
                 onCancel={handleCancle}
-                accept="application/pdf"
                 title="Upload Employees (PDF)"
                 setParsedContacts={setParsedContacts}
               />
@@ -383,8 +382,8 @@ Thank you for your cooperation.`;
                             {multipleNumber.map((c) => (
                               <div
                                 key={c._id}
-                                className="px-3 py-1 rounded-full bg-(--btn-primary-bg) text-white text-sm flex items-center gap-2"
-                              >
+                                className="px-3 py-1 min-h-8 max-h-12 rounded-full bg-(--btn-primary-bg) text-white text-sm flex items-center gap-2"
+                              > 
                                 {c.name}
                                 <span
                                   className="cursor-pointer"
