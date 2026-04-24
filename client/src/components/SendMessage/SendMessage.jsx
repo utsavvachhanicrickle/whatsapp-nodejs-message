@@ -58,6 +58,16 @@ function SendMessage({ sessionId }) {
   const defaulMessages = useSelector(
     (state) => state.defaultMessages.defaultMessages,
   );
+  const footerMessage = `
+
+------------------------------
+
+*Automated Message*
+
+This message was sent automatically by *SCET*.  
+Please do not reply to this message.
+
+Thank you for your cooperation.`;
 
   const sendMessage = async () => {
     if (!number || !message) return alert("Fill all fields");
@@ -65,7 +75,7 @@ function SendMessage({ sessionId }) {
     await messageServices.SendMessageServices(
       sessionId,
       number,
-      `${message} \n\n ------------------------------ \n\n  *this* message is sends from *Utsav Vachhani* and this will be Part of the autmation of messages sending`,
+      `${message} ${footerMessage}`,
     );
 
     setMessageSEnding(false);
@@ -81,7 +91,7 @@ function SendMessage({ sessionId }) {
     await messageServices.SendMultipleMessagesServices(
       sessionId,
       multipleNumber,
-      `${message} \n\n ------------------------------ \n\n  *this* message is sends from *Utsav Vachhani* and this will be Part of the autmation of messages sending`,
+      `${message} ${footerMessage}`,
     );
     setMessage(null);
     setMultipleNumber([]);
@@ -367,7 +377,7 @@ function SendMessage({ sessionId }) {
                             No contacts selected
                           </p>
                         ) : (
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 min-h-45 max-h-45 overflow-auto">
                             {multipleNumber.map((c) => (
                               <div
                                 key={c._id}

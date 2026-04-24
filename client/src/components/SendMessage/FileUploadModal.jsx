@@ -28,6 +28,7 @@ function FileUploadModal({
 
       let text = "";
 
+      // 🔹 Extract text from PDF
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
@@ -35,31 +36,37 @@ function FileUploadModal({
         text += content.items.map((item) => item.str).join(" ") + "\n";
       }
 
-      const lines = text.split("\n");
+      // 🔹 Regex to match: 1. Name - 9876543210
+      const matches = text.match(/\d+\.\s*([A-Za-z\s]+)\s*-\s*(\d{10})/g);
 
-      const contacts = [];
+      // 🔹 Deduplication Map (key = phoneNumber)
+      const uniqueContacts = new Map();
 
-      for (let line of lines) {
-        line = line.trim();
+      if (matches) {
+        matches.forEach((item) => {
+          const m = item.match(/([A-Za-z\s]+)\s*-\s*(\d{10})/);
 
-        // ✅ NEW REGEX (matches: 1. Jay - 9876543210)
-        const matches = text.match(/\d+\.\s*([A-Za-z\s]+)\s*-\s*(\d{10})/g);
-        if (matches) {
-          matches.forEach((item) => {
-            const m = item.match(/([A-Za-z\s]+)\s*-\s*(\d{10})/);
-            if (m) {
-              contacts.push({
-                name: m[1].trim(),
-                phoneNumber: m[2],
+          if (m) {
+            const name = m[1].trim();
+            const phone = m[2];
+
+            // ✅ Prevent duplicates
+            if (!uniqueContacts.has(phone)) {
+              uniqueContacts.set(phone, {
+                name,
+                phoneNumber: phone,
               });
             }
-          });
-        }
+          }
+        });
       }
 
-      console.log("📦 Extracted JSON:", contacts);
+      // 🔹 Convert Map → Array
+      const contacts = Array.from(uniqueContacts.values());
 
-      setParsedContacts(contacts); // ✅ NOW WORKS
+      console.log("📦 Final Clean Contacts:", contacts);
+
+      setParsedContacts(contacts);
     };
 
     reader.readAsArrayBuffer(selectedFile);
