@@ -2,6 +2,8 @@ import { useEffect, useContext, useState } from "react";
 import { SocketContext } from "../context/scoketContext";
 import { DarkModeContext } from "../context/darkModeContext";
 
+import toast from "../utils/Toast";
+
 import QR from "../components/QR";
 import SendMessage from "../components/SendMessage/SendMessage";
 
@@ -16,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers, addUser, removeUser } from "../store/slices/userSlice";
 
 import { socket } from "../socket";
+import { logout } from "../store/slices/authSlices";
 
 function HomePage() {
   const { darkMode, setDarkMode } = useContext(DarkModeContext);
@@ -58,10 +61,20 @@ function HomePage() {
     });
   }, [users]);
 
-  const startSession = async () => {
-    if (!inputPhone.trim()) return alert("Enter phone");
+  const handleLogout = async () => {
+    try {
+      await userServices.logout(); 
+    } catch (err) {
+      console.log(err);
+    }
 
-    if (!socketId) return alert("Socket not connected yet");
+    dispatch(logout()); 
+  };
+
+  const startSession = async () => {
+    if (!inputPhone.trim()) return toast.error("Enter phone");
+
+    if (!socketId) return toast.error("Socket not connected yet");
 
     setLoading(true);
 
@@ -118,7 +131,7 @@ function HomePage() {
     try {
       await dispatch(removeUser({ phone: user, socketId })).unwrap();
       if (activeUser === user) {
-        switchUser(null); 
+        switchUser(null);
         setStatus("No active session");
         setQr(null);
       }
@@ -182,13 +195,16 @@ function HomePage() {
         {/* HEADER */}
         <div className="p-4 flex justify-between items-center border-b border-(--border)">
           <h1 className="text-xl font-semibold">WhatsApp Dashboard</h1>
+          <div>
+            <button
+              onClick={() => setDarkMode((p) => !p)}
+              className="p-2 rounded hover:bg-(--bg-secondary)"
+            >
+              {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
+            </button>
 
-          <button
-            onClick={() => setDarkMode((p) => !p)}
-            className="p-2 rounded hover:bg-(--bg-secondary)"
-          >
-            {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
-          </button>
+            <Button onClick={handleLogout}>Logout</Button>
+          </div>
         </div>
 
         {/* CONTENT */}

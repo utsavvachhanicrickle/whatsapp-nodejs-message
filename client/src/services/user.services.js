@@ -27,9 +27,8 @@ export const userServices = {
       // console.log("phone : ", phone, socketId);
       return await API.delete(`/api/user/remove/${phone}`, {
         params: { socketId },
-      }); 
+      });
       console.log("done");
-      
     } catch (err) {
       console.error(err);
       throw err;
@@ -46,5 +45,10 @@ export const userServices = {
   signup: async (formData) => {
     const { data } = await API.post("/api/user/signup", formData);
     return data;
+  },
+
+  logout: async () => {
+    await API.delete("/api/user/logout");
+    return true;
   },
 };

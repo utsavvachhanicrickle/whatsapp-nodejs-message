@@ -21,6 +21,8 @@ import {
   deleteDefaultMessage,
 } from "../../store/slices/defaultMessagesSlices";
 
+import toast from "../../utils/Toast";
+
 import ContactSidebar from "./ContactSidebar";
 import DefaultMessageSidebar from "./DefaultMessageSidebar";
 import Button from "../Button";
@@ -70,7 +72,7 @@ Please do not reply to this message.
 Thank you for your cooperation.`;
 
   const sendMessage = async () => {
-    if (!number || !message) return alert("Fill all fields");
+    if (!number || !message) return toast.error("Fill all fields");
     setMessageSEnding(true);
     await messageServices.SendMessageServices(
       sessionId,
@@ -86,7 +88,7 @@ Thank you for your cooperation.`;
 
   const sendMultipleMessages = async () => {
     if (multipleNumber.length === 0 || !message)
-      return alert("fill all fields");
+      return toast.error("fill all fields");
     setMessageSEnding(true);
     await messageServices.SendMultipleMessagesServices(
       sessionId,
@@ -162,11 +164,11 @@ Thank you for your cooperation.`;
   const handleFileSelect = (selectedFile) => {
     if (!selectedFile) return;
     if (file) {
-      alert("Only one PDF allowed. Remove current file first.");
+      toast.error("Only one PDF allowed. Remove current file first.");
       return;
     }
     if (selectedFile.type !== "application/pdf") {
-      alert("Only PDF allowed");
+      toast.error("Only PDF allowed");
       return;
     }
 
@@ -175,7 +177,7 @@ Thank you for your cooperation.`;
 
   const handleUpload = async () => {
     if (!parsedContacts.length) {
-      return alert("No valid contacts found");
+      return toast.error("No valid contacts found");
     }
 
     try {
@@ -185,14 +187,14 @@ Thank you for your cooperation.`;
         bulkUploadContactsSlice(parsedContacts),
       ).unwrap();
 
-      alert(`Created: ${res.created}, Failed: ${res.failed}`);
+      toast.success(`Created: ${res.created}, Failed: ${res.failed}`);
 
       setParsedContacts([]);
       setFile(null);
       handleCancle();
     } catch (err) {
       console.error(err);
-      alert("Upload failed");
+      toast.error("Upload failed");
     } finally {
       setLoading(false);
     }

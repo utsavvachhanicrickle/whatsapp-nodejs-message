@@ -1,4 +1,5 @@
 import API from "./api.services.js";
+import toast from "../utils/Toast.jsx"
 
 export const messageServices = {
   SendMessageServices: async (sessionId, number, message) => {
@@ -9,7 +10,7 @@ export const messageServices = {
         message,
       });
 
-      alert("Message sent");
+      toast.success("Message sent");
     } catch (err) {
       console.error(err);
     }
@@ -21,7 +22,7 @@ export const messageServices = {
         multipleNumber,
         message,
       });
-      alert("Messages sends ");
+      toast.success("Messages sends ");
     } catch (error) {
       console.error(error);
     }

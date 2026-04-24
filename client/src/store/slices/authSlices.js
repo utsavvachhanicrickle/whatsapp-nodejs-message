@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { userServices } from "../../services/user.services";
 
 const initialState = {
   authData: JSON.parse(localStorage.getItem("profile")) || null,
@@ -16,8 +17,9 @@ const authSlice = createSlice({
       state.authData = action.payload;
     },
     logout: (state) => {
+      console.log("called");
       localStorage.removeItem("profile");
-      state.authData = null;
+      state.authData = false;
     },
   },
 });

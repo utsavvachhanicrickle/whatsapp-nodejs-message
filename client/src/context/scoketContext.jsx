@@ -14,10 +14,8 @@ export const SocketContextProvider = () => {
 
   const dispatch = useDispatch();
 
-  // 🔥 track latest active session (prevents stale updates)
   const activeSessionRef = useRef(null);
 
-  // ================= SOCKET CONNECT =================
   useEffect(() => {
     socket.connect();
 
@@ -36,7 +34,6 @@ export const SocketContextProvider = () => {
   // ================= SOCKET EVENTS =================
   useEffect(() => {
     const handleQR = ({ sessionId, qr }) => {
-      // ❗ ignore old session events
       if (activeSessionRef.current !== sessionId) return;
 
       setQr(qr);
@@ -75,7 +72,6 @@ export const SocketContextProvider = () => {
   const switchUser = async (user) => {
     if (!user) return;
 
-    // 🔥 reset UI instantly
     setLoading(true);
     setQr(null);
     setStatus(`Connecting: ${user}...`);
@@ -83,7 +79,6 @@ export const SocketContextProvider = () => {
     setActiveUser(user);
     activeSessionRef.current = user;
 
-    // 🔥 wait for socket (promise style)
     const waitForSocket = () =>
       new Promise((resolve) => {
         if (socket.connected) return resolve(socket.id);
@@ -94,7 +89,6 @@ export const SocketContextProvider = () => {
     setSocketId(id);
 
     console.log("waiting", id);
-    // 🔥 trigger backend again (IMPORTANT)
     socket.emit("start-session", {
       sessionId: user,
       socketId: id,

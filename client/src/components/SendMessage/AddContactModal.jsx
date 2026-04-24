@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "../../utils/Toast"
 
 function AddContactModal({ onClose }) {
   const [mode, setMode] = useState("single");
@@ -21,7 +22,7 @@ function AddContactModal({ onClose }) {
     let existing = JSON.parse(localStorage.getItem("contacts")) || [];
 
     if (mode === "single") {
-      if (!name || !number) return alert("Fill all fields");
+      if (!name || !number) return toast.error("Fill all fields");
       existing.push({ name, number });
     } else {
       const lines = bulk.split("\n");
