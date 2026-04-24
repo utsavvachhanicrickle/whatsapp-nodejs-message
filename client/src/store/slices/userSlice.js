@@ -27,11 +27,12 @@ export const addUser = createAsyncThunk(
 
 export const removeUser = createAsyncThunk(
   "user/removeUser",
-  async (phone, thunkAPI) => {
-    console.log("delete called", phone);
-
+  async ({ phone, socketId }, thunkAPI) => {
     try {
-      await userServices.removeUser(phone);
+      // console.log("slice i will called ", phone);
+
+      await userServices.removeUser(phone, socketId);
+
       return phone;
     } catch (err) {
       return thunkAPI.rejectWithValue("Failed to remove user");
@@ -67,7 +68,9 @@ const userSlice = createSlice({
       })
 
       .addCase(removeUser.fulfilled, (state, action) => {
-        state.users = state.users.filter((u) => u.phone !== action.payload);
+        state.users = state.users.filter((u) => u !== action.payload);
+        console.log("done");
+        
       });
   },
 });

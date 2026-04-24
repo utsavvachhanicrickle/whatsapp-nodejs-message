@@ -19,6 +19,6 @@ router.get("/refresh", refreshTokenController);
 
 router.post("/add", addUser);
 router.get("/getAllUsers", getAllUsers);
-router.delete("/remove", removeUser);
+router.delete("/remove/:phone", removeUser);
 
 export default router;

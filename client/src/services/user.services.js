@@ -24,18 +24,22 @@ export const userServices = {
 
   removeUser: async (phone, socketId) => {
     try {
-      await API.delete("/api/user/remove", {
-        data: { phone, socketId },
-      });
+      // console.log("phone : ", phone, socketId);
+      return await API.delete(`/api/user/remove/${phone}`, {
+        params: { socketId },
+      }); 
+      console.log("done");
+      
     } catch (err) {
       console.error(err);
+      throw err;
     }
   },
 
   login: async (formData) => {
     const { data } = await API.post("/api/user/login", formData);
     console.log(data);
-    
+
     return data.user;
   },
 

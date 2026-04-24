@@ -104,7 +104,15 @@ export const addUser = async (req, res) => {
 
 export const removeUser = async (req, res) => {
   const io = req.app.get("io");
-  const { phone, socketId } = req.body;
+  const phone = req.params.phone;
+  const socketId = req.query.socketId;
+
+  console.log("PHONE:", phone);
+  console.log("SOCKET:", socketId);
+
+  if (!phone) {
+    return res.status(400).json({ error: "Phone is required" });
+  }
 
   const sessionId = phone;
   const sessionPath = path.join(
@@ -289,7 +297,7 @@ export const refreshTokenController = async (req, res) => {
         .status(403)
         .json({ success: true, message: MESSAGES.REFRESH_TOKEN_INVALID });
 
-    console.log("Refrensh Called ",userRefresh.id);
+    console.log("Refrensh Called ", userRefresh.id);
 
     const user = await User.findById(userRefresh.id);
 

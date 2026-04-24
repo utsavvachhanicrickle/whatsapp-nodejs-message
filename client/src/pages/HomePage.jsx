@@ -43,20 +43,20 @@ function HomePage() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (users?.length > 0 && !activeUser) {
-      const user = users[0];
-      switchUser(user);
+    if (!users?.length || activeUser) return;
 
-      setStatus(`Connecting: ${user}...`);
-      setQr(null);
-      setLoading(true);
+    const user = users[0];
 
-      socket.emit("start-session", {
-        sessionId: user,
-        socketId,
-      });
-    }
-  }, [users, activeUser, socketId]);
+    switchUser(user);
+    setStatus(`Connecting: ${user}...`);
+    setQr(null);
+    setLoading(true);
+
+    socket.emit("start-session", {
+      sessionId: user,
+      socketId,
+    });
+  }, [users]);
 
   const startSession = async () => {
     if (!inputPhone.trim()) return alert("Enter phone");
@@ -115,9 +115,13 @@ function HomePage() {
 
     setDeletingUser(user);
     setLoading(true);
-    // does not connectes with backends please wait for few periodes
     try {
-      // await dispatch(removeUser({ phone: user, socketId })).unwrap();
+      await dispatch(removeUser({ phone: user, socketId })).unwrap();
+      if (activeUser === user) {
+        switchUser(null); 
+        setStatus("No active session");
+        setQr(null);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -161,7 +165,10 @@ function HomePage() {
               <span onClick={() => handleSwitchUser(user)}>{user}</span>
               <Button
                 disabled={deletingUser === user}
-                onClick={() => handledeleteUser(user)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handledeleteUser(user);
+                }}
               >
                 ✕
               </Button>

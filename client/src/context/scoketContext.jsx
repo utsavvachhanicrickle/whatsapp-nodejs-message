@@ -2,7 +2,6 @@ import { useEffect, useState, createContext, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { socket } from "../socket";
 import { useDispatch } from "react-redux";
-import { removeUser } from "../store/slices/userSlice";
 
 export const SocketContext = createContext();
 
@@ -34,7 +33,6 @@ export const SocketContextProvider = () => {
     };
   }, []);
 
-  
   // ================= SOCKET EVENTS =================
   useEffect(() => {
     const handleQR = ({ sessionId, qr }) => {
@@ -55,8 +53,6 @@ export const SocketContextProvider = () => {
     };
 
     const handleSessionRemoved = ({ sessionId }) => {
-      dispatch(removeUser(sessionId));
-
       if (activeSessionRef.current === sessionId) {
         setActiveUser(null);
         setQr(null);
