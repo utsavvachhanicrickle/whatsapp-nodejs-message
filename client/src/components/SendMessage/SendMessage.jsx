@@ -334,7 +334,7 @@ function SendMessage({ sessionId }) {
                         placeholder="Message"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        className="p-3 border rounded bg-(--bg-primary) min-h-[120px]"
+                        className="p-3 border rounded bg-(--bg-primary) min-h-30"
                       />
 
                       <button
@@ -395,7 +395,7 @@ function SendMessage({ sessionId }) {
                         placeholder="Message"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        className="p-3 border rounded bg-(--bg-primary) min-h-[120px]"
+                        className="p-3 border rounded bg-(--bg-primary) min-h-30"
                       />
 
                       <button
