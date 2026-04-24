@@ -4,7 +4,7 @@ export const contactServices = {
   getContact: async () => {
     try {
       const res = await API.get("/api/contact/get-all");
-      console.log(res);
+      // console.log(res);
       return res.data.contacts;
     } catch (error) {
       console.error(err);
@@ -38,11 +38,13 @@ export const contactServices = {
       throw error;
     }
   },
-  bulkUploadPDF: async (formData) => {
+  bulkUploadContacts: async (contacts) => {
     try {
-      const res = await API.post("/api/user/bulk-upload-pdf", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+
+      const res = await API.post("/api/contact/bulk-upload", {
+        contacts,
       });
+      console.log("SENDING CONTACTS:", res);
       return res.data;
     } catch (error) {
       console.log(error);

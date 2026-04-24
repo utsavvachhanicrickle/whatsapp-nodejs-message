@@ -43,7 +43,7 @@ function ContactSidebar({ contacts, onSelect, onEdit, onDelete }) {
 
             <Button
               variant="ghost"
-              onClick={() => onDelete(i)}
+              onClick={() => onDelete(c._id)}
               className="p-1 hover:bg-red-500/20"
             >
               <DeleteIcon fontSize="small" className="text-red-500" />

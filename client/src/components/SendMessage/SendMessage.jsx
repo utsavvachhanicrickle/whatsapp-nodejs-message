@@ -4,6 +4,7 @@ import {
   contectFormData,
   messageTempleteFormData,
 } from "../../utils/constants/sendMessageFields";
+import FileUploadModal from "./FileUploadModal";
 
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -11,6 +12,7 @@ import {
   addContactSlice,
   updateContactSlice,
   deleteContactSlice,
+  bulkUploadContactsSlice,
 } from "../../store/slices/contactSlices";
 import {
   fetchDefaultMessage,
@@ -39,6 +41,7 @@ function SendMessage({ sessionId }) {
   const [addContact, setAddContact] = useState(true);
 
   const [multipleContentAdd, setMutltipleContentAdd] = useState(false);
+  const [parsedContacts, setParsedContacts] = useState([]);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -97,6 +100,8 @@ function SendMessage({ sessionId }) {
     setEditContactId(null);
     setEditTemplateId(null);
     setMutltipleContentAdd(false);
+    setFile(null);
+    setParsedContacts([]);
   };
 
   const handleContectSubmit = (formData) => {
@@ -110,6 +115,8 @@ function SendMessage({ sessionId }) {
   };
 
   const handleDeleteContect = (id) => {
+    console.log(id);
+    
     dispatch(deleteContactSlice(id));
   };
 
@@ -143,18 +150,27 @@ function SendMessage({ sessionId }) {
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!parsedContacts.length) {
+      return alert("No valid contacts found");
+    }
 
     try {
-      const res = await dispatch(bulkUploadPDFSlice(file)).unwrap();
+      setLoading(true);
+
+      const res = await dispatch(
+        bulkUploadContactsSlice(parsedContacts),
+      ).unwrap();
 
       alert(`Created: ${res.created}, Failed: ${res.failed}`);
 
+      setParsedContacts([]);
       setFile(null);
       handleCancle();
     } catch (err) {
       console.error(err);
       alert("Upload failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -211,59 +227,17 @@ function SendMessage({ sessionId }) {
 
           <div className="p-6 flex flex-col gap-4">
             {multipleContentAdd && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                <div className="bg-(--text-inverse) p-6 rounded-xl w-[90%] max-w-lg shadow-xl">
-                  {/* HEADER */}
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-semibold">
-                      Upload Employees (PDF)
-                    </h2>
-                  </div>
-
-                  {/* DROP AREA */}
-                  <div
-                    className="border-2 border-dashed border-(--border) rounded-lg p-6 text-center cursor-pointer hover:bg-(--bg-secondary) transition"
-                    onClick={() => document.getElementById("pdfInput").click()}
-                  >
-                    <p className="text-(--text-secondary)">
-                      {file ? "File selected" : "Click or Drag & Drop PDF here"}
-                    </p>
-
-                    <input
-                      id="pdfInput"
-                      type="file"
-                      accept="application/pdf"
-                      multiple={false}
-                      className="hidden"
-                      onChange={(e) => handleFileSelect(e.target.files[0])}
-                    />
-                  </div>
-
-                  {file && (
-                    <div className="mt-3 p-3 border rounded bg-(--bg-secondary)">
-                      <p className="text-sm font-medium">{file.name}</p>
-                      <p className="text-xs text-(--text-secondary)">
-                        {(file.size / 1024).toFixed(2)} KB
-                      </p>
-                    </div>
-                  )}
-
-                  {/* ACTION BUTTONS */}
-                  <div className="flex justify-end gap-3 mt-6">
-                    <Button variant="outline" onClick={handleCancle}>
-                      Cancel
-                    </Button>
-
-                    <Button
-                      onClick={handleUpload}
-                      disabled={!file || loading}
-                      className="px-4 py-2 rounded bg-(--btn-primary-bg) text-white disabled:opacity-50"
-                    >
-                      {loading ? "Uploading..." : "Upload"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <FileUploadModal
+                isOpen={multipleContentAdd}
+                file={file}
+                setFile={setFile}
+                loading={loading}
+                onUpload={handleUpload}
+                onCancel={handleCancle}
+                accept="application/pdf"
+                title="Upload Employees (PDF)"
+                setParsedContacts={setParsedContacts}
+              />
             )}
             {openBox ? (
               addContact ? (

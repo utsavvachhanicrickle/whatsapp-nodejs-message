@@ -130,3 +130,65 @@ export const updateContectController = async (req, res) => {
     });
   }
 };
+
+export const addMultipleContectController = async (req, res) => {
+  try {
+    const { contacts } = req.body.contacts;
+    const userId = req.user?.id || req.userId;
+console.log(contacts);
+
+    if (!contacts || !Array.isArray(contacts)) {
+      return res.status(400).json({
+        success: false,
+        message: "Contacts array is required",
+      });
+    }
+
+    // ✅ Validate format
+    const validContacts = contacts.filter(
+      (c) =>
+        c.name &&
+        c.phoneNumber &&
+        /^\d{10}$/.test(c.phoneNumber)
+    );
+
+    if (validContacts.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid contacts found",
+      });
+    }
+
+    // ✅ Remove duplicates (DB)
+    const existing = await Contact.find({
+      phoneNumber: { $in: validContacts.map((c) => c.phoneNumber) },
+      userId,
+    }).select("phoneNumber");
+
+    const existingSet = new Set(existing.map((e) => e.phoneNumber));
+
+    const newContacts = validContacts.filter(
+      (c) => !existingSet.has(c.phoneNumber)
+    );
+
+    const inserted = await Contact.insertMany(
+      newContacts.map((c) => ({ ...c, userId })),
+      { ordered: false }
+    );
+
+    return res.status(200).json({
+      success: true,
+      created: inserted.length,
+      duplicates: validContacts.length - newContacts.length,
+      failed: contacts.length - validContacts.length,
+      createdContacts: inserted,
+    });
+  } catch (error) {
+    console.error("Bulk upload error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Bulk upload failed",
+    });
+  }
+};
