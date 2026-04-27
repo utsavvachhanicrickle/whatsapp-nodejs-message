@@ -41,7 +41,7 @@ export const messageTempleteFormData = {
     },
     {
       type: "textarea",
-      row: 4,
+      row: 10,
       name: "message",
       placeholder: "Enter Your Messsage",
       value: editId !== null ? data.message : "",
