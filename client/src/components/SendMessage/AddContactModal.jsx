@@ -14,7 +14,7 @@ function AddContactModal({ onClose }) {
   };
 
   const handleClose = () => {
-    reset();     // ✅ revoke changes
+    reset();     
     onClose();
   };
 

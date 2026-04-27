@@ -13,6 +13,7 @@ import {
   updateContactSlice,
   deleteContactSlice,
   bulkUploadContactsSlice,
+  bulkDeleteContactsSlice
 } from "../../store/slices/contactSlices";
 import {
   fetchDefaultMessage,
@@ -66,7 +67,7 @@ function SendMessage({ sessionId }) {
 
 *Automated Message*
 
-This message was sent automatically by *SCET*.  
+This message was sent automatically.  
 Please do not reply to this message.
 
 Thank you for your cooperation.`;
@@ -146,6 +147,11 @@ Thank you for your cooperation.`;
     dispatch(deleteContactSlice(id));
   };
 
+  const onBulkDelete = (multipleContents) => {
+    dispatch(bulkDeleteContactsSlice(multipleContents))
+    setMultipleNumber([])
+  }
+
   const handleMessageTempleteSubmit = (formData) => {
     console.log(formData);
 
@@ -217,6 +223,7 @@ Thank you for your cooperation.`;
           setContactDetails(item);
         }}
         onDelete={handleDeleteContect}
+        onBulkDelete={onBulkDelete}
       />
 
       <div className="flex-1 flex justify-center">
@@ -383,7 +390,7 @@ Thank you for your cooperation.`;
                               <div
                                 key={c._id}
                                 className="px-3 py-1 min-h-8 max-h-12 rounded-full bg-(--btn-primary-bg) text-white text-sm flex items-center gap-2"
-                              > 
+                              >
                                 {c.name}
                                 <span
                                   className="cursor-pointer"

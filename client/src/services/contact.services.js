@@ -40,12 +40,24 @@ export const contactServices = {
   },
   bulkUploadContacts: async (contacts) => {
     try {
-
       const res = await API.post("/api/contact/bulk-upload", {
         contacts,
       });
       console.log("SENDING CONTACTS:", res);
       return res.data;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  },
+  bulkDeleteContacts: async (contacts) => {
+    try {
+      
+      const res = await API.post("/api/contact/bulk-delete", {
+        contacts,
+      });
+      console.log(res);
+      return res.data.deletedId;
     } catch (error) {
       console.log(error);
       throw error;

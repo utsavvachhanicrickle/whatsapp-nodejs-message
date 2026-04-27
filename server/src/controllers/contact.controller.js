@@ -135,7 +135,7 @@ export const addMultipleContectController = async (req, res) => {
   try {
     const { contacts } = req.body.contacts;
     const userId = req.user?.id || req.userId;
-console.log(contacts);
+    // console.log(contacts);
 
     if (!contacts || !Array.isArray(contacts)) {
       return res.status(400).json({
@@ -146,10 +146,7 @@ console.log(contacts);
 
     // ✅ Validate format
     const validContacts = contacts.filter(
-      (c) =>
-        c.name &&
-        c.phoneNumber &&
-        /^\d{10}$/.test(c.phoneNumber)
+      (c) => c.name && c.phoneNumber && /^\d{10}$/.test(c.phoneNumber),
     );
 
     if (validContacts.length === 0) {
@@ -168,12 +165,12 @@ console.log(contacts);
     const existingSet = new Set(existing.map((e) => e.phoneNumber));
 
     const newContacts = validContacts.filter(
-      (c) => !existingSet.has(c.phoneNumber)
+      (c) => !existingSet.has(c.phoneNumber),
     );
 
     const inserted = await Contact.insertMany(
       newContacts.map((c) => ({ ...c, userId })),
-      { ordered: false }
+      { ordered: false },
     );
 
     return res.status(200).json({
@@ -189,6 +186,42 @@ console.log(contacts);
     return res.status(500).json({
       success: false,
       message: "Bulk upload failed",
+    });
+  }
+};
+
+export const deleteMultipleContactController = async (req, res) => {
+  try {
+    const { contacts } = req.body.contacts;
+    console.log("delete Contact Called");
+
+    const userId = req.user?.id || req.userId;
+
+    if (!contacts || !Array.isArray(contacts)) {
+      return res.status(400).json({
+        success: false,
+        message: "Contacts array is required",
+      });
+    }
+
+    const ids = contacts.map((c) => c._id);
+
+    const result = await Contact.deleteMany({
+      _id: { $in: ids },
+      userId: userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Contacts deleted successfully",
+      deletedId: ids,
+    });
+  } catch (error) {
+    console.error("Bulk delete error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Bulk delete failed",
     });
   }
 };

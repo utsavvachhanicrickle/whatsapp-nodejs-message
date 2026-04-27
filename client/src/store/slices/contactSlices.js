@@ -60,6 +60,19 @@ export const bulkUploadContactsSlice = createAsyncThunk(
     }
   },
 );
+
+export const bulkDeleteContactsSlice = createAsyncThunk(
+  "contact/bulkDeleteCntacts",
+  async (contacts, thunkAPI) => {
+    try {
+      const res = await contactServices.bulkDeleteContacts({ contacts });
+      return res;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Bulk Delete failed");
+    }
+  },
+);
+
 const contactSlice = createSlice({
   name: "contact",
   initialState: {
@@ -110,6 +123,15 @@ const contactSlice = createSlice({
       .addCase(bulkUploadContactsSlice.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      .addCase(bulkDeleteContactsSlice.fulfilled, (state, action) => {
+        state.loading = false;        
+        const deletedIds = action.payload.map((c) => c);
+
+        state.contacts = state.contacts.filter(
+          (c) => !deletedIds.includes(c._id),
+        );
       });
   },
 });
