@@ -1,11 +1,16 @@
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Button from "../Button";
+import EventNoteIcon from "@mui/icons-material/EventNote";
 
 function DefaultMessageSidebar({ onSelect, onEdit, onDelete, defaulMessages }) {
   return (
     <div className="w-72 min-h-screen max-h-screen p-4 bg-(--sidebar) border-r border-(--border) overflow-y-auto">
-      <h3 className="mb-3 font-semibold text-(--text-primary)">Templates</h3>
+      <h3 className="mb-3 font-semibold text-(--text-primary) flex justify-center gap-1.5">
+        <EventNoteIcon />
+        {" "}
+        Templates
+      </h3>
 
       {defaulMessages.length === 0 && (
         <p className="text-sm text-(--text-secondary)">No templates found</p>

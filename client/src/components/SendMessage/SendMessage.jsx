@@ -35,6 +35,10 @@ import AddIcCallIcon from "@mui/icons-material/AddIcCall";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import SendIcon from "@mui/icons-material/Send";
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import PersonIcon from "@mui/icons-material/Person";
+import PeopleIcon from "@mui/icons-material/People";
+import GroupsIcon from "@mui/icons-material/Groups";
 
 function SendMessage({ sessionId }) {
   const [number, setNumber] = useState("");
@@ -265,8 +269,13 @@ Thank you for your cooperation.`;
       <div className="flex-1 flex justify-center">
         <div className="w-full max-w-3xl flex flex-col">
           <div className="flex flex-col gap-4 p-4 border-b border-(--border) bg-(--card)">
-            <div className="items-center text-center ">
-              <h2 className="text-xl font-semibold">Send Message</h2>
+            <div className="flex justify-center">
+              <div className="flex items-center gap-3 px-6 py-3 rounded-2xl shadow-md cursor-pointer">
+                <WhatsAppIcon className=" text-3xl" />
+                <h2 className="text-xl md:text-2xl font-semibold ">
+                  Send Message
+                </h2>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3 justify-center">
@@ -345,13 +354,13 @@ Thank you for your cooperation.`;
                         setIsMultiple(false);
                         setIsGroup(false);
                       }}
-                      className={`px-4 py-2 rounded-lg ${
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
                         !isMultiple && !isGroup
                           ? "bg-(--btn-primary-bg) text-white"
                           : "bg-(--bg-secondary)"
                       }`}
                     >
-                      Single
+                      <PersonIcon /> Single
                     </button>
 
                     <button
@@ -359,12 +368,13 @@ Thank you for your cooperation.`;
                         setIsMultiple(true);
                         setIsGroup(false);
                       }}
-                      className={`px-4 py-2 rounded-lg ${
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
                         isMultiple
                           ? "bg-(--btn-primary-bg) text-white"
                           : "bg-(--bg-secondary)"
                       }`}
                     >
+                      <PeopleIcon />
                       Multiple
                     </button>
 
@@ -373,12 +383,13 @@ Thank you for your cooperation.`;
                         setIsMultiple(false);
                         setIsGroup(true);
                       }}
-                      className={`px-4 py-2 rounded-lg ${
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl  ${
                         isGroup
                           ? "bg-(--btn-primary-bg) text-white"
                           : "bg-(--bg-secondary)"
                       }`}
                     >
+                      <GroupsIcon />
                       Group
                     </button>
                   </div>

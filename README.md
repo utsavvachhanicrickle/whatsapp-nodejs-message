@@ -94,17 +94,10 @@ Create reusable message templates.
 
 ## 👥 WhatsApp Group Messaging (NEW 🔥)
 
-### 🟢 Fetch Groups
-
-Automatically fetch all WhatsApp groups linked to the session.
-![Fetch Groups](./utils/version-04/groupsList.png)
-
----
-
 ### 🟢 Send Message to Group
 
 Send messages directly to selected WhatsApp groups.
-![Group Message](./utils/version-04/groupMessage.png)
+![Group Message](./utils/version-04/groupMessageSending.png)
 
 ---
 
@@ -158,16 +151,6 @@ Tracks progress of messages sent to multiple users:
 
 ![Bulk Status](./utils/version-04/mutltipleMessage.png)
 
----
-### 🟢 Bulk Group Status 🔥
-
-Tracks progress of messages sent to multiple  groups:
-
-* 📤 Sending Progress
-* ✅ Success Count
-* ❌ Failed Messages
-
-![Bulk Status](./utils/version-04/groupMessageSending.png)
 
 ---
 # ⚙️ Key Features
