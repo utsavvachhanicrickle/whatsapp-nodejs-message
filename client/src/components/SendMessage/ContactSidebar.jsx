@@ -15,11 +15,9 @@ function ContactSidebar({
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
 
-  // ✅ Check if selected
   const isSelected = (contact) =>
     multipleNumber.some((c) => c._id === contact._id);
 
-  // ✅ Toggle checkbox selection
   const handleCheckboxChange = (contact) => {
     if (isSelected(contact)) {
       setMultipleNumber((prev) => prev.filter((c) => c._id !== contact._id));

@@ -13,7 +13,7 @@ import {
   updateContactSlice,
   deleteContactSlice,
   bulkUploadContactsSlice,
-  bulkDeleteContactsSlice
+  bulkDeleteContactsSlice,
 } from "../../store/slices/contactSlices";
 import {
   fetchDefaultMessage,
@@ -21,6 +21,8 @@ import {
   updateDefaultMessage,
   deleteDefaultMessage,
 } from "../../store/slices/defaultMessagesSlices";
+import { fetchGroups } from "../../store/slices/groupSlices.js";
+import WhatsappGroupMessageSidebar from "./WhatsappGroupMessageSidebar.jsx";
 
 import toast from "../../utils/Toast";
 
@@ -40,6 +42,9 @@ function SendMessage({ sessionId }) {
   const [multipleNumber, setMultipleNumber] = useState([]);
   const [message, setMessage] = useState("");
   const [messageSending, setMessageSEnding] = useState(false);
+
+  const [isGroup, setIsGroup] = useState(false);
+  const [multipleGroup, setMultipleGroup] = useState([]);
 
   const [openBox, setOpenBox] = useState(false);
   const [addContact, setAddContact] = useState(true);
@@ -61,6 +66,8 @@ function SendMessage({ sessionId }) {
   const defaulMessages = useSelector(
     (state) => state.defaultMessages.defaultMessages,
   );
+  const groups = useSelector((state) => state.groups.groups);
+
   const footerMessage = `
 
 ------------------------------
@@ -101,10 +108,31 @@ Thank you for your cooperation.`;
     setMessageSEnding(false);
   };
 
+  const sendMultipleGroupMessages = async () => {
+    if (multipleGroup.length === 0 || !message) {
+      return toast.error("fill all fields");
+    }
+    setMessageSEnding(true);
+    await messageServices.SendMultipleGroupMessagesServices(
+      sessionId,
+      multipleGroup,
+      `${message} ${footerMessage}`,
+    );
+    setMessage(null);
+    setMultipleGroup([]);
+    setMessage("")
+    setMessageSEnding(false);
+  };
+
   useEffect(() => {
     dispatch(fetchContactSlice());
     dispatch(fetchDefaultMessage());
   }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchGroups(sessionId));
+    console.log(groups);
+  }, [dispatch, sessionId]);
 
   const handleAddedContect = () => {
     setOpenBox(true);
@@ -148,9 +176,9 @@ Thank you for your cooperation.`;
   };
 
   const onBulkDelete = (multipleContents) => {
-    dispatch(bulkDeleteContactsSlice(multipleContents))
-    setMultipleNumber([])
-  }
+    dispatch(bulkDeleteContactsSlice(multipleContents));
+    setMultipleNumber([]);
+  };
 
   const handleMessageTempleteSubmit = (formData) => {
     console.log(formData);
@@ -208,23 +236,31 @@ Thank you for your cooperation.`;
 
   return (
     <div className="flex h-full">
-      <ContactSidebar
-        contacts={contacts}
-        multipleNumber={multipleNumber}
-        setMultipleNumber={setMultipleNumber}
-        onSelect={(c) => {
-          setName(c.name);
-          setNumber(c.phoneNumber);
-        }}
-        onEdit={(index, item) => {
-          setOpenBox(true);
-          setAddContact(true);
-          setEditContactId(item._id);
-          setContactDetails(item);
-        }}
-        onDelete={handleDeleteContect}
-        onBulkDelete={onBulkDelete}
-      />
+      {!isGroup ? (
+        <ContactSidebar
+          contacts={contacts}
+          multipleNumber={multipleNumber}
+          setMultipleNumber={setMultipleNumber}
+          onSelect={(c) => {
+            setName(c.name);
+            setNumber(c.phoneNumber);
+          }}
+          onEdit={(index, item) => {
+            setOpenBox(true);
+            setAddContact(true);
+            setEditContactId(item._id);
+            setContactDetails(item);
+          }}
+          onDelete={handleDeleteContect}
+          onBulkDelete={onBulkDelete}
+        />
+      ) : (
+        <WhatsappGroupMessageSidebar
+          groups={groups}
+          multipleGroup={multipleGroup}
+          setMultipleGroup={setMultipleGroup}
+        />
+      )}
 
       <div className="flex-1 flex justify-center">
         <div className="w-full max-w-3xl flex flex-col">
@@ -305,9 +341,12 @@ Thank you for your cooperation.`;
                   {/* TOGGLE MODE */}
                   <div className="flex gap-3">
                     <button
-                      onClick={() => setIsMultiple(false)}
+                      onClick={() => {
+                        setIsMultiple(false);
+                        setIsGroup(false);
+                      }}
                       className={`px-4 py-2 rounded-lg ${
-                        !isMultiple
+                        !isMultiple && !isGroup
                           ? "bg-(--btn-primary-bg) text-white"
                           : "bg-(--bg-secondary)"
                       }`}
@@ -316,7 +355,10 @@ Thank you for your cooperation.`;
                     </button>
 
                     <button
-                      onClick={() => setIsMultiple(true)}
+                      onClick={() => {
+                        setIsMultiple(true);
+                        setIsGroup(false);
+                      }}
                       className={`px-4 py-2 rounded-lg ${
                         isMultiple
                           ? "bg-(--btn-primary-bg) text-white"
@@ -325,10 +367,24 @@ Thank you for your cooperation.`;
                     >
                       Multiple
                     </button>
+
+                    <button
+                      onClick={() => {
+                        setIsMultiple(false);
+                        setIsGroup(true);
+                      }}
+                      className={`px-4 py-2 rounded-lg ${
+                        isGroup
+                          ? "bg-(--btn-primary-bg) text-white"
+                          : "bg-(--bg-secondary)"
+                      }`}
+                    >
+                      Group
+                    </button>
                   </div>
 
                   {/* ================= SINGLE ================= */}
-                  {!isMultiple && (
+                  {(!isMultiple && !isGroup) && (
                     <div className="bg-(--card) p-5 rounded-xl border border-(--border) flex flex-col gap-4 shadow-sm">
                       <h2 className="text-lg font-semibold">
                         Send to Single Contact
@@ -425,6 +481,65 @@ Thank you for your cooperation.`;
                           <>
                             <SendIcon />
                             Send to {multipleNumber.length} Contacts
+                          </>
+                        ) : (
+                          <div className="h-6 w-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {isGroup && (
+                    <div className="bg-(--card) p-5 rounded-xl border border-(--border) flex flex-col gap-4 shadow-sm">
+                      <h2 className="text-lg font-semibold">
+                        Send to Multiple Groups
+                      </h2>
+
+                      <div className="border rounded-lg p-3 bg-(--bg-secondary)">
+                        {multipleGroup.length === 0 ? (
+                          <p className="text-sm text-(--text-secondary)">
+                            No Groups selected
+                          </p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2 min-h-45 max-h-45 overflow-auto">
+                            {multipleGroup.map((c) => (
+                              <div
+                                key={c._id}
+                                className="px-3 py-1 min-h-8 max-h-12 rounded-full bg-(--btn-primary-bg) text-white text-sm flex items-center gap-2"
+                              >
+                                {c.name}
+                                <span
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    setMultipleGroup((prev) =>
+                                      prev.filter((p) => p._id !== c._id),
+                                    )
+                                  }
+                                >
+                                  ✕
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <textarea
+                        placeholder="Message"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        className="p-3 border rounded bg-(--bg-primary) min-h-30"
+                      />
+
+                      <button
+                        onClick={sendMultipleGroupMessages}
+                        disabled={multipleGroup.length === 0}
+                        className="py-3 bg-(--btn-primary-bg) text-white rounded-lg flex items-center justify-center gap-3 disabled:opacity-50"
+                      >
+                        {!messageSending ? (
+                          <>
+                            <SendIcon />
+                            Send to {multipleGroup.length} Group
                           </>
                         ) : (
                           <div className="h-6 w-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
