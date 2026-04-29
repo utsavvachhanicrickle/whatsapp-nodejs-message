@@ -39,7 +39,10 @@ server/.wwebjs_auth/
 # Node modules
 node_modules/
 **/node_modules/
-
 # Env files
 .env
 .env.*
+**/.env
+
+# Allow example env file
+!.env.example
