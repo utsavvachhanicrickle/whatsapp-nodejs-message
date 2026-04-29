@@ -104,6 +104,7 @@ Thank you for your cooperation.`;
       `${message} ${footerMessage}`,
     );
     setMessage(null);
+    setMessage("");
     setMultipleNumber([]);
     setMessageSEnding(false);
   };
@@ -120,7 +121,7 @@ Thank you for your cooperation.`;
     );
     setMessage(null);
     setMultipleGroup([]);
-    setMessage("")
+    setMessage("");
     setMessageSEnding(false);
   };
 
@@ -131,7 +132,6 @@ Thank you for your cooperation.`;
 
   useEffect(() => {
     dispatch(fetchGroups(sessionId));
-    console.log(groups);
   }, [dispatch, sessionId]);
 
   const handleAddedContect = () => {
@@ -384,7 +384,7 @@ Thank you for your cooperation.`;
                   </div>
 
                   {/* ================= SINGLE ================= */}
-                  {(!isMultiple && !isGroup) && (
+                  {!isMultiple && !isGroup && (
                     <div className="bg-(--card) p-5 rounded-xl border border-(--border) flex flex-col gap-4 shadow-sm">
                       <h2 className="text-lg font-semibold">
                         Send to Single Contact

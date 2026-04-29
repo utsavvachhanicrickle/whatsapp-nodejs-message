@@ -46,7 +46,7 @@ function DefaultMessageSidebar({ onSelect, onEdit, onDelete, defaulMessages }) {
 
             <Button
               variant="ghost"
-              onClick={() => onDelete(i)}
+              onClick={() => onDelete(m._id)}
               className="p-1 hover:bg-red-500/20"
             >
               <DeleteIcon fontSize="small" className="text-red-500" />

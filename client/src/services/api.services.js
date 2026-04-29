@@ -1,4 +1,7 @@
 import axios from "axios";
+import { store } from "../store/store";
+import { logout } from "../store/slices/authSlices";
+import toast from "../utils/Toast";
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_SERVER_URL,
@@ -25,9 +28,8 @@ API.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/api/user/refresh") 
+      !originalRequest.url.includes("/api/user/refresh")
     ) {
-      
       originalRequest._retry = true;
 
       // If refresh already running → queue requests
@@ -49,13 +51,12 @@ API.interceptors.response.use(
 
           processQueue(); // resolve queued requests
 
-          resolve(API(originalRequest)); // retry original request
+          resolve(API(originalRequest));
         } catch (err) {
           processQueue(err);
-
-          // ❗ Optional: clear app state / redirect if needed
-          // localStorage.removeItem("profile");
-
+          toast.success("Logout SuccessFull !!!");
+          localStorage.removeItem("profile");
+          store.dispatch(logout());
           reject(err);
         } finally {
           isRefreshing = false;
