@@ -25,7 +25,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<SocketContextProvider />}>
                 <Route path={HOME} element={<HomePage />} />
-                <Route path="/message" element={<SendMessage />} />
+                {/* <Route path="/message" element={<SendMessage />} /> */}
               </Route>
             </Route>
           </Routes>

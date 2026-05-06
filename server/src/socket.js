@@ -36,7 +36,7 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
   client = new Client({
     authStrategy: new LocalAuth({ clientId: sessionId }),
     puppeteer: {
-      headless: true,
+      headless: false,
       protocolTimeout: 120000,
       args: ["--no-sandbox"],
     },
