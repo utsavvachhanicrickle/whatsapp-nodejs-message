@@ -39,7 +39,7 @@ export const messageServices = {
         multipleGroup,
         message,
       });
-      toast.success(response.data.message || "Messages sent successfully!");
+      toast.success( "Messages sent successfully!");
     } catch (error) {
       toast.error(error);
       console.error(error);

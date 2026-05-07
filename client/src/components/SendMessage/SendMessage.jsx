@@ -89,13 +89,14 @@ Thank you for your cooperation.`;
     await messageServices.SendMessageServices(
       sessionId,
       number,
-      `${message} ${footerMessage}`,
+      // `${message} ${footerMessage}`,
+      `${message}`,
     );
 
     setMessageSEnding(false);
     setMessage("");
-    setNumber("");
-    setName("");
+    // setNumber("");
+    // setName("");
   };
 
   const sendMultipleMessages = async () => {
@@ -121,7 +122,8 @@ Thank you for your cooperation.`;
     await messageServices.SendMultipleGroupMessagesServices(
       sessionId,
       multipleGroup,
-      `${message} ${footerMessage}`,
+      // `${message} ${footerMessage}`,
+      `${message}`,
     );
     setMessage(null);
     setMultipleGroup([]);
