@@ -1,12 +1,24 @@
-import mongoose from 'mongoose';
+import pkg from 'pg';
+const { Pool } = pkg;
+import dotenv from 'dotenv';
+dotenv.config();
 
-const coonectionDB = async()=>{
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
+export const connectionDB = async () => {
     try {
-        const response = await mongoose.connect(process.env.MONGO_URI);
-        console.log("Mongodb connected");
+        const res = await pool.query('SELECT NOW()');
+        console.log("PostgreSQL connected successfully at", res.rows[0].now);
     } catch (error) {
-        console.log("mongodb is not connecting",error)
+        console.error("PostgreSQL is not connecting", error);
     }
-}
+};
 
-export default coonectionDB;
+export default pool;

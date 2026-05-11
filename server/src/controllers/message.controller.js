@@ -1,39 +1,39 @@
 import { clients } from "../socket.js";
 import { MESSAGES } from "../utils/Messages.js";
+import AppError from "../utils/AppError.js";
 
-export const messageSendController = async (req, res) => {
-  const { sessionId, number, message } = req.body;
-
-  const client = clients[sessionId];
-
-  if (!client) {
-    return res.status(400).json({ error: MESSAGES.CLIENT_NOT_FOUND });
-  }
-
-  const formatted = number.includes("@c.us") ? number : `91${number}@c.us`;
-
+export const messageSendController = async (req, res, next) => {
   try {
+    const { sessionId, number, message } = req.body;
+
+    const client = clients[sessionId];
+
+    if (!client) {
+      return next(new AppError(MESSAGES.CLIENT_NOT_FOUND, 400));
+    }
+
+    const formatted = number.includes("@c.us") ? number : `91${number}@c.us`;
+
     await client.sendMessage(formatted, message);
     res.json({ success: true });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: MESSAGES.WHATSAPP_MESSAGE_ERROR });
+    console.error(err);
+    return next(new AppError(MESSAGES.WHATSAPP_MESSAGE_ERROR, 500));
   }
 };
 
-
-export const multipleMessageSendController = async (req, res) => {
+export const multipleMessageSendController = async (req, res, next) => {
   try {
     const { sessionId, multipleNumber, message } = req.body;
 
     if (!multipleNumber || !Array.isArray(multipleNumber)) {
-      return res.status(400).json({ error: "multipleNumber not present" });
+      return next(new AppError("multipleNumber not present", 400));
     }
 
     const client = clients[sessionId];
 
     if (!client) {
-      return res.status(400).json({ error: MESSAGES.CLIENT_NOT_FOUND });
+      return next(new AppError(MESSAGES.CLIENT_NOT_FOUND, 400));
     }
 
     let success = 0;
@@ -61,9 +61,6 @@ export const multipleMessageSendController = async (req, res) => {
 
   } catch (error) {
     console.error("Bulk message error:", error);
-
-    return res.status(500).json({
-      error: MESSAGES.WHATSAPP_MESSAGE_ERROR,
-    });
+    return next(new AppError(MESSAGES.WHATSAPP_MESSAGE_ERROR, 500));
   }
 };

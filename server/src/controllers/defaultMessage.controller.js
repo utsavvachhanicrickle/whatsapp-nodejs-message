@@ -1,18 +1,22 @@
-import DefaultMessage from "../modules/defaultMessage.module.js";
+import {
+  createDefaultMessage,
+  getDefaultMessagesByUserId,
+  deleteDefaultMessageByIdAndUserId,
+  updateDefaultMessageByIdAndUserId
+} from "../services/defaultMessage.service.js";
 import { MESSAGES } from "../utils/Messages.js";
+import AppError from "../utils/AppError.js";
 
-export const addDefaultMessageController = async (req, res) => {
+export const addDefaultMessageController = async (req, res, next) => {
   try {
     const { title, message } = req.body;
-    const userId = req.userId;
+    const userId = req.userId || req.user?.id;
 
-    const defaultMessage = new DefaultMessage({
-      title,
-      message,
-      userId,
-    });
+    if (!title || !message) {
+      return next(new AppError(MESSAGES.MISSING_FIELDS, 400));
+    }
 
-    await defaultMessage.save();
+    const defaultMessage = await createDefaultMessage(title, message, userId);
 
     res.status(201).json({
       success: true,
@@ -21,20 +25,15 @@ export const addDefaultMessageController = async (req, res) => {
     });
   } catch (error) {
     console.error("Error adding default message:", error);
-    res.status(500).json({
-      success: false,
-      message: MESSAGES.ADDDEFAULTMESSAGEERROR,
-      error: error.message,
-    });
+    return next(new AppError(MESSAGES.ADDDEFAULTMESSAGEERROR, 500));
   }
 };
 
-export const getDefaultMessagesController = async (req, res) => {
+export const getDefaultMessagesController = async (req, res, next) => {
   try {
-    const userId = req.userId;
-    const defaultMessages = await DefaultMessage.find({ userId }).sort({
-      createdAt: -1,
-    });
+    const userId = req.userId || req.user?.id;
+    const defaultMessages = await getDefaultMessagesByUserId(userId);
+    
     res.status(200).json({
       success: true,
       message: MESSAGES.GETDEFAULTMESSAGESUCCESS,
@@ -42,28 +41,21 @@ export const getDefaultMessagesController = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching default messages:", error);
-    res.status(500).json({
-      success: false,
-      message: MESSAGES.GETDEFAULTMESSAGEERROR,
-      error: error.message,
-    });
+    return next(new AppError(MESSAGES.GETDEFAULTMESSAGEERROR, 500));
   }
 };
 
-export const deleteDefaultMessageController = async (req, res) => {
+export const deleteDefaultMessageController = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.userId;
-    const defaultMessage = await DefaultMessage.findOneAndDelete({
-      _id: id,
-      userId,
-    });
+    const userId = req.userId || req.user?.id;
+    
+    const defaultMessage = await deleteDefaultMessageByIdAndUserId(id, userId);
+    
     if (!defaultMessage) {
-      return res.status(404).json({
-        success: false,
-        message: MESSAGES.DEFAULTMESSAGENOTFOUND,
-      });
+      return next(new AppError(MESSAGES.DEFAULTMESSAGENOTFOUND, 404));
     }
+    
     res.status(200).json({
       success: true,
       message: MESSAGES.DELETEDEFAULTMESSAGESUCCESS,
@@ -71,31 +63,22 @@ export const deleteDefaultMessageController = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting default message:", error);
-    res.status(500).json({
-      success: false,
-      message: MESSAGES.DELETEDEFAULTMESSAGEERROR,
-      error: error.message,
-    });
+    return next(new AppError(MESSAGES.DELETEDEFAULTMESSAGEERROR, 500));
   }
 };
 
-export const updateDefaultMessageController = async (req, res) => {
+export const updateDefaultMessageController = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { title, message } = req.body;
-    const userId = req.userId;
-    const defaultMessage = await DefaultMessage.findOneAndUpdate(
-      { _id: id, userId },
-      { title },
-      { message },
-      { new: true },
-    );
+    const userId = req.userId || req.user?.id;
+    
+    const defaultMessage = await updateDefaultMessageByIdAndUserId(id, userId, title, message);
+    
     if (!defaultMessage) {
-      return res.status(404).json({
-        success: false,
-        message: MESSAGES.DEFAULTMESSAGENOTFOUND,
-      });
+      return next(new AppError(MESSAGES.DEFAULTMESSAGENOTFOUND, 404));
     }
+    
     res.status(200).json({
       success: true,
       message: MESSAGES.UPDATEDEFAULTMESSAGESUCCESS,
@@ -103,10 +86,6 @@ export const updateDefaultMessageController = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating default message:", error);
-    res.status(500).json({
-      success: false,
-      message: MESSAGES.UPDATEDEFAULTMESSAGEERROR,
-      error: error.message,
-    });
+    return next(new AppError(MESSAGES.UPDATEDEFAULTMESSAGEERROR, 500));
   }
 };

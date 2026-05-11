@@ -1,5 +1,6 @@
-import User from "../modules/user.module.js";
+import { createUser, getUserByEmail, getUserById, updateUserRefreshToken } from "../services/user.service.js";
 import { MESSAGES } from "../utils/Messages.js";
+import AppError from "../utils/AppError.js";
 import {
   createPassword,
   comparePassword,
@@ -10,137 +11,60 @@ import {
   clearAuthCookies,
   verifyRefreshToken,
 } from "../utils/schema/index.js";
-import { startWhatsAppSession } from "../socket.js";
-import { clients } from "../socket.js";
+import { startWhatsAppSession, clients } from "../socket.js";
 import fs from "fs";
 import path from "path";
 
-export const addUser = async (req, res) => {
+export const addUser = async (req, res, next) => {
   try {
     const io = req.app.get("io");
-
     const { name, phone, socketId } = req.body;
 
     if (!name || !phone || !socketId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields",
-      });
+      return next(new AppError("Missing required fields", 400));
     }
 
     const sessionId = phone;
-
     await startWhatsAppSession({ sessionId, socketId, io });
 
     return res.json({
       success: true,
       message: "Session started",
-      user: {
-        name,
-        phone,
-      },
+      user: { name, phone },
     });
   } catch (error) {
     console.log("addUser error:", error.message);
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong",
-    });
+    return next(new AppError("Something went wrong", 500));
   }
 };
 
-// export const removeUser = async (req, res) => {
-//   const io = req.app.get("io");
-//   const { phone, socketId } = req.body;
-
-//   const sessionId = phone;
-
-//   if (!sessionId) {
-//     return res.status(400).json({
-//       success: false,
-//       message: "Session ID required",
-//     });
-//   }
-
-//   const client = clients[sessionId];
-
-//   try {
-//     if (client) {
-//       console.log("🗑 Removing session:", sessionId);
-
-//       try {
-//         await client.destroy();
-//         await client.pupBrowser?.close();
-//       } catch (err) {
-//         console.warn("Destroy issue:", err.message);
-//       }
-
-//       delete clients[sessionId];
-//       delete initializing[sessionId];
-//     }
-
-//     // ✅ Always notify frontend
-//     if (socketId) {
-//       io.to(socketId).emit("session-removed", { sessionId });
-//     } else {
-//       io.emit("session-removed", { sessionId });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Session removed successfully",
-//     });
-//   } catch (error) {
-//     console.error("❌ Remove error:", error);
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Error removing session",
-//       error: error.message,
-//     });
-//   }
-// };
-
-export const removeUser = async (req, res) => {
-  const io = req.app.get("io");
-  const phone = req.params.phone;
-  const socketId = req.query.socketId;
-
-  console.log("PHONE:", phone);
-  console.log("SOCKET:", socketId);
-
-  if (!phone) {
-    return res.status(400).json({ error: "Phone is required" });
-  }
-
-  const sessionId = phone;
-  const sessionPath = path.join(
-    process.cwd(),
-    `.wwebjs_auth/session-${sessionId}`,
-  );
-
+export const removeUser = async (req, res, next) => {
   try {
-    const client = clients[sessionId];
+    const io = req.app.get("io");
+    const phone = req.params.phone;
 
-    // ✅ If client exists → destroy properly
+    if (!phone) {
+      return next(new AppError("Phone is required", 400));
+    }
+
+    const sessionId = phone;
+    const sessionPath = path.join(process.cwd(), `.wwebjs_auth/session-${sessionId}`);
+
+    const client = clients[sessionId];
     if (client) {
       try {
         await client.destroy();
       } catch (err) {
         console.warn("Client destroy error:", err.message);
       }
-
       delete clients[sessionId];
     }
 
-    // ✅ FORCE CLEAN SESSION FILE (VERY IMPORTANT)
     if (fs.existsSync(sessionPath)) {
       fs.rmSync(sessionPath, { recursive: true, force: true });
       console.log("🧹 Session folder deleted:", sessionId);
     }
 
-    // ✅ EMIT EVENT
     io.emit("session-removed", { sessionId });
 
     return res.status(200).json({
@@ -149,11 +73,7 @@ export const removeUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Remove error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return next(new AppError(error.message, 500));
   }
 };
 
@@ -161,27 +81,25 @@ export const getAllUsers = async (req, res) => {
   res.json({ users: Object.keys(clients) });
 };
 
-export const signUpController = async (req, res) => {
+export const signUpController = async (req, res, next) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
+    
     if (!name || !email || !password || !confirmPassword) {
-      return res
-        .status(400)
-        .json({ success: false, message: MESSAGES.MISSING_FIELDS });
+      return next(new AppError(MESSAGES.MISSING_FIELDS, 400));
     }
 
     if (password !== confirmPassword) {
-      return res
-        .status(400)
-        .json({ success: false, message: MESSAGES.PASSWORDS_DO_NOT_MATCH });
+      return next(new AppError(MESSAGES.PASSWORDS_DO_NOT_MATCH, 400));
     }
 
-    const newUser = new User({
-      name,
-      email,
-      password: await createPassword(password),
-    });
-    await newUser.save();
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) {
+      return next(new AppError("Email already exists", 400));
+    }
+
+    const hashedPassword = await createPassword(password);
+    await createUser({ name, email, password: hashedPassword });
 
     res.status(201).json({
       success: true,
@@ -189,28 +107,20 @@ export const signUpController = async (req, res) => {
     });
   } catch (error) {
     console.error("Sign-up error:", error);
-    res.status(500).json({
-      success: false,
-      message: MESSAGES.SIGNUP_ERROR,
-      error: error.message,
-    });
+    return next(new AppError(MESSAGES.SIGNUP_ERROR, 500));
   }
 };
 
-export const loginController = async (req, res) => {
+export const loginController = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: MESSAGES.MISSING_FIELDS });
+      return next(new AppError(MESSAGES.MISSING_FIELDS, 400));
     }
 
-    const user = await User.findOne({ email });
+    const user = await getUserByEmail(email);
     if (!user || !(await comparePassword(password, user.password))) {
-      return res
-        .status(401)
-        .json({ success: false, message: MESSAGES.INVALID_CREDENTIALS });
+      return next(new AppError(MESSAGES.INVALID_CREDENTIALS, 401));
     }
 
     const accessToken = await genrateAccessToken({
@@ -223,8 +133,7 @@ export const loginController = async (req, res) => {
       id: user._id,
     });
 
-    user.refreshToken = refreshToken;
-    await user.save();
+    await updateUserRefreshToken(user._id, refreshToken);
 
     setCookies({
       type: COOKIESSCHEMA.ACCESSTOKEN,
@@ -251,59 +160,48 @@ export const loginController = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({
-      success: false,
-      message: MESSAGES.LOGIN_ERROR,
-      error: error.message,
-    });
+    return next(new AppError(MESSAGES.LOGIN_ERROR, 500));
   }
 };
 
-export const logoutController = async (req, res) => {
+export const logoutController = async (req, res, next) => {
   try {
-    const user = await User.findById(req.userId);
+    const user = await getUserById(req.userId);
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: MESSAGES.USER_NOT_FOUND });
+      return next(new AppError(MESSAGES.USER_NOT_FOUND, 404));
     }
 
-    user.refreshToken = undefined;
-    await user.save();
-
+    await updateUserRefreshToken(user._id, null);
     clearAuthCookies(res);
 
     res.status(200).json({ success: true, message: MESSAGES.LOGOUT_SUCCESS });
   } catch (error) {
     console.error("Logout error:", error);
-    res.status(500).json({
-      success: false,
-      message: MESSAGES.LOGOUT_ERROR,
-      error: error.message,
-    });
+    return next(new AppError(MESSAGES.LOGOUT_ERROR, 500));
   }
 };
 
-export const refreshTokenController = async (req, res) => {
+export const refreshTokenController = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken;
-    if (!token)
+    if (!token) {
       return res.status(401).json({ message: MESSAGES.ACCESS_DENIED });
+    }
 
     const userRefresh = await verifyRefreshToken(token);
-    if (!userRefresh)
-      return res
-        .status(403)
-        .json({ success: true, message: MESSAGES.REFRESH_TOKEN_INVALID });
+    if (!userRefresh) {
+      return next(new AppError(MESSAGES.REFRESH_TOKEN_INVALID, 403));
+    }
 
-    console.log("Refrensh Called ", userRefresh.id);
-
-    const user = await User.findById(userRefresh.id);
+    const user = await getUserById(userRefresh.id);
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
 
     const newAccessToken = await genrateAccessToken({
       email: user.email,
-      id: user.id,
+      id: user._id,
     });
 
     await setCookies({
@@ -316,10 +214,6 @@ export const refreshTokenController = async (req, res) => {
     res.status(200).json({ success: true, message: MESSAGES.REFRESH_TOKEN });
   } catch (error) {
     console.error("Refresh token error:", error);
-    res.status(500).json({
-      success: false,
-      message: MESSAGES.REFRESH_TOKEN_ERROR,
-      error: error.message,
-    });
+    return next(new AppError(MESSAGES.REFRESH_TOKEN_ERROR, 500));
   }
 };

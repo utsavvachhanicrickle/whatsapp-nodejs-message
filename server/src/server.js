@@ -3,7 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
-import coonectionDB from "../config/db.js";
+import { connectionDB } from "../config/db.js";
 import apiRoute from "./routes/index.routes.js";
 import cookieParser from "cookie-parser";
 import { startWhatsAppSession } from "./socket.js";
@@ -38,7 +38,16 @@ app.get("/", (req, res) => {
 app.set("io", io);
 app.use("/api", apiRoute);
 
-coonectionDB();
+// Global Error Handler
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
+
+connectionDB();
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);

@@ -1,22 +1,22 @@
 import { clients } from "../socket.js";
 import { MESSAGES } from "../utils/Messages.js";
+import AppError from "../utils/AppError.js";
 
-export const getGroupsController = async (req, res) => {
+export const getGroupsController = async (req, res, next) => {
   try {
     const { sessionId } = req.params;
 
     const client = clients[sessionId];
 
     if (!client) {
-      return res.status(400).json({
-        success: false,
-        message: MESSAGES.CLIENT_NOT_FOUND,
-      });
+      return next(new AppError(MESSAGES.CLIENT_NOT_FOUND, 400));
     }
 
     const chats = await client.getChats();
 
     const groups = chats
+
+    
       .filter((chat) => chat.isGroup)
       .map((g) => ({
         id: g.id._serialized,
@@ -29,40 +29,24 @@ export const getGroupsController = async (req, res) => {
     });
   } catch (error) {
     console.error("Get groups error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch groups",
-    });
+    return next(new AppError("Failed to fetch groups", 500));
   }
 };
 
-
-export const sendMultipleGroupMessageController = async (req, res) => {
+export const sendMultipleGroupMessageController = async (req, res, next) => {
   try {
-    // 1. Extract multipleGroup (the array of objects) from body
     const { sessionId, multipleGroup, message } = req.body;
 
-    // 2. Validate that it's an array and not empty
     if (!Array.isArray(multipleGroup) || multipleGroup.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Selection is empty. Please select at least one group.",
-      });
+      return next(new AppError("Selection is empty. Please select at least one group.", 400));
     }
 
     const client = clients[sessionId];
     if (!client) {
-      return res.status(400).json({
-        success: false,
-        message: "WhatsApp client not found. Please re-login.",
-      });
+      return next(new AppError("WhatsApp client not found. Please re-login.", 400));
     }
 
-    // 3. Loop through the objects and extract the 'id'
-    // Using Promise.all with map is faster than a standard for-loop for message sending
     const sendPromises = multipleGroup.map((group) => {
-      // Each group in your array looks like { id: "...", name: "..." }
       return client.sendMessage(group.id, message);
     });
 
@@ -74,9 +58,6 @@ export const sendMultipleGroupMessageController = async (req, res) => {
     });
   } catch (error) {
     console.error("Bulk Group Send Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to send bulk group messages.",
-    });
+    return next(new AppError("Failed to send bulk group messages.", 500));
   }
 };
