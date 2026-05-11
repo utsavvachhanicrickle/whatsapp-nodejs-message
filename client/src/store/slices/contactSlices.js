@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { contactServices } from "../../services/contact.services";
+import { contactModules } from "../../modules/contactModules";
 
 export const fetchContactSlice = createAsyncThunk(
   "contact/fetchContact",
   async (_, thunkAPI) => {
     try {
-      const res = await contactServices.getContact();
-      return res;
+      const res = await contactModules.getContacts();
+      return res.data.contacts;
     } catch (error) {
       return thunkAPI.rejectWithValue("Failed to fetch contacts");
     }
@@ -17,8 +17,8 @@ export const addContactSlice = createAsyncThunk(
   "contact/addContact",
   async (formData, thunkAPI) => {
     try {
-      const res = await contactServices.addContact(formData);
-      return res;
+      const res = await contactModules.addContact(formData);
+      return res.data.newContact;
     } catch (error) {
       return thunkAPI.rejectWithValue("Failed to add contact");
     }
@@ -29,8 +29,8 @@ export const updateContactSlice = createAsyncThunk(
   "contact/updateContact",
   async ({ id, formData }, thunkAPI) => {
     try {
-      const res = await contactServices.updateContact(id, formData);
-      return res;
+      const res = await contactModules.updateContact(id, formData);
+      return res.data.updatedContact;
     } catch (error) {
       return thunkAPI.rejectWithValue("Failed to update contact");
     }
@@ -41,7 +41,7 @@ export const deleteContactSlice = createAsyncThunk(
   "contact/deleteContact",
   async (id, thunkAPI) => {
     try {
-      await contactServices.deleteContact(id);
+      await contactModules.deleteContact(id);
       return id;
     } catch (error) {
       return thunkAPI.rejectWithValue("Failed to delete contact");
@@ -53,8 +53,8 @@ export const bulkUploadContactsSlice = createAsyncThunk(
   "contact/bulkUploadContacts",
   async (contacts, thunkAPI) => {
     try {
-      const res = await contactServices.bulkUploadContacts({ contacts });
-      return res;
+      const res = await contactModules.bulkUploadContacts({ contacts });
+      return res.data;
     } catch (error) {
       return thunkAPI.rejectWithValue("Bulk upload failed");
     }
@@ -65,8 +65,8 @@ export const bulkDeleteContactsSlice = createAsyncThunk(
   "contact/bulkDeleteCntacts",
   async (contacts, thunkAPI) => {
     try {
-      const res = await contactServices.bulkDeleteContacts({ contacts });
-      return res;
+      const res = await contactModules.bulkDeleteContacts({ contacts });
+      return res.data;
     } catch (error) {
       return thunkAPI.rejectWithValue("Bulk Delete failed");
     }

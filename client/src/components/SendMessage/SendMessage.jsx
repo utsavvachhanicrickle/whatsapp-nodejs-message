@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { messageServices } from "../../services/message.services";
+import { messageModules } from "../../modules/messageModules";
 import {
   contectFormData,
   messageTempleteFormData,
@@ -86,7 +86,7 @@ Thank you for your cooperation.`;
   const sendMessage = async () => {
     if (!number || !message) return toast.error("Fill all fields");
     setMessageSEnding(true);
-    await messageServices.SendMessageServices(
+    await messageModules.sendMessage(
       sessionId,
       number,
       // `${message} ${footerMessage}`,
@@ -103,7 +103,7 @@ Thank you for your cooperation.`;
     if (multipleNumber.length === 0 || !message)
       return toast.error("fill all fields");
     setMessageSEnding(true);
-    await messageServices.SendMultipleMessagesServices(
+    await messageModules.sendMultipleMessages(
       sessionId,
       multipleNumber,
       `${message} ${footerMessage}`,
@@ -119,7 +119,7 @@ Thank you for your cooperation.`;
       return toast.error("fill all fields");
     }
     setMessageSEnding(true);
-    await messageServices.SendMultipleGroupMessagesServices(
+    await messageModules.sendMultipleGroupMessages(
       sessionId,
       multipleGroup,
       // `${message} ${footerMessage}`,

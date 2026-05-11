@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { userServices } from "../../services/user.services";
 
 const initialState = {
   authData: JSON.parse(localStorage.getItem("profile")) || null,

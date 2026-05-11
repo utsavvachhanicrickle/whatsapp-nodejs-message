@@ -1,7 +1,7 @@
 import FormField from "../components/Forms/FormField";
 import { authFields } from "../utils/constants/auhFields";
 import { useNavigate } from "react-router-dom";
-import { userServices } from "../services/user.services";
+import { authModules } from "../modules/authModules";
 import { toast } from "react-toastify";
 import { LOGIN } from "../utils/app.routes";
 
@@ -14,7 +14,7 @@ function SignUpPage() {
         return toast.error("Passwords do not match");
       }
 
-      await userServices.signup(formData);
+      await authModules.signUp(formData);
 
       toast.success("Account created");
       navigate(LOGIN);

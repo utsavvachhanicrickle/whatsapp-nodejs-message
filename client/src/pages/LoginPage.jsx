@@ -2,7 +2,7 @@ import React from "react";
 import { authFields } from "../utils/constants/auhFields";
 import FormField from "../components/Forms/FormField";
 import { useNavigate } from "react-router-dom";
-import { userServices } from "../services/user.services";
+import { authModules } from "../modules/authModules";
 import { useDispatch } from "react-redux";
 import { setAuth } from "../store/slices/authSlices";
 import { toast } from "react-toastify";
@@ -14,7 +14,8 @@ function LoginPage() {
 
   const handleSubmit = async (formData) => {
     try {
-      const user = await userServices.login(formData);
+      const res = await authModules.signIn(formData);
+      const user = res.data.user;
 
       dispatch(setAuth(user)); 
       toast.success("Login successful");

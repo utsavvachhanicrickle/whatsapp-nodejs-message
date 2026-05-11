@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import { userServices } from "../services/user.services";
+import { authModules } from "../modules/authModules";
 
 export const UserContext = createContext();
 
@@ -9,8 +9,8 @@ export const UserContextProvider = () => {
 
   useEffect(() => {
     const loadUsers = async () => {
-      const data = await userServices.getUsers();
-      setUsers(data);
+      const res = await authModules.getUsers();
+      setUsers(res.data.users);
     };
     loadUsers();
   }, []);

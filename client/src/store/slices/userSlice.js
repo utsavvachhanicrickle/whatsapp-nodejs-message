@@ -1,11 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { userServices } from "../../services/user.services";
+import { authModules } from "../../modules/authModules";
 
 export const fetchUsers = createAsyncThunk(
   "user/fetchUsers",
   async (_, thunkAPI) => {
     try {
-      return await userServices.getUsers();
+      const res = await authModules.getUsers();
+      return res.data.users;
     } catch (err) {
       return thunkAPI.rejectWithValue("Failed to fetch users");
     }
@@ -16,9 +17,9 @@ export const addUser = createAsyncThunk(
   "user/addUser",
   async ({ phone, socketId, onSuccess }, thunkAPI) => {
     try {
-      const newUser = await userServices.addUser(phone, phone, socketId);
-      if (onSuccess) onSuccess(newUser);
-      return newUser;
+      const res = await authModules.addUser({ name: phone, phone, socketId });
+      if (onSuccess) onSuccess(res.data.user || phone);
+      return phone;
     } catch (err) {
       return thunkAPI.rejectWithValue("Failed to add user");
     }
@@ -31,7 +32,7 @@ export const removeUser = createAsyncThunk(
     try {
       // console.log("slice i will called ", phone);
 
-      await userServices.removeUser(phone, socketId);
+      await authModules.removeUser(phone, socketId);
 
       return phone;
     } catch (err) {

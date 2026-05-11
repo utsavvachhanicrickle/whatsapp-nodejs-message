@@ -1,12 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { groupServices } from "../../services/group.services";
+import { groupModules } from "../../modules/groupModules";
 
 export const fetchGroups = createAsyncThunk(
   "group/fetchGroups",
   async (sessionId, thunkAPI) => {
     try {
-      const res = await groupServices.getGroups(sessionId);
-      return res;
+      const res = await groupModules.getGroups(sessionId);
+      return res.data.groups;
     } catch (error) {
       return thunkAPI.rejectWithValue("Failed to fetch Groups");
     }
