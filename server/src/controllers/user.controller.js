@@ -1,4 +1,10 @@
 import { createUser, getUserByEmail, getUserById, updateUserRefreshToken } from "../services/user.service.js";
+import { 
+  createWhatsappSection, 
+  getWhatsappSectionsByUserId, 
+  getWhatsappSectionByNumber,
+  deleteWhatsappSectionByNumberAndUserId 
+} from "../services/whatsappSection.service.js";
 import { MESSAGES } from "../utils/Messages.js";
 import AppError from "../utils/AppError.js";
 import {
@@ -25,12 +31,20 @@ export const addUser = async (req, res, next) => {
     }
 
     const sessionId = phone;
+    const userId = req.userId;
+
+    // Save to DB if not already exists
+    const existingSection = await getWhatsappSectionByNumber(sessionId);
+    if (!existingSection) {
+      await createWhatsappSection(sessionId, userId);
+    }
+
     await startWhatsAppSession({ sessionId, socketId, io });
 
     return res.json({
       success: true,
       message: "Session started",
-      user: { name, phone },
+      user: sessionId,
     });
   } catch (error) {
     console.log("addUser error:", error.message);
@@ -48,6 +62,10 @@ export const removeUser = async (req, res, next) => {
     }
 
     const sessionId = phone;
+    const userId = req.userId;
+
+    // Remove from DB
+    await deleteWhatsappSectionByNumberAndUserId(sessionId, userId);
     const sessionPath = path.join(process.cwd(), `.wwebjs_auth/session-${sessionId}`);
 
     const client = clients[sessionId];
@@ -78,7 +96,13 @@ export const removeUser = async (req, res, next) => {
 };
 
 export const getAllUsers = async (req, res) => {
-  res.json({ users: Object.keys(clients) });
+  try {
+    const userId = req.userId;
+    const sections = await getWhatsappSectionsByUserId(userId);
+    res.json({ users: sections.map(s => s.number) });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 export const signUpController = async (req, res, next) => {

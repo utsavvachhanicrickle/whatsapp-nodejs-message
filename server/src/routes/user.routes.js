@@ -17,8 +17,8 @@ router.post("/login", loginController);
 router.delete("/logout", authMiddleware, logoutController);
 router.get("/refresh", refreshTokenController);
 
-router.post("/add", addUser);
-router.get("/getAllUsers", getAllUsers);
-router.delete("/remove/:phone", removeUser);
+router.post("/add", authMiddleware, addUser);
+router.get("/getAllUsers", authMiddleware, getAllUsers);
+router.delete("/remove/:phone", authMiddleware, removeUser);
 
 export default router;

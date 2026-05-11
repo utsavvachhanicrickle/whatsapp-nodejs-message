@@ -43,18 +43,25 @@ export const updateContactByIdAndUserId = async (id, userId, name, phoneNumber) 
 export const insertManyContacts = async (contactsData) => {
   if (contactsData.length === 0) return [];
   
-  const values = [];
-  let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId") VALUES ';
+  const CHUNK_SIZE = 100;
+  const results = [];
+
+  for (let i = 0; i < contactsData.length; i += CHUNK_SIZE) {
+    const chunk = contactsData.slice(i, i + CHUNK_SIZE);
+    const values = [];
+    let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId") VALUES ';
+    
+    chunk.forEach((c, index) => {
+      queryStr += `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3}),`;
+      values.push(c.name, c.phoneNumber, c.userId);
+    });
+    
+    queryStr = queryStr.slice(0, -1) + ' RETURNING *';
+    const result = await pool.query(queryStr, values);
+    results.push(...result.rows);
+  }
   
-  contactsData.forEach((c, index) => {
-    queryStr += `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3}),`;
-    values.push(c.name, c.phoneNumber, c.userId);
-  });
-  
-  queryStr = queryStr.slice(0, -1) + ' RETURNING *';
-  
-  const result = await pool.query(queryStr, values);
-  return result.rows;
+  return results;
 };
 
 export const getContactsByPhonesAndUserId = async (phoneNumbers, userId) => {
@@ -73,4 +80,33 @@ export const deleteManyContacts = async (ids, userId) => {
     [userId, ids]
   );
   return result.rowCount;
+};
+
+export const upsertWhatsappContacts = async (contactsData) => {
+  if (contactsData.length === 0) return [];
+
+  const CHUNK_SIZE = 100;
+  const results = [];
+
+  for (let i = 0; i < contactsData.length; i += CHUNK_SIZE) {
+    const chunk = contactsData.slice(i, i + CHUNK_SIZE);
+    const values = [];
+    let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId", "whatsappId", "pushName") VALUES ';
+
+    chunk.forEach((c, index) => {
+      queryStr += `($${index * 5 + 1}, $${index * 5 + 2}, $${index * 5 + 3}, $${index * 5 + 4}, $${index * 5 + 5}),`;
+      values.push(c.name || null, c.phoneNumber, c.userId, c.whatsappId, c.pushName || null);
+    });
+
+    queryStr = queryStr.slice(0, -1) + 
+      ' ON CONFLICT ("phoneNumber", "userId") DO UPDATE SET ' +
+      '"whatsappId" = EXCLUDED."whatsappId", ' +
+      '"pushName" = EXCLUDED."pushName", ' +
+      '"updatedAt" = CURRENT_TIMESTAMP RETURNING *';
+
+    const result = await pool.query(queryStr, values);
+    results.push(...result.rows);
+  }
+
+  return results;
 };

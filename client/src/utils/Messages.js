@@ -12,13 +12,27 @@ export const MESSAGES = {
   LOGIN_ERROR: "Login failed",
   SIGNUP_SUCCESS: "Account created successfully",
   SIGNUP_ERROR: "Signup failed",
+  LOGOUT_SUCCESS: "Logged out successfully",
 
   // Contacts
   CONTACT_ADDED_SUCCESS: "Contact added successfully",
   CONTACT_ADDED_ERROR: "Failed to add contact",
   CONTACT_DELETED_SUCCESS: "Contact deleted successfully",
+  CONTACT_DELETED_ERROR: "Failed to delete contact",
   CONTACT_UPDATED_SUCCESS: "Contact updated successfully",
+  CONTACT_UPDATED_ERROR: "Failed to update contact",
+  BULK_UPLOAD_SUCCESS: "Contacts uploaded successfully",
+  BULK_UPLOAD_ERROR: "Failed to upload contacts",
+  BULK_DELETE_SUCCESS: "Contacts deleted successfully",
+  BULK_DELETE_ERROR: "Failed to delete contacts",
+
+  // Default Messages
+  DEFAULT_MESSAGE_ADDED_SUCCESS: "Default message added",
+  DEFAULT_MESSAGE_ADDED_ERROR: "Failed to add default message",
+  DEFAULT_MESSAGE_UPDATED_SUCCESS: "Default message updated",
+  DEFAULT_MESSAGE_DELETED_SUCCESS: "Default message deleted",
 
   // General
   FILL_ALL_FIELDS: "Please fill all fields",
+  SOMETHING_WENT_WRONG: "Something went wrong. Please try again.",
 };

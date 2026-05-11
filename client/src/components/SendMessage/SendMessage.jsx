@@ -179,6 +179,7 @@ Thank you for your cooperation.`;
 
   const handleDeleteContect = (id) => {
     dispatch(deleteContactSlice(id));
+    
   };
 
   const onBulkDelete = (multipleContents) => {
@@ -460,7 +461,7 @@ Thank you for your cooperation.`;
                                 key={c._id}
                                 className="px-3 py-1 min-h-8 max-h-12 rounded-full bg-(--btn-primary-bg) text-white text-sm flex items-center gap-2"
                               >
-                                {c.name}
+                                {c.name || "Unknown"}
                                 <span
                                   className="cursor-pointer"
                                   onClick={() =>

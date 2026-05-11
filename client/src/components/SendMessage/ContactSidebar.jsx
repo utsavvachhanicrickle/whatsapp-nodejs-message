@@ -29,16 +29,20 @@ function ContactSidebar({
   const filteredContacts = useMemo(() => {
     let filtered = contacts.filter((c) => {
       const value = search.toLowerCase();
+      const name = c.name || "";
+      const phoneNumber = c.phoneNumber || "";
       return (
-        c.name.toLowerCase().includes(value) || c.phoneNumber.includes(value)
+        name.toLowerCase().includes(value) || phoneNumber.includes(value)
       );
     });
 
     filtered.sort((a, b) => {
+      const nameA = a.name || "";
+      const nameB = b.name || "";
       if (sortOrder === "asc") {
-        return a.name.localeCompare(b.name);
+        return nameA.localeCompare(nameB);
       } else {
-        return b.name.localeCompare(a.name);
+        return nameB.localeCompare(nameA);
       }
     });
 
@@ -55,9 +59,9 @@ function ContactSidebar({
   };
 
   return (
-    <div className="w-72 min-h-screen max-h-screen p-4 bg-(--sidebar) border-r border-(--border) overflow-y-auto">
-      {/* HEADER */}
-      <div className="mb-3 flex flex-col gap-2">
+    <div className="w-72 min-h-screen max-h-screen flex flex-col bg-(--sidebar) border-r border-(--border)">
+      {/* 📌 FIXED HEADER */}
+      <div className="p-4 border-b border-(--border) flex flex-col gap-3">
         {/* TOP ROW */}
         <div className="flex justify-between items-center">
           <h3 className="font-semibold text-(--text-primary)">
@@ -90,13 +94,13 @@ function ContactSidebar({
             placeholder="Search name or number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 p-2 text-sm border rounded bg-(--bg-primary)"
+            className="flex-1 p-2 text-sm border rounded bg-(--bg-primary) focus:outline-none focus:ring-1 focus:ring-(--primary)"
           />
 
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
-            className="text-sm border rounded px-2 bg-(--bg-primary)"
+            className="text-sm border rounded px-2 bg-(--bg-primary) focus:outline-none focus:ring-1 focus:ring-(--primary)"
           >
             <option value="asc">A-Z</option>
             <option value="desc">Z-A</option>
@@ -104,67 +108,70 @@ function ContactSidebar({
         </div>
       </div>
 
-      {filteredContacts.length === 0 && (
-        <p className="text-sm text-(--text-secondary)">No contacts found</p>
-      )}
+      {/* 📜 SCROLLABLE CONTENT */}
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        {filteredContacts.length === 0 && (
+          <p className="text-sm text-(--text-secondary) text-center py-4">No contacts found</p>
+        )}
 
-      {filteredContacts.map((c, i) => {
-        const selected = isSelected(c);
+        {filteredContacts.map((c, i) => {
+          const selected = isSelected(c);
 
-        return (
-          <div
-            key={c._id || i}
-            className={`group relative flex items-center gap-3 p-3 mb-3 rounded-xl border 
-              transition-all duration-200
-              ${
-                selected
-                  ? "bg-(--bg-select) border-green-400 text-(--secondary-hover)"
-                  : "border-(--border) hover:bg-(--bg-secondary)"
-              }`}
-          >
-            {/* ✅ CHECKBOX */}
-            <input
-              type="checkbox"
-              checked={selected}
-              onChange={() => handleCheckboxChange(c)}
-              onClick={(e) => e.stopPropagation()} // prevent card click
-              className="w-4 h-4 cursor-pointer"
-            />
-
-            {/* ✅ CONTACT INFO (single select mode) */}
+          return (
             <div
-              onClick={() => onSelect(c)}
-              className="cursor-pointer flex-1 pr-16"
+              key={c._id || i}
+              className={`group relative flex items-center gap-3 p-3 mb-3 rounded-xl border 
+                transition-all duration-200
+                ${
+                  selected
+                    ? "bg-(--bg-select) border-green-400 text-(--secondary-hover)"
+                    : "border-(--border) hover:bg-(--bg-secondary)"
+                }`}
             >
-              <p className="font-medium  truncate">{c.name}</p>
-              <p className="text-sm  truncate">{c.phoneNumber}</p>
-            </div>
+              {/* ✅ CHECKBOX */}
+              <input
+                type="checkbox"
+                checked={selected}
+                onChange={() => handleCheckboxChange(c)}
+                onClick={(e) => e.stopPropagation()} // prevent card click
+                className="w-4 h-4 cursor-pointer accent-(--primary)"
+              />
 
-            {/* ACTION BUTTONS */}
-            <div
-              className="absolute top-2 right-2 flex gap-1 opacity-0 
-                         group-hover:opacity-100 transition duration-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Button
-                variant="ghost"
-                onClick={() => onEdit(i, c)}
-                className="p-1 hover:bg-(--btn-primary-hover)"
+              {/* ✅ CONTACT INFO */}
+              <div
+                onClick={() => onSelect(c)}
+                className="cursor-pointer flex-1 pr-12"
               >
-                <EditIcon fontSize="small" />
-              </Button>
+                <p className="font-medium truncate text-sm">{c.name || "Unknown"}</p>
+                <p className="text-xs text-(--text-secondary) truncate">{c.phoneNumber}</p>
+              </div>
 
-              <Button
-                variant="ghost"
-                onClick={() => onDelete(c._id)}
-                className="p-1 hover:bg-red-500/20"
+              {/* ACTION BUTTONS */}
+              <div
+                className="absolute top-2 right-2 flex gap-1 opacity-0 
+                           group-hover:opacity-100 transition duration-200"
+                onClick={(e) => e.stopPropagation()}
               >
-                <DeleteIcon fontSize="small" className="text-red-500" />
-              </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => onEdit(i, c)}
+                  className="p-1 hover:bg-(--btn-primary-hover)"
+                >
+                  <EditIcon fontSize="small" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => onDelete(c._id)}
+                  className="p-1 hover:bg-red-500/20"
+                >
+                  <DeleteIcon fontSize="small" className="text-red-500" />
+                </Button>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
