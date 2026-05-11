@@ -34,4 +34,22 @@ export const messageModules = {
       throw error;
     }
   },
+  getChats: async (sessionId) => {
+    try {
+      const res = await API.get(APIENDPOINTS.GET_CHATS(sessionId));
+      return res.data.contactIds;
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+      return [];
+    }
+  },
+  getMessages: async (sessionId, contactWhatsappId) => {
+    try {
+      const res = await API.get(APIENDPOINTS.GET_MESSAGES(sessionId, contactWhatsappId));
+      return res.data.messages;
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      return [];
+    }
+  },
 };

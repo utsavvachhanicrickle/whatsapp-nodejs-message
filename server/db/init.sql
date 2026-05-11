@@ -1,8 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Force a clean slate for the contacts table to ensure all columns match the code
-DROP TABLE IF EXISTS whatsapp_sections CASCADE;
-DROP TABLE IF EXISTS contacts CASCADE;
+-- -- Force a clean slate for the contacts table to ensure all columns match the code
+-- DROP TABLE IF EXISTS whatsapp_sections CASCADE;
+-- DROP TABLE IF EXISTS contacts CASCADE;
+-- DROP TABLE IF EXISTS messages CASCADE;
 
 -- Users Table
 CREATE TABLE IF NOT EXISTS users (
@@ -43,4 +44,19 @@ CREATE TABLE IF NOT EXISTS whatsapp_sections (
     number VARCHAR(255) NOT NULL,
     "userId" UUID NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Messages Table
+CREATE TABLE IF NOT EXISTS messages (
+    _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "sessionId" VARCHAR(255) NOT NULL,
+    "whatsappId" VARCHAR(255) NOT NULL,
+    "from" VARCHAR(255) NOT NULL,
+    "to" VARCHAR(255) NOT NULL,
+    body TEXT,
+    "type" VARCHAR(50) DEFAULT 'chat',
+    "fromMe" BOOLEAN DEFAULT false,
+    timestamp BIGINT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("whatsappId")
 );

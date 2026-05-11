@@ -60,6 +60,10 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
       io.to(socketId).emit("ready", { sessionId });
       syncContacts(client, sessionId);
     }
+    
+    // Join room for this session
+    const socket = io.sockets.sockets.get(socketId);
+    if (socket) socket.join(`session_${sessionId}`);
 
     return;
   }
@@ -88,6 +92,9 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
 
   try {
     await client.initialize();
+    // Join room after initialization
+    const socket = io.sockets.sockets.get(socketId);
+    if (socket) socket.join(`session_${sessionId}`);
   } catch (err) {
     console.log("❌ Init error:", err.message);
     delete clients[sessionId];
@@ -99,6 +106,36 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
 // ================= EVENTS =================
 const bindClientEvents = (client, sessionId, socketId, io) => {
   client.removeAllListeners();
+
+  // 🔥 Unified message listener for all incoming and outgoing messages
+  client.on("message_create", async (msg) => {
+    try {
+      console.log(`📩 message_create received: from=${msg.from}, to=${msg.to}, body=${msg.body?.substring(0, 20)}...`);
+      
+      const { saveMessage } = await import("./services/message.service.js");
+      const messageData = {
+        sessionId,
+        whatsappId: msg.id._serialized,
+        from: msg.from,
+        to: msg.to,
+        body: msg.body,
+        type: msg.type,
+        fromMe: msg.fromMe,
+        timestamp: msg.timestamp,
+      };
+      
+      // Save to database
+      console.log(`💾 Attempting to save message to DB for session: ${sessionId}`);
+      const saved = await saveMessage(messageData);
+      console.log(`✅ Save result: ${saved ? 'Success' : 'Duplicate/Skipped'}`);
+
+      // Notify all clients in the session room (including sender tabs)
+      console.log(`📣 Emitting new-message to room session_${sessionId}`);
+      io.to(`session_${sessionId}`).emit("new-message", messageData);
+    } catch (err) {
+      console.error("❌ Error handling message_create:", err);
+    }
+  });
 
   client.on("qr", async (qr) => {
     const qrImage = await qrcode.toDataURL(qr);

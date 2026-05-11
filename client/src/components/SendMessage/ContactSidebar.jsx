@@ -18,6 +18,9 @@ function ContactSidebar({
   onAddMultiple,
   isGroupMode,
   setIsGroupMode,
+  viewMode,
+  setViewMode,
+  chatsWithMessages,
 }) {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -34,7 +37,15 @@ function ContactSidebar({
   };
 
   const filteredContacts = useMemo(() => {
-    let filtered = contacts.filter((c) => {
+    let baseContacts = contacts;
+    
+    if (viewMode === "chats") {
+      baseContacts = contacts.filter(c => 
+        chatsWithMessages.some(chat => chat.contactId === c.whatsappId || chat.contactId === c.phoneNumber)
+      );
+    }
+
+    let filtered = baseContacts.filter((c) => {
       const value = search.toLowerCase();
       const name = c.name || "";
       const phoneNumber = c.phoneNumber || "";
@@ -52,7 +63,7 @@ function ContactSidebar({
     });
 
     return filtered;
-  }, [contacts, search, sortOrder]);
+  }, [contacts, search, sortOrder, viewMode, chatsWithMessages]);
 
   const handleSelectAll = () => {
     if (multipleNumber.length === contacts.length) {
@@ -69,13 +80,28 @@ function ContactSidebar({
         <div className="p-4 flex items-center justify-between border-b border-(--border) bg-(--header)">
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => setIsGroupMode(false)}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${!isGroupMode ? "bg-(--primary) text-white" : "text-(--text-secondary) hover:bg-(--bg-secondary)"}`}
+              onClick={() => {
+                setIsGroupMode(false);
+                setViewMode("all");
+              }}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${!isGroupMode && viewMode === "all" ? "bg-(--primary) text-white" : "text-(--text-secondary) hover:bg-(--bg-secondary)"}`}
             >
-              Personal
+              All
             </Button>
             <Button
-              onClick={() => setIsGroupMode(true)}
+              onClick={() => {
+                setIsGroupMode(false);
+                setViewMode("chats");
+              }}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${!isGroupMode && viewMode === "chats" ? "bg-(--primary) text-white" : "text-(--text-secondary) hover:bg-(--bg-secondary)"}`}
+            >
+              Chats
+            </Button>
+            <Button
+              onClick={() => {
+                setIsGroupMode(true);
+                setViewMode("all");
+              }}
               variant="other"
               className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${isGroupMode ? "bg-(--primary) text-white" : "text-(--text-secondary) hover:bg-(--bg-secondary)"}`}
             >
@@ -187,10 +213,35 @@ function ContactSidebar({
                     <h4 className="text-sm font-medium text-(--text-primary) truncate">
                       {c.name || "Unknown"}
                     </h4>
+                    {viewMode === "chats" && (
+                      <span className="text-[10px] text-(--text-secondary) shrink-0">
+                        {(() => {
+                          const chat = chatsWithMessages.find(chat => chat.contactId === c.whatsappId || chat.contactId === c.phoneNumber);
+                          return chat ? new Date(chat.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                        })()}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-(--text-secondary) truncate">
-                    {c.phoneNumber}
-                  </p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-(--text-secondary) truncate flex-1">
+                      {viewMode === "chats" ? (
+                        <>
+                          {(() => {
+                            const chat = chatsWithMessages.find(chat => chat.contactId === c.whatsappId || chat.contactId === c.phoneNumber);
+                            if (!chat) return c.phoneNumber;
+                            return (
+                              <span className="flex items-center gap-1">
+                                {chat.fromMe && <span className="text-blue-400">✓✓</span>}
+                                {chat.body}
+                              </span>
+                            );
+                          })()}
+                        </>
+                      ) : (
+                        c.phoneNumber
+                      )}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">

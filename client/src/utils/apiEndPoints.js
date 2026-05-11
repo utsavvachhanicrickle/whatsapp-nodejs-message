@@ -29,4 +29,6 @@ export const APIENDPOINTS = {
   SEND_MESSAGE: "api/message/send",
   SEND_MULTIPLE_MESSAGES: "api/message/multiple-send",
   SEND_MULTIPLE_GROUP_MESSAGES: "api/group/send/multiples",
+  GET_CHATS: (sessionId) => `api/message/${sessionId}/chats`,
+  GET_MESSAGES: (sessionId, contactWhatsappId) => `api/message/${sessionId}/messages/${contactWhatsappId}`,
 };

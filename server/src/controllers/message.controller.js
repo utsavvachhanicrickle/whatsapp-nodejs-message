@@ -39,6 +39,28 @@ export const messageSendController = async (req, res, next) => {
   }
 };
 
+export const getMessagesController = async (req, res, next) => {
+  try {
+    const { sessionId, contactWhatsappId } = req.params;
+    const { getMessagesBySessionAndContact } = await import("../services/message.service.js");
+    const messages = await getMessagesBySessionAndContact(sessionId, contactWhatsappId);
+    res.json({ success: true, messages });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getContactsWithMessagesController = async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    const { getContactsWithMessages } = await import("../services/message.service.js");
+    const contactIds = await getContactsWithMessages(sessionId);
+    res.json({ success: true, contactIds });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const multipleMessageSendController = async (req, res, next) => {
   try {
     const { sessionId, multipleNumber, message } = req.body;
