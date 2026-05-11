@@ -1,5 +1,4 @@
 import axios from "axios";
-import { store } from "../store/store";
 import { logout } from "../store/slices/authSlices";
 import toast from "../utils/Toast";
 
@@ -56,7 +55,12 @@ API.interceptors.response.use(
           processQueue(err);
           toast.success("Logout SuccessFull !!!");
           localStorage.removeItem("profile");
-          store.dispatch(logout());
+          
+          // Use dynamic import to avoid circular dependency
+          import("../store/store").then((m) => {
+             m.store.dispatch(logout());
+          });
+          
           reject(err);
         } finally {
           isRefreshing = false;

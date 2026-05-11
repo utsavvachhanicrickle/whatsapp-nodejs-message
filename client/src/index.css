@@ -2,67 +2,110 @@
 
 /* ================= LIGHT THEME ================= */
 :root {
-  --bg: #efeae2;
+  --bg: #f0f2f5;
+  --bg-app: #eae6df;
   --bg-primary: #ffffff;
   --bg-secondary: #f0f2f5;
-  --bg-select: #181616;
-
-  --card: #ffffff;
+  --bg-chat: #efeae2;
+  --bg-active: #ebebeb;
+  
+  --nav-bar: #f0f2f5;
   --sidebar: #ffffff;
+  --header: #f0f2f5;
 
   --text-primary: #111b21;
   --text-secondary: #667781;
   --text-inverse: #ffffff;
 
-  --primary: #25d366;
-  --primary-hover: #1ebc57;
-  --secondary-hover: #ffffff;
-
-  --btn-primary-bg: var(--primary);
-  --btn-primary-text: #ffffff;
-  --btn-primary-hover: var(--primary-hover);
-
-  --btn-outline-text: var(--primary);
-  --btn-outline-border: var(--primary);
+  --primary: #00a884;
+  --primary-hover: #06cf9c;
+  --accent: #25d366;
 
   --border: #e9edef;
-
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  
+  --glass: rgba(255, 255, 255, 0.8);
 }
 
 /* ================= DARK THEME ================= */
 [data-theme="dark"] {
-  --bg: #0b141a;
+  --bg: #0c1317;
+  --bg-app: #0c1317;
   --bg-primary: #111b21;
   --bg-secondary: #202c33;
-  --bg-select: #f3f3f3;
+  --bg-chat: #0b141a;
+  --bg-active: #2a3942;
 
-  --card: #111b21;
+  --nav-bar: #202c33;
   --sidebar: #111b21;
+  --header: #202c33;
 
   --text-primary: #e9edef;
   --text-secondary: #8696a0;
   --text-inverse: #111b21;
 
-  --primary: #25d366;
-  --primary-hover: #1ebc57;
-  --secondary-hover: #0c0b0b;
+  --primary: #00a884;
+  --primary-hover: #06cf9c;
+  --accent: #25d366;
 
-  --btn-primary-bg: var(--primary);
-  --btn-primary-text: #ffffff;
-  --btn-primary-hover: var(--primary-hover);
-
-  --btn-outline-text: var(--primary);
-  --btn-outline-border: var(--primary);
-
-  --border: #2a3942;
-
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --border: #222d34;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  
+  --glass: rgba(17, 27, 33, 0.8);
 }
 
 /* ================= BASE ================= */
 body {
   background-color: var(--bg);
   color: var(--text-primary); 
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow: hidden;
+  height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#root {
+  height: 100%;
+}
+
+/* ================= SCROLLBAR ================= */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ced0d1;
+  border-radius: 10px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #374045;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aab2b7;
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.whatsapp-shadow {
+  box-shadow: 0 6px 18px rgba(11, 20, 26, 0.05);
+}
+
+.glass-effect {
+  backdrop-filter: blur(8px);
+  background: var(--glass);
 }

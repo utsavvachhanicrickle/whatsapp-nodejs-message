@@ -8,8 +8,8 @@ function AddEntityForm({
   formDataButtons,
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-(--bg-pop) p-6 rounded-lg w-[90%] max-w-md shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div className=" w-[90%] max-w-md rounded-2xl border shadow-2xl bg-(--bg-primary) border-(--border) text-(--text-primary)">
         <FormField
           header={`${editEntityId ? "Update" : "Add"}`}
           fields={formDataFields}

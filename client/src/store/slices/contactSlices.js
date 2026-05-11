@@ -66,7 +66,7 @@ export const bulkDeleteContactsSlice = createAsyncThunk(
   async (contacts, thunkAPI) => {
     try {
       const res = await contactModules.bulkDeleteContacts({ contacts });
-      return res.data;
+      return res.data.deletedId;
     } catch (error) {
       return thunkAPI.rejectWithValue("Bulk Delete failed");
     }
@@ -126,7 +126,7 @@ const contactSlice = createSlice({
       })
 
       .addCase(bulkDeleteContactsSlice.fulfilled, (state, action) => {
-        state.loading = false;        
+        state.loading = false;
         const deletedIds = action.payload.map((c) => c);
 
         state.contacts = state.contacts.filter(

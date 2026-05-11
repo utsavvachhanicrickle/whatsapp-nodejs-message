@@ -4,16 +4,16 @@ import Button from "../Button";
 import { buttonInputTypes } from "../../utils/schema";
 
 function FormField({ header = "", fields, onSubmit, buttons, footer = {} }) {
-  const initalData = Object.fromEntries(
+  const initialData = Object.fromEntries(
     fields.map((field) => [
       field.name,
       field.type === buttonInputTypes.CHECKBOX_GROUP
         ? field.value || []
         : field.value || "",
-    ])
+    ]),
   );
 
-  const [formData, setFormData] = useState(initalData);
+  const [formData, setFormData] = useState(initialData);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,47 +21,55 @@ function FormField({ header = "", fields, onSubmit, buttons, footer = {} }) {
   };
 
   const handleReset = () => {
-    setFormData(initalData);
+    setFormData(initialData);
   };
 
   const handleChange = (name, value, type = buttonInputTypes.TEXT) => {
     setFormData((prev) => {
       if (type === buttonInputTypes.CHECKBOX_GROUP) {
         const current = prev[name] || [];
+
         return {
           ...prev,
           [name]: current.includes(value)
             ? current.filter((v) => v !== value)
             : [...current, value],
         };
-      } else if (type === buttonInputTypes.DATETIME_LOCAL) {
-        return { ...prev, [name]: new Date(value).toISOString() };
-      } else {
-        return { ...prev, [name]: value };
       }
+
+      if (type === buttonInputTypes.DATETIME_LOCAL) {
+        return {
+          ...prev,
+          [name]: new Date(value).toISOString(),
+        };
+      }
+
+      return {
+        ...prev,
+        [name]: value,
+      };
     });
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="
-        bg-(--card)
-        shadow-(--shadow)
+      className=" rounded-2xl border p-6 shadow-xl
+        bg-(--bg-primary)
+        border-(--border)
         text-(--text-primary)
-        rounded-2xl
-        p-6
-        w-[90%]
-        max-w-md
-        border border-(--border)
       "
     >
       {/* HEADER */}
-      <h2 className="text-2xl font-semibold text-center mb-6">
-        {header}
-      </h2>
+      {header && (
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-center">{header}</h2>
 
-      {/* INPUTS */}
+          <div className="w-14 h-1 mx-auto mt-2 rounded-full bg-(--primary)" />
+        </div>
+      )}
+
+      {/* INPUT FIELDS */}
       <div className="flex flex-col gap-4">
         {fields.map((field) => (
           <InputField
@@ -77,14 +85,19 @@ function FormField({ header = "", fields, onSubmit, buttons, footer = {} }) {
         ))}
       </div>
 
-      {/* BUTTONS */}
+      {/* ACTION BUTTONS */}
       <div className="flex gap-3 mt-6">
         {buttons.map((button, index) => (
           <Button
             key={index}
             type={button.type}
             variant={button.variant}
-            className={`w-full ${button.className || ""}`}
+            className={`
+              w-full
+              transition-all
+              duration-200
+              ${button.className || ""}
+            `}
             onClick={() => {
               if (button.type === buttonInputTypes.SUBMIT) return;
 
@@ -102,10 +115,21 @@ function FormField({ header = "", fields, onSubmit, buttons, footer = {} }) {
 
       {/* FOOTER */}
       {footer?.message && (
-        <p className="text-sm text-center mt-5 text-(--text-secondary)">
+        <p
+          className="
+            mt-5
+            text-center
+            text-sm
+            text-(--text-secondary)
+          "
+        >
           {footer.message}{" "}
           <span
-            className="text-(--primary) cursor-pointer hover:underline"
+            className="
+              cursor-pointer
+              text-(--primary)
+              hover:underline
+            "
             onClick={footer.onClick}
           >
             {footer.spanText}

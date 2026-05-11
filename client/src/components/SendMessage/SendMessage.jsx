@@ -28,17 +28,15 @@ import toast from "../../utils/Toast";
 
 import ContactSidebar from "./ContactSidebar";
 import DefaultMessageSidebar from "./DefaultMessageSidebar";
-import Button from "../Button";
 import AddEntityForm from "./AddEntityForm";
 
-import AddIcCallIcon from "@mui/icons-material/AddIcCall";
-import AddBoxIcon from "@mui/icons-material/AddBox";
 import SendIcon from "@mui/icons-material/Send";
-import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import AddIcon from "@mui/icons-material/Add";
 import PersonIcon from "@mui/icons-material/Person";
 import PeopleIcon from "@mui/icons-material/People";
 import GroupsIcon from "@mui/icons-material/Groups";
+import ClearIcon from "@mui/icons-material/Clear";
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 
 function SendMessage({ sessionId }) {
   const [number, setNumber] = useState("");
@@ -72,65 +70,6 @@ function SendMessage({ sessionId }) {
   );
   const groups = useSelector((state) => state.groups.groups);
 
-  const footerMessage = `
-
-------------------------------
-
-*Automated Message*
-
-This message was sent automatically.  
-Please do not reply to this message.
-
-Thank you for your cooperation.`;
-
-  const sendMessage = async () => {
-    if (!number || !message) return toast.error("Fill all fields");
-    setMessageSEnding(true);
-    await messageModules.sendMessage(
-      sessionId,
-      number,
-      // `${message} ${footerMessage}`,
-      `${message}`,
-    );
-
-    setMessageSEnding(false);
-    setMessage("");
-    // setNumber("");
-    // setName("");
-  };
-
-  const sendMultipleMessages = async () => {
-    if (multipleNumber.length === 0 || !message)
-      return toast.error("fill all fields");
-    setMessageSEnding(true);
-    await messageModules.sendMultipleMessages(
-      sessionId,
-      multipleNumber,
-      `${message} ${footerMessage}`,
-    );
-    setMessage(null);
-    setMessage("");
-    setMultipleNumber([]);
-    setMessageSEnding(false);
-  };
-
-  const sendMultipleGroupMessages = async () => {
-    if (multipleGroup.length === 0 || !message) {
-      return toast.error("fill all fields");
-    }
-    setMessageSEnding(true);
-    await messageModules.sendMultipleGroupMessages(
-      sessionId,
-      multipleGroup,
-      // `${message} ${footerMessage}`,
-      `${message}`,
-    );
-    setMessage(null);
-    setMultipleGroup([]);
-    setMessage("");
-    setMessageSEnding(false);
-  };
-
   useEffect(() => {
     dispatch(fetchContactSlice());
     dispatch(fetchDefaultMessage());
@@ -140,22 +79,41 @@ Thank you for your cooperation.`;
     dispatch(fetchGroups(sessionId));
   }, [dispatch, sessionId]);
 
-  const handleAddedContect = () => {
-    setOpenBox(true);
-    setAddContact(true);
-    setEditContactId(null);
-    setContactDetails({});
+  const sendMessage = async () => {
+    if (!number || !message) return toast.error("Fill all fields");
+    setMessageSEnding(true);
+    await messageModules.sendMessage(sessionId, number, message);
+    setMessageSEnding(false);
+    setMessage("");
   };
 
-  const handleMulipleAddContect = () => {
-    setMutltipleContentAdd(true);
+  const sendMultipleMessages = async () => {
+    if (multipleNumber.length === 0 || !message)
+      return toast.error("Fill all fields");
+    setMessageSEnding(true);
+    await messageModules.sendMultipleMessages(
+      sessionId,
+      multipleNumber,
+      message,
+    );
+    setMultipleNumber([]);
+    setMessage("");
+    setMessageSEnding(false);
   };
 
-  const handleAddMessageTemplete = () => {
-    setOpenBox(true);
-    setAddContact(false);
-    setEditTemplateId(null);
-    setTemplateDetails({});
+  const sendMultipleGroupMessages = async () => {
+    if (multipleGroup.length === 0 || !message) {
+      return toast.error("Fill all fields");
+    }
+    setMessageSEnding(true);
+    await messageModules.sendMultipleGroupMessages(
+      sessionId,
+      multipleGroup,
+      message,
+    );
+    setMultipleGroup([]);
+    setMessage("");
+    setMessageSEnding(false);
   };
 
   const handleCancle = () => {
@@ -173,23 +131,10 @@ Thank you for your cooperation.`;
     } else {
       dispatch(addContactSlice(formData));
     }
-
     handleCancle();
   };
 
-  const handleDeleteContect = (id) => {
-    dispatch(deleteContactSlice(id));
-    
-  };
-
-  const onBulkDelete = (multipleContents) => {
-    dispatch(bulkDeleteContactsSlice(multipleContents));
-    setMultipleNumber([]);
-  };
-
   const handleMessageTempleteSubmit = (formData) => {
-    console.log(formData);
-
     if (editTemplateId !== null) {
       dispatch(updateDefaultMessage({ id: editTemplateId, formData }));
     } else {
@@ -198,390 +143,347 @@ Thank you for your cooperation.`;
     handleCancle();
   };
 
-  const handleDeleteDefaultMessage = (id) => {
-    dispatch(deleteDefaultMessage(id));
-  };
-
-  const handleFileSelect = (selectedFile) => {
-    if (!selectedFile) return;
-    if (file) {
-      toast.error("Only one PDF allowed. Remove current file first.");
-      return;
-    }
-    if (selectedFile.type !== "application/pdf") {
-      toast.error("Only PDF allowed");
-      return;
-    }
-
-    setFile(selectedFile);
-  };
-
   const handleUpload = async () => {
-    if (!parsedContacts.length) {
-      return toast.error("No valid contacts found");
-    }
-
+    if (!parsedContacts.length) return toast.error("No valid contacts found");
     try {
       setLoading(true);
-
       const res = await dispatch(
         bulkUploadContactsSlice(parsedContacts),
       ).unwrap();
-
       toast.success(`Created: ${res.created}, Failed: ${res.failed}`);
-
-      setParsedContacts([]);
-      setFile(null);
       handleCancle();
     } catch (err) {
-      console.error(err);
       toast.error("Upload failed");
     } finally {
       setLoading(false);
     }
   };
 
+  const activeMode = isGroup ? "group" : isMultiple ? "multiple" : "single";
+
   return (
-    <div className="flex h-full">
-      {!isGroup ? (
-        <ContactSidebar
-          contacts={contacts}
-          multipleNumber={multipleNumber}
-          setMultipleNumber={setMultipleNumber}
-          onSelect={(c) => {
-            setName(c.name);
-            setNumber(c.phoneNumber);
-          }}
-          onEdit={(index, item) => {
-            setOpenBox(true);
-            setAddContact(true);
-            setEditContactId(item._id);
-            setContactDetails(item);
-          }}
-          onDelete={handleDeleteContect}
-          onBulkDelete={onBulkDelete}
-        />
-      ) : (
-        <WhatsappGroupMessageSidebar
-          groups={groups}
-          multipleGroup={multipleGroup}
-          setMultipleGroup={setMultipleGroup}
-        />
-      )}
+    <div className="flex h-full w-full overflow-hidden bg-(--bg-chat)">
+      {/* 1. LEFT SIDEBAR (Contacts/Groups) */}
+      <div className="h-full flex shrink-0">
+        {!isGroup ? (
+          <ContactSidebar
+            contacts={contacts}
+            multipleNumber={multipleNumber}
+            setMultipleNumber={setMultipleNumber}
+            onSelect={(c) => {
+              setIsMultiple(false);
+              setName(c.name);
+              setNumber(c.phoneNumber);
+            }}
+            onEdit={(index, item) => {
+              setOpenBox(true);
+              setAddContact(true);
+              setEditContactId(item._id);
+              setContactDetails(item);
+            }}
+            onDelete={(id) => dispatch(deleteContactSlice(id))}
+            onBulkDelete={(multiple) => {
+              dispatch(bulkDeleteContactsSlice(multiple));
+              setMultipleNumber([]);
+            }}
+            onAddContact={() => {
+              setOpenBox(true);
+              setAddContact(true);
+              setEditContactId(null);
+              setContactDetails({});
+            }}
+            onAddMultiple={() => setMutltipleContentAdd(true)}
+            isGroupMode={isGroup}
+            setIsGroupMode={setIsGroup}
+          />
+        ) : (
+          <WhatsappGroupMessageSidebar
+            groups={groups}
+            multipleGroup={multipleGroup}
+            setMultipleGroup={setMultipleGroup}
+            setIsGroupMode={setIsGroup}
+          />
+        )}
+      </div>
 
-      <div className="flex-1 flex justify-center">
-        <div className="w-full max-w-3xl flex flex-col">
-          <div className="flex flex-col gap-4 p-4 border-b border-(--border) bg-(--card)">
-            <div className="flex justify-center">
-              <div className="flex items-center gap-3 px-6 py-3 rounded-2xl shadow-md cursor-pointer">
-                <WhatsAppIcon className=" text-3xl" />
-                <h2 className="text-xl md:text-2xl font-semibold ">
-                  Send Message
-                </h2>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Button
-                className="flex items-center gap-2 px-4 py-2 rounded-xl"
-                onClick={handleAddedContect}
-              >
-                <AddIcCallIcon />
-                <span className="hidden xl:inline">Add Contact</span>
-              </Button>
-
-              <Button
-                className="flex items-center gap-2 px-4 py-2 rounded-xl"
-                onClick={handleMulipleAddContect}
-              >
-                <LibraryAddIcon />
-                <span className="hidden xl:inline">Add Multiple</span>
-              </Button>
-
-              <Button
-                className="flex items-center gap-2 px-4 py-2 rounded-xl"
-                onClick={handleAddMessageTemplete}
-              >
-                <AddBoxIcon />
-                <span className="hidden xl:inline">Add Template</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="p-6 flex flex-col gap-4">
-            {multipleContentAdd && (
-              <FileUploadModal
-                isOpen={multipleContentAdd}
-                file={file}
-                setFile={setFile}
-                loading={loading}
-                onUpload={handleUpload}
-                onCancel={handleCancle}
-                title="Upload Employees (PDF)"
-                setParsedContacts={setParsedContacts}
-              />
-            )}
-            {openBox ? (
-              addContact ? (
-                <AddEntityForm
-                  handleSubmit={handleContectSubmit}
-                  editEntityId={editContactId}
-                  handleCancle={handleCancle}
-                  entity={contactDetails}
-                  formDataFields={contectFormData.field(
-                    editContactId,
-                    contactDetails,
-                  )}
-                  formDataButtons={contectFormData.buttons}
+      {/* 2. CENTER: Composer Area */}
+      <div className="flex-1 h-full flex flex-col relative min-w-0 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat opacity-95">
+        {/* Overlay for Form modals */}
+        {(openBox || multipleContentAdd) && (
+          <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
+            <div className="w-full max-w-xl animate-fade-in">
+              {multipleContentAdd ? (
+                <FileUploadModal
+                  isOpen={multipleContentAdd}
+                  file={file}
+                  setFile={setFile}
+                  loading={loading}
+                  onUpload={handleUpload}
+                  onCancel={handleCancle}
+                  title="Bulk Upload Contacts (PDF)"
+                  setParsedContacts={setParsedContacts}
                 />
               ) : (
                 <AddEntityForm
-                  handleSubmit={handleMessageTempleteSubmit}
-                  editEntityId={editTemplateId}
+                  handleSubmit={
+                    addContact
+                      ? handleContectSubmit
+                      : handleMessageTempleteSubmit
+                  }
+                  editEntityId={addContact ? editContactId : editTemplateId}
                   handleCancle={handleCancle}
-                  entity={templateDetails}
-                  formDataFields={messageTempleteFormData.field(
-                    editTemplateId,
-                    templateDetails,
-                  )}
-                  formDataButtons={messageTempleteFormData.buttons}
+                  entity={addContact ? contactDetails : templateDetails}
+                  formDataFields={
+                    addContact
+                      ? contectFormData.field(editContactId, contactDetails)
+                      : messageTempleteFormData.field(
+                          editTemplateId,
+                          templateDetails,
+                        )
+                  }
+                  formDataButtons={
+                    addContact
+                      ? contectFormData.buttons
+                      : messageTempleteFormData.buttons
+                  }
                 />
-              )
-            ) : (
-              <>
-                <div className="p-6 flex flex-col gap-6">
-                  {/* TOGGLE MODE */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => {
-                        setIsMultiple(false);
-                        setIsGroup(false);
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
-                        !isMultiple && !isGroup
-                          ? "bg-(--btn-primary-bg) text-white"
-                          : "bg-(--bg-secondary)"
-                      }`}
-                    >
-                      <PersonIcon /> Single
-                    </button>
+              )}
+            </div>
+          </div>
+        )}
 
-                    <button
-                      onClick={() => {
-                        setIsMultiple(true);
-                        setIsGroup(false);
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
-                        isMultiple
-                          ? "bg-(--btn-primary-bg) text-white"
-                          : "bg-(--bg-secondary)"
-                      }`}
-                    >
-                      <PeopleIcon />
-                      Multiple
-                    </button>
+        {/* Composer Header (Tab Switcher) */}
+        <div className="h-[50px] bg-(--header)/90 backdrop-blur-md border-b border-(--border) flex items-center justify-center px-4 shrink-0 z-20">
+          <div className="flex bg-(--bg-secondary) p-1 rounded-full gap-1">
+            {[
+              {
+                id: "single",
+                label: "Single",
+                icon: <PersonIcon fontSize="inherit" />,
+                onClick: () => {
+                  setIsMultiple(false);
+                  setIsGroup(false);
+                },
+              },
+              {
+                id: "multiple",
+                label: "Multiple",
+                icon: <PeopleIcon fontSize="inherit" />,
+                onClick: () => {
+                  setIsMultiple(true);
+                  setIsGroup(false);
+                },
+              },
+              {
+                id: "group",
+                label: "Groups",
+                icon: <GroupsIcon fontSize="inherit" />,
+                onClick: () => {
+                  setIsMultiple(false);
+                  setIsGroup(true);
+                },
+              },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={tab.onClick}
+                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-full transition-all ${
+                  activeMode === tab.id
+                    ? "bg-white text-(--primary) shadow-sm"
+                    : "text-(--text-secondary) hover:bg-white/50"
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-                    <button
-                      onClick={() => {
-                        setIsMultiple(false);
-                        setIsGroup(true);
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl  ${
-                        isGroup
-                          ? "bg-(--btn-primary-bg) text-white"
-                          : "bg-(--bg-secondary)"
-                      }`}
-                    >
-                      <GroupsIcon />
-                      Group
-                    </button>
-                  </div>
+        {/* Composer Content */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto">
+          <div className="w-full max-w-2xl bg-(--bg-primary) rounded-2xl shadow-xl overflow-hidden border border-(--border)">
+            <div className="p-4 bg-(--bg-secondary)/50 border-b border-(--border) flex items-center justify-between">
+              <h3 className="font-semibold text-sm">
+                Send {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)}{" "}
+                Message
+              </h3>
+              <div className="flex items-center gap-2">
+                {activeMode === "multiple" && (
+                  <span className="text-[10px] bg-(--primary) text-white px-2 py-0.5 rounded-full font-bold">
+                    {multipleNumber.length} SELECTED
+                  </span>
+                )}
+                {activeMode === "group" && (
+                  <span className="text-[10px] bg-(--primary) text-white px-2 py-0.5 rounded-full font-bold">
+                    {multipleGroup.length} SELECTED
+                  </span>
+                )}
+              </div>
+            </div>
 
-                  {/* ================= SINGLE ================= */}
-                  {!isMultiple && !isGroup && (
-                    <div className="bg-(--card) p-5 rounded-xl border border-(--border) flex flex-col gap-4 shadow-sm">
-                      <h2 className="text-lg font-semibold">
-                        Send to Single Contact
-                      </h2>
-
-                      <input
-                        placeholder="Contact Name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="p-3 border rounded bg-(--bg-primary)"
-                      />
-
-                      <input
-                        placeholder="Phone Number"
-                        value={number}
-                        onChange={(e) => setNumber(e.target.value)}
-                        className="p-3 border rounded bg-(--bg-primary)"
-                      />
-
-                      <textarea
-                        placeholder="Message"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        className="p-3 border rounded bg-(--bg-primary) min-h-30"
-                      />
-
-                      <button
-                        onClick={sendMessage}
-                        className="py-3 bg-(--btn-primary-bg) text-white rounded-lg flex items-center justify-center gap-3"
-                      >
-                        {!messageSending ? (
-                          <>
-                            <SendIcon />
-                            Send Message
-                          </>
-                        ) : (
-                          <div className="h-6 w-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                        )}
-                      </button>
-                    </div>
+            <div className="p-6 flex flex-col gap-5">
+              {/* RECIPIENTS DISPLAY (for multiple/group) */}
+              {(activeMode === "multiple" || activeMode === "group") && (
+                <div className="p-3 bg-(--bg-secondary)/30 rounded-xl border border-dashed border-(--border) min-h-[100px] max-h-[150px] overflow-y-auto flex flex-wrap gap-2">
+                  {activeMode === "multiple" && multipleNumber.length === 0 && (
+                    <p className="text-xs text-(--text-secondary) m-auto italic">
+                      Select contacts from the left sidebar
+                    </p>
+                  )}
+                  {activeMode === "group" && multipleGroup.length === 0 && (
+                    <p className="text-xs text-(--text-secondary) m-auto italic">
+                      Select groups from the left sidebar
+                    </p>
                   )}
 
-                  {/* ================= MULTIPLE ================= */}
-                  {isMultiple && (
-                    <div className="bg-(--card) p-5 rounded-xl border border-(--border) flex flex-col gap-4 shadow-sm">
-                      <h2 className="text-lg font-semibold">
-                        Send to Multiple Contacts
-                      </h2>
-
-                      {/* SELECTED CONTACTS */}
-                      <div className="border rounded-lg p-3 bg-(--bg-secondary)">
-                        {multipleNumber.length === 0 ? (
-                          <p className="text-sm text-(--text-secondary)">
-                            No contacts selected
-                          </p>
-                        ) : (
-                          <div className="flex flex-wrap gap-2 min-h-45 max-h-45 overflow-auto">
-                            {multipleNumber.map((c) => (
-                              <div
-                                key={c._id}
-                                className="px-3 py-1 min-h-8 max-h-12 rounded-full bg-(--btn-primary-bg) text-white text-sm flex items-center gap-2"
-                              >
-                                {c.name || "Unknown"}
-                                <span
-                                  className="cursor-pointer"
-                                  onClick={() =>
-                                    setMultipleNumber((prev) =>
-                                      prev.filter((p) => p._id !== c._id),
-                                    )
-                                  }
-                                >
-                                  ✕
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                  {activeMode === "multiple" &&
+                    multipleNumber.map((c) => (
+                      <div
+                        key={c._id}
+                        className="flex items-center gap-2 px-3 py-1 bg-(--primary)/10 text-(--primary) text-xs font-medium rounded-full border border-(--primary)/20"
+                      >
+                        {c.name || c.phoneNumber}
+                        <button
+                          onClick={() =>
+                            setMultipleNumber((prev) =>
+                              prev.filter((p) => p._id !== c._id),
+                            )
+                          }
+                          className="hover:text-red-500"
+                        >
+                          <ClearIcon sx={{ fontSize: 14 }} />
+                        </button>
                       </div>
-
-                      {/* MESSAGE */}
-                      <textarea
-                        placeholder="Message"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        className="p-3 border rounded bg-(--bg-primary) min-h-30"
-                      />
-
-                      <button
-                        onClick={sendMultipleMessages}
-                        disabled={multipleNumber.length === 0}
-                        className="py-3 bg-(--btn-primary-bg) text-white rounded-lg flex items-center justify-center gap-3 disabled:opacity-50"
+                    ))}
+                  {activeMode === "group" &&
+                    multipleGroup.map((g) => (
+                      <div
+                        key={g._id}
+                        className="flex items-center gap-2 px-3 py-1 bg-teal-500/10 text-teal-700 text-xs font-medium rounded-full border border-teal-500/20"
                       >
-                        {!messageSending ? (
-                          <>
-                            <SendIcon />
-                            Send to {multipleNumber.length} Contacts
-                          </>
-                        ) : (
-                          <div className="h-6 w-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                        )}
-                      </button>
-                    </div>
-                  )}
-
-                  {isGroup && (
-                    <div className="bg-(--card) p-5 rounded-xl border border-(--border) flex flex-col gap-4 shadow-sm">
-                      <h2 className="text-lg font-semibold">
-                        Send to Multiple Groups
-                      </h2>
-
-                      <div className="border rounded-lg p-3 bg-(--bg-secondary)">
-                        {multipleGroup.length === 0 ? (
-                          <p className="text-sm text-(--text-secondary)">
-                            No Groups selected
-                          </p>
-                        ) : (
-                          <div className="flex flex-wrap gap-2 min-h-45 max-h-45 overflow-auto">
-                            {multipleGroup.map((c) => (
-                              <div
-                                key={c._id}
-                                className="px-3 py-1 min-h-8 max-h-12 rounded-full bg-(--btn-primary-bg) text-white text-sm flex items-center gap-2"
-                              >
-                                {c.name}
-                                <span
-                                  className="cursor-pointer"
-                                  onClick={() =>
-                                    setMultipleGroup((prev) =>
-                                      prev.filter((p) => p._id !== c._id),
-                                    )
-                                  }
-                                >
-                                  ✕
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        {g.name}
+                        <button
+                          onClick={() =>
+                            setMultipleGroup((prev) =>
+                              prev.filter((p) => p._id !== g._id),
+                            )
+                          }
+                          className="hover:text-red-500"
+                        >
+                          <ClearIcon sx={{ fontSize: 14 }} />
+                        </button>
                       </div>
-
-                      <textarea
-                        placeholder="Message"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        className="p-3 border rounded bg-(--bg-primary) min-h-30"
-                      />
-
-                      <button
-                        onClick={sendMultipleGroupMessages}
-                        disabled={multipleGroup.length === 0}
-                        className="py-3 bg-(--btn-primary-bg) text-white rounded-lg flex items-center justify-center gap-3 disabled:opacity-50"
-                      >
-                        {!messageSending ? (
-                          <>
-                            <SendIcon />
-                            Send to {multipleGroup.length} Group
-                          </>
-                        ) : (
-                          <div className="h-6 w-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                        )}
-                      </button>
-                    </div>
-                  )}
+                    ))}
                 </div>
-              </>
-            )}
+              )}
+
+              {/* SINGLE RECIPIENT INPUTS */}
+              {activeMode === "single" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider ml-1">
+                      Contact Name
+                    </label>
+                    <input
+                      placeholder="Search or enter name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="p-3 text-sm border-none rounded-xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary)"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider ml-1">
+                      Phone Number
+                    </label>
+                    <input
+                      placeholder="e.g. 919876543210"
+                      value={number}
+                      onChange={(e) => setNumber(e.target.value)}
+                      className="p-3 text-sm border-none rounded-xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary)"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* MESSAGE TEXTAREA */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider ml-1">
+                  Your Message
+                </label>
+                <textarea
+                  placeholder="Type your message here..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="p-4 text-sm border-none rounded-2xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) min-h-[180px] resize-none leading-relaxed"
+                />
+              </div>
+
+              {/* SEND BUTTON */}
+              <button
+                onClick={
+                  activeMode === "single"
+                    ? sendMessage
+                    : activeMode === "multiple"
+                      ? sendMultipleMessages
+                      : sendMultipleGroupMessages
+                }
+                disabled={
+                  messageSending ||
+                  (activeMode === "multiple" && multipleNumber.length === 0) ||
+                  (activeMode === "group" && multipleGroup.length === 0)
+                }
+                className="w-full py-4 bg-(--primary) text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:shadow-none mt-2 active:scale-[0.98]"
+              >
+                {!messageSending ? (
+                  <>
+                    <SendIcon fontSize="small" />
+                    {activeMode === "single"
+                      ? "Send Message"
+                      : `Send to ${activeMode === "multiple" ? multipleNumber.length : multipleGroup.length} ${activeMode === "multiple" ? "Contacts" : "Groups"}`}
+                  </>
+                ) : (
+                  <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <DefaultMessageSidebar
-        defaulMessages={defaulMessages}
-        onSelect={(msg) => setMessage(msg)}
-        onEdit={(index, item) => {
-          setOpenBox(true);
-          setAddContact(false);
-          setEditTemplateId(item._id);
-          setTemplateDetails({
-            title: item.label,
-            message: item.value,
-          });
-        }}
-        onDelete={handleDeleteDefaultMessage}
-      />
+      {/* 3. RIGHT SIDEBAR (Default Messages) */}
+      <div className="h-full shrink-0 flex flex-col bg-(--sidebar) border-l border-(--border)">
+        <div className="p-4 h-[60px] flex items-center justify-between bg-(--header) border-b border-(--border)">
+          <div className="flex items-center gap-2">
+            <LibraryBooksIcon className="text-(--primary)" fontSize="small" />
+            <h3 className="font-semibold text-sm">Templates</h3>
+          </div>
+          <button
+            onClick={() => {
+              setOpenBox(true);
+              setAddContact(false);
+              setEditTemplateId(null);
+              setTemplateDetails({});
+            }}
+            className="p-2 text-(--primary) hover:bg-(--bg-secondary) rounded-full"
+          >
+            <AddIcon fontSize="small" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-hidden">
+          <DefaultMessageSidebar
+            defaulMessages={defaulMessages}
+            onSelect={(msg) => setMessage(msg)}
+            onEdit={(index, item) => {
+              setOpenBox(true);
+              setAddContact(false);
+              setEditTemplateId(item._id);
+              setTemplateDetails(item);
+            }}
+            onDelete={(id) => dispatch(deleteDefaultMessage(id))}
+          />
+        </div>
+      </div>
     </div>
   );
 }

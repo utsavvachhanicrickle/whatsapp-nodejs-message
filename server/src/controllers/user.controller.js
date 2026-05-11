@@ -64,8 +64,17 @@ export const removeUser = async (req, res, next) => {
     const sessionId = phone;
     const userId = req.userId;
 
-    // Remove from DB
+    // Remove from DB (Section and all associated contacts)
     await deleteWhatsappSectionByNumberAndUserId(sessionId, userId);
+    
+    try {
+      const { deleteContactsByUserId } = await import("../services/contact.service.js");
+      await deleteContactsByUserId(userId);
+      console.log("🧹 Contacts cleared for user:", userId);
+    } catch (err) {
+      console.warn("Contact deletion error:", err.message);
+    }
+
     const sessionPath = path.join(process.cwd(), `.wwebjs_auth/session-${sessionId}`);
 
     const client = clients[sessionId];

@@ -110,3 +110,11 @@ export const upsertWhatsappContacts = async (contactsData) => {
 
   return results;
 };
+
+export const deleteContactsByUserId = async (userId) => {
+  const result = await pool.query(
+    'DELETE FROM contacts WHERE "userId" = $1',
+    [userId]
+  );
+  return result.rowCount;
+};
