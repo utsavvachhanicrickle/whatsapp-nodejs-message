@@ -1,6 +1,7 @@
 import { clients } from "../socket.js";
 import { MESSAGES } from "../utils/Messages.js";
 import AppError from "../utils/AppError.js";
+import { safeClientCall } from "../utils/whatsappUtils.js";
 
 export const getGroupsController = async (req, res, next) => {
   try {
@@ -12,11 +13,14 @@ export const getGroupsController = async (req, res, next) => {
       return next(new AppError(MESSAGES.CLIENT_NOT_FOUND, 400));
     }
 
-    const chats = await client.getChats();
+    if (!client.isReady) {
+      return next(new AppError("WhatsApp is still initializing. Please wait a moment.", 400));
+    }
+
+    // Use safeClientCall to handle timing issues during initialization
+    const chats = await safeClientCall(client, 'getChats');
 
     const groups = chats
-
-    
       .filter((chat) => chat.isGroup)
       .map((g) => ({
         id: g.id._serialized,
@@ -28,10 +32,11 @@ export const getGroupsController = async (req, res, next) => {
       groups,
     });
   } catch (error) {
-    console.error("Get groups error:", error);
-    return next(new AppError("Failed to fetch groups", 500));
+    console.error("Get groups error:", error.message);
+    return next(new AppError("Failed to fetch groups. WhatsApp might still be loading.", 500));
   }
 };
+
 
 export const sendMultipleGroupMessageController = async (req, res, next) => {
   try {
@@ -47,7 +52,8 @@ export const sendMultipleGroupMessageController = async (req, res, next) => {
     }
 
     const sendPromises = multipleGroup.map((group) => {
-      return client.sendMessage(group.id, message);
+      // Use safeClientCall for each message to handle transient errors
+      return safeClientCall(client, 'sendMessage', [group.id, message]);
     });
 
     await Promise.all(sendPromises);
@@ -57,7 +63,7 @@ export const sendMultipleGroupMessageController = async (req, res, next) => {
       message: `Messages sent to ${multipleGroup.length} groups successfully.`,
     });
   } catch (error) {
-    console.error("Bulk Group Send Error:", error);
+    console.error("Bulk Group Send Error:", error.message);
     return next(new AppError("Failed to send bulk group messages.", 500));
   }
 };

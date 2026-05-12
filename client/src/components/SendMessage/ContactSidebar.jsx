@@ -18,6 +18,9 @@ function ContactSidebar({
   onAddMultiple,
   isGroupMode,
   setIsGroupMode,
+  viewMode,
+  setViewMode,
+  chatsWithMessages,
 }) {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -34,7 +37,59 @@ function ContactSidebar({
   };
 
   const filteredContacts = useMemo(() => {
-    let filtered = contacts.filter((c) => {
+    let baseContacts = contacts;
+    
+    if (viewMode === "chats") {
+      // Create a map of existing contacts by their WhatsApp ID for quick lookup
+      const contactMap = new Map();
+      contacts.forEach(c => {
+        if (c.whatsappId) contactMap.set(c.whatsappId, c);
+        // Also map by phone number if whatsappId is missing or doesn't match
+        const phoneKey = (c.phoneNumber || "").replace(/\D/g, "");
+        if (phoneKey) contactMap.set(phoneKey, c);
+      });
+
+      // Combine existing contacts with chats that might not be in contacts
+      const chatContacts = chatsWithMessages.map(chat => {
+        const chatPhoneKey = (chat.contactId || "").split('@')[0].replace(/\D/g, "");
+        
+        const existing = contactMap.get(chat.contactId) || contactMap.get(chatPhoneKey);
+        
+        if (existing) {
+          return { ...existing, lastChat: chat, name: existing.name || chat.name };
+        }
+        
+        // Create a virtual contact for someone not in saved contacts
+        return {
+          _id: chat.contactId,
+          whatsappId: chat.contactId,
+          phoneNumber: chatPhoneKey,
+          name: chat.name || chatPhoneKey || "Unknown",
+          isVirtual: true,
+          lastChat: chat
+        };
+      });
+
+
+      // Filter out duplicates (if any) and handle search
+      const seen = new Set();
+      const uniqueChatContacts = chatContacts.filter(c => {
+        const key = c.whatsappId || c.phoneNumber;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      return uniqueChatContacts.filter((c) => {
+        const value = search.toLowerCase();
+        const name = c.name || "";
+        const phoneNumber = c.phoneNumber || "";
+        return name.toLowerCase().includes(value) || phoneNumber.includes(value);
+      });
+    }
+
+    // Default "all" or "groups" view (existing logic)
+    let filtered = baseContacts.filter((c) => {
       const value = search.toLowerCase();
       const name = c.name || "";
       const phoneNumber = c.phoneNumber || "";
@@ -52,7 +107,8 @@ function ContactSidebar({
     });
 
     return filtered;
-  }, [contacts, search, sortOrder]);
+  }, [contacts, search, sortOrder, viewMode, chatsWithMessages]);
+
 
   const handleSelectAll = () => {
     if (multipleNumber.length === contacts.length) {
@@ -69,13 +125,28 @@ function ContactSidebar({
         <div className="p-4 flex items-center justify-between border-b border-(--border) bg-(--header)">
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => setIsGroupMode(false)}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${!isGroupMode ? "bg-(--primary) text-white" : "text-(--text-secondary) hover:bg-(--bg-secondary)"}`}
+              onClick={() => {
+                setIsGroupMode(false);
+                setViewMode("all");
+              }}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${!isGroupMode && viewMode === "all" ? "bg-(--primary) text-white" : "text-(--text-secondary) hover:bg-(--bg-secondary)"}`}
             >
-              Personal
+              All
             </Button>
             <Button
-              onClick={() => setIsGroupMode(true)}
+              onClick={() => {
+                setIsGroupMode(false);
+                setViewMode("chats");
+              }}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${!isGroupMode && viewMode === "chats" ? "bg-(--primary) text-white" : "text-(--text-secondary) hover:bg-(--bg-secondary)"}`}
+            >
+              Chats
+            </Button>
+            <Button
+              onClick={() => {
+                setIsGroupMode(true);
+                setViewMode("all");
+              }}
               variant="other"
               className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${isGroupMode ? "bg-(--primary) text-white" : "text-(--text-secondary) hover:bg-(--bg-secondary)"}`}
             >
@@ -187,32 +258,59 @@ function ContactSidebar({
                     <h4 className="text-sm font-medium text-(--text-primary) truncate">
                       {c.name || "Unknown"}
                     </h4>
+                    {viewMode === "chats" && (
+                      <span className="text-[10px] text-(--text-secondary) shrink-0">
+                        {(() => {
+                          const chat = chatsWithMessages.find(chat => chat.contactId === c.whatsappId || chat.contactId === c.phoneNumber);
+                          return chat ? new Date(chat.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                        })()}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-(--text-secondary) truncate">
-                    {c.phoneNumber}
-                  </p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-(--text-secondary) truncate flex-1">
+                      {viewMode === "chats" ? (
+                        <>
+                          {(() => {
+                            const chat = chatsWithMessages.find(chat => chat.contactId === c.whatsappId || chat.contactId === c.phoneNumber);
+                            if (!chat) return c.phoneNumber;
+                            return (
+                              <span className="flex items-center gap-1">
+                                {chat.body}
+                              </span>
+                            );
+                          })()}
+                        </>
+                      ) : (
+                        c.phoneNumber
+                      )}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(i, c);
-                    }}
-                    className="p-1.5 text-(--text-secondary) hover:text-(--primary) hover:bg-white rounded-full shadow-sm "
-                  >
-                    <EditIcon fontSize="inherit" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(c._id);
-                    }}
-                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-white rounded-full shadow-sm "
-                  >
-                    <DeleteIcon fontSize="inherit" />
-                  </button>
-                </div>
+                {!c.isVirtual && (
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(i, c);
+                      }}
+                      className="p-1.5 text-(--text-secondary) hover:text-(--primary) hover:bg-white rounded-full shadow-sm "
+                    >
+                      <EditIcon fontSize="inherit" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(c._id);
+                      }}
+                      className="p-1.5 text-red-400 hover:text-red-600 hover:bg-white rounded-full shadow-sm "
+                    >
+                      <DeleteIcon fontSize="inherit" />
+                    </button>
+                  </div>
+                )}
+
               </div>
             );
           })

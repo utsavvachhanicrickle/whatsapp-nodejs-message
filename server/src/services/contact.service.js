@@ -91,18 +91,21 @@ export const upsertWhatsappContacts = async (contactsData) => {
   for (let i = 0; i < contactsData.length; i += CHUNK_SIZE) {
     const chunk = contactsData.slice(i, i + CHUNK_SIZE);
     const values = [];
-    let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId", "whatsappId", "pushName") VALUES ';
+    let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId", "whatsappId", "pushName", lid) VALUES ';
+
 
     chunk.forEach((c, index) => {
-      queryStr += `($${index * 5 + 1}, $${index * 5 + 2}, $${index * 5 + 3}, $${index * 5 + 4}, $${index * 5 + 5}),`;
-      values.push(c.name || null, c.phoneNumber, c.userId, c.whatsappId, c.pushName || null);
+      queryStr += `($${index * 6 + 1}, $${index * 6 + 2}, $${index * 6 + 3}, $${index * 6 + 4}, $${index * 6 + 5}, $${index * 6 + 6}),`;
+      values.push(c.name || null, c.phoneNumber, c.userId, c.whatsappId, c.pushName || null, c.lid || null);
     });
 
     queryStr = queryStr.slice(0, -1) + 
       ' ON CONFLICT ("phoneNumber", "userId") DO UPDATE SET ' +
       '"whatsappId" = EXCLUDED."whatsappId", ' +
+      '"lid" = EXCLUDED."lid", ' +
       '"pushName" = EXCLUDED."pushName", ' +
       '"updatedAt" = CURRENT_TIMESTAMP RETURNING *';
+
 
     const result = await pool.query(queryStr, values);
     results.push(...result.rows);
