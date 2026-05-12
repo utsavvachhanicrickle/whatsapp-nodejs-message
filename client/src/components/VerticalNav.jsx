@@ -29,7 +29,7 @@ function VerticalNav({
           US
         </div>
 
-        <div className="w-8 h-[1px] bg-(--border) mb-2 shrink-0" />
+        <div className="w-8 h-px bg-(--border) mb-2 shrink-0" />
 
         {/* List of Sessions */}
         {users?.map((user) => (
@@ -47,7 +47,7 @@ function VerticalNav({
             </button>
             
             {/* Hover Tooltip & Delete button */}
-            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-2 bg-(--bg-primary) border border-(--border) px-3 py-1.5 rounded-lg shadow-xl z-[100] whitespace-nowrap animate-fade-in">
+            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-2 bg-(--bg-primary) border border-(--border) px-3 py-1.5 rounded-lg shadow-xl z-100 whitespace-nowrap animate-fade-in">
                <span className="text-xs font-semibold text-(--text-primary)">{user}</span>
                <button 
                  onClick={(e) => { e.stopPropagation(); onDeleteUser(e, user); }}
@@ -81,7 +81,7 @@ function VerticalNav({
           </button>
 
           {showSettings && (
-            <div className="absolute bottom-0 left-16 mb-2 w-48 bg-(--bg-primary) rounded-lg shadow-xl border border-(--border) animate-fade-in overflow-hidden z-[100]">
+            <div className="absolute bottom-0 left-16 mb-2 w-48 bg-(--bg-primary) rounded-lg shadow-xl border border-(--border) animate-fade-in overflow-hidden z-100">
               <button
                 onClick={() => {
                   setDarkMode(!darkMode);

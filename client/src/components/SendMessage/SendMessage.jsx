@@ -101,9 +101,13 @@ function SendMessage({ sessionId }) {
 
   const normalizeId = (id) => {
     if (!id) return "";
+    if (id.includes("@g.us")) return id; // Keep group IDs
+    if (id.includes("@broadcast")) return id; // Keep broadcast IDs
+    if (id.includes("@lid")) return id; // 🔥 Keep LID IDs
     const clean = id.split("@")[0].replace(/\D/g, "");
     return `${clean}@c.us`;
   };
+
 
   useEffect(() => {
     console.log("🔌 Socket listener attached for session:", sessionId);

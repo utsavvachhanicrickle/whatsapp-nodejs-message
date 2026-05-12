@@ -34,7 +34,7 @@ const syncContacts = async (client, sessionId) => {
     const contacts = await safeClientCall(client, 'getContacts');
     
     const userContacts = contacts
-      .filter((c) => c.isUser && !c.isGroup && c.number && !c.id._serialized.includes('@lid') && (c.name) )
+      .filter((c) => c.isUser && !c.isGroup && c.number && (c.name) )
       .map((c) => ({
         whatsappId: c.id._serialized,
         name: c.name || null,
@@ -42,6 +42,7 @@ const syncContacts = async (client, sessionId) => {
         phoneNumber: c.number,
         userId: userId,
       }));
+
 
     if (userContacts.length > 0) {
       const { upsertWhatsappContacts } = await import("./services/contact.service.js");
@@ -146,8 +147,13 @@ const bindClientEvents = (client, sessionId, io) => {
       // Save to database
       const saved = await saveMessage(messageData);
       
-      // Notify all clients in the session room
-      io.to(`session_${sessionId}`).emit("new-message", messageData);
+      // Notify all clients in the session room if it was a valid message (not filtered)
+      if (saved) {
+        console.log(`✅ Message saved: ${msg.id._serialized}`);
+        io.to(`session_${sessionId}`).emit("new-message", messageData);
+      }
+
+
     } catch (err) {
       console.error("❌ Error handling message_create:", err);
     }

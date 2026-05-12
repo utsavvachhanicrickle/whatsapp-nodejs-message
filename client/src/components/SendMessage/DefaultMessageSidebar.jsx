@@ -66,19 +66,8 @@ function DefaultMessageSidebar({ onSelect, onEdit, onDelete, defaulMessages }) {
       {/* MESSAGE LIST */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {filteredMessages.length === 0 ? (
-          <div
-            className="
-              h-full
-              flex
-              flex-col
-              items-center
-              justify-center
-              text-center
-              opacity-50
-            "
-          >
+          <div className=" h-full flex flex-col items-center justify-center text-center opacity-50 ">
             <div className="text-4xl mb-3">📭</div>
-
             <p className="text-sm text-(--text-secondary)">
               No templates found
             </p>
@@ -88,64 +77,20 @@ function DefaultMessageSidebar({ onSelect, onEdit, onDelete, defaulMessages }) {
             <div
               key={m._id || i}
               onClick={() => onSelect(m.message)}
-              className="
-                group
-                relative
-                rounded-2xl
-                border
-                p-4
-                cursor-pointer
-                transition-all
-                duration-200
-                bg-(--bg-primary)
-                border-(--border)
-                hover:border-(--primary)/30
-                hover:bg-(--bg-secondary)
-                hover:shadow-md
-              "
+              className=" group relative rounded-2xl border p-4 cursor-pointer transition-all duration-200 bg-(--bg-primary) border-(--border) hover:border-(--primary)/30 hover:bg-(--bg-secondary) hover:shadow-md "
             >
               {/* TEXT */}
               <div className="pr-14">
-                <h4
-                  className="
-                    text-sm
-                    font-semibold
-                    truncate
-                    text-(--text-primary)
-                  "
-                >
+                <h4 className=" text-sm font-semibold truncate text-(--text-primary) ">
                   {m.title}
                 </h4>
-
-                <p
-                  className="
-                    mt-1
-                    text-xs
-                    leading-relaxed
-                    line-clamp-2
-                    text-(--text-secondary)
-                  "
-                >
+                <p className=" mt-1 text-xs leading-relaxed line-clamp-2 text-(--text-secondary) ">
                   {m.message}
                 </p>
               </div>
 
               {/* ACTIONS */}
-              <div
-                className="
-                  absolute
-                  top-3
-                  right-3
-                  gap-2
-                  opacity-0
-                  translate-x-2
-                  transition-all
-                  duration-200
-                  group-hover:opacity-100
-                  group-hover:translate-x-0
-                "
-              >
-                {/* EDIT */}
+              <div className="top-3 absolute right-3 gap-2 opacity-0 translate-x-2 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0  ">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -164,7 +109,6 @@ function DefaultMessageSidebar({ onSelect, onEdit, onDelete, defaulMessages }) {
                   <EditIcon sx={{ fontSize: 16 }} />
                 </button>
 
-                {/* DELETE */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

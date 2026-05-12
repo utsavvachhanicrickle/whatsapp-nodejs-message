@@ -29,12 +29,29 @@ export const messageSendController = async (req, res, next) => {
     }
 
     try {
-      await safeClientCall(client, 'sendMessage', [formatted, message]);
-      res.json({ success: true });
+      const result = await safeClientCall(client, 'sendMessage', [formatted, message]);
+
+      // 🔥 Manually save the sent message to ensure it's in the history immediately
+      if (result) {
+        const { saveMessage } = await import("../services/message.service.js");
+        await saveMessage({
+          sessionId,
+          whatsappId: result.id?._serialized,
+          from: result.from,
+          to: result.to,
+          body: result.body,
+          type: result.type,
+          fromMe: result.fromMe,
+          timestamp: result.timestamp,
+        });
+      }
+
+      res.json({ success: true, message: result });
     } catch (sendErr) {
       console.error("❌ WhatsApp Send Error:", sendErr.message);
       return next(new AppError("WhatsApp failed to send message. Is the number valid?", 500));
     }
+
   } catch (err) {
     console.error(err);
     return next(new AppError(MESSAGES.WHATSAPP_MESSAGE_ERROR, 500));
@@ -96,12 +113,29 @@ export const multipleMessageSendController = async (req, res, next) => {
       }
 
       try {
-        await safeClientCall(client, 'sendMessage', [formatted, message]);
+        const result = await safeClientCall(client, 'sendMessage', [formatted, message]);
+        
+        // 🔥 Save each sent message to history
+        if (result) {
+          const { saveMessage } = await import("../services/message.service.js");
+          await saveMessage({
+            sessionId,
+            whatsappId: result.id?._serialized,
+            from: result.from,
+            to: result.to,
+            body: result.body,
+            type: result.type,
+            fromMe: result.fromMe,
+            timestamp: result.timestamp,
+          });
+        }
+        
         success++;
       } catch (err) {
         console.log("❌ Failed:", formatted, err.message);
         failed++;
       }
+
     }
 
     return res.status(200).json({

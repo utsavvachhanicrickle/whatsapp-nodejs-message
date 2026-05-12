@@ -40,11 +40,54 @@ function ContactSidebar({
     let baseContacts = contacts;
     
     if (viewMode === "chats") {
-      baseContacts = contacts.filter(c => 
-        chatsWithMessages.some(chat => chat.contactId === c.whatsappId || chat.contactId === c.phoneNumber)
-      );
+      // Create a map of existing contacts by their WhatsApp ID for quick lookup
+      const contactMap = new Map();
+      contacts.forEach(c => {
+        if (c.whatsappId) contactMap.set(c.whatsappId, c);
+        // Also map by phone number if whatsappId is missing or doesn't match
+        const phoneKey = (c.phoneNumber || "").replace(/\D/g, "");
+        if (phoneKey) contactMap.set(phoneKey, c);
+      });
+
+      // Combine existing contacts with chats that might not be in contacts
+      const chatContacts = chatsWithMessages.map(chat => {
+        const chatPhoneKey = (chat.contactId || "").split('@')[0].replace(/\D/g, "");
+        
+        const existing = contactMap.get(chat.contactId) || contactMap.get(chatPhoneKey);
+        
+        if (existing) {
+          return { ...existing, lastChat: chat };
+        }
+        
+        // Create a virtual contact for someone not in saved contacts
+        return {
+          _id: chat.contactId,
+          whatsappId: chat.contactId,
+          phoneNumber: chatPhoneKey,
+          name: chatPhoneKey || "Unknown",
+          isVirtual: true,
+          lastChat: chat
+        };
+      });
+
+      // Filter out duplicates (if any) and handle search
+      const seen = new Set();
+      const uniqueChatContacts = chatContacts.filter(c => {
+        const key = c.whatsappId || c.phoneNumber;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      return uniqueChatContacts.filter((c) => {
+        const value = search.toLowerCase();
+        const name = c.name || "";
+        const phoneNumber = c.phoneNumber || "";
+        return name.toLowerCase().includes(value) || phoneNumber.includes(value);
+      });
     }
 
+    // Default "all" or "groups" view (existing logic)
     let filtered = baseContacts.filter((c) => {
       const value = search.toLowerCase();
       const name = c.name || "";
@@ -64,6 +107,7 @@ function ContactSidebar({
 
     return filtered;
   }, [contacts, search, sortOrder, viewMode, chatsWithMessages]);
+
 
   const handleSelectAll = () => {
     if (multipleNumber.length === contacts.length) {
@@ -244,26 +288,29 @@ function ContactSidebar({
                   </div>
                 </div>
 
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(i, c);
-                    }}
-                    className="p-1.5 text-(--text-secondary) hover:text-(--primary) hover:bg-white rounded-full shadow-sm "
-                  >
-                    <EditIcon fontSize="inherit" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(c._id);
-                    }}
-                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-white rounded-full shadow-sm "
-                  >
-                    <DeleteIcon fontSize="inherit" />
-                  </button>
-                </div>
+                {!c.isVirtual && (
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(i, c);
+                      }}
+                      className="p-1.5 text-(--text-secondary) hover:text-(--primary) hover:bg-white rounded-full shadow-sm "
+                    >
+                      <EditIcon fontSize="inherit" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(c._id);
+                      }}
+                      className="p-1.5 text-red-400 hover:text-red-600 hover:bg-white rounded-full shadow-sm "
+                    >
+                      <DeleteIcon fontSize="inherit" />
+                    </button>
+                  </div>
+                )}
+
               </div>
             );
           })
