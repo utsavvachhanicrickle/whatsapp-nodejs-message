@@ -68,7 +68,8 @@ function SendMessage({ sessionId }) {
   const [viewMode, setViewMode] = useState("all"); // "all" or "chats"
   const [chatsWithMessages, setChatsWithMessages] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
-  const [selectedContactWhatsappId, setSelectedContactWhatsappId] = useState(null);
+  const [selectedContactWhatsappId, setSelectedContactWhatsappId] =
+    useState(null);
   const [isChatMode, setIsChatMode] = useState(false);
   const chatContainerRef = useRef(null);
 
@@ -108,10 +109,9 @@ function SendMessage({ sessionId }) {
     return `${clean}@c.us`;
   };
 
-
   useEffect(() => {
     console.log("🔌 Socket listener attached for session:", sessionId);
-    
+
     const handleNewMessage = (msg) => {
       console.log("📨 Received new-message event:", msg);
       if (msg.sessionId === sessionId) {
@@ -122,12 +122,15 @@ function SendMessage({ sessionId }) {
         const normalizedIncoming = normalizeId(contactIdInMsg);
         const normalizedSelected = normalizeId(selectedContactWhatsappId);
 
-        console.log("🔍 Comparing IDs:", { normalizedIncoming, normalizedSelected });
+        console.log("🔍 Comparing IDs:", {
+          normalizedIncoming,
+          normalizedSelected,
+        });
 
         if (normalizedIncoming === normalizedSelected) {
           console.log("✨ ID Match! Adding message to UI");
-          setChatMessages(prev => {
-            if (prev.some(m => m.whatsappId === msg.whatsappId)) return prev;
+          setChatMessages((prev) => {
+            if (prev.some((m) => m.whatsappId === msg.whatsappId)) return prev;
             return [...prev, msg];
           });
         }
@@ -145,22 +148,33 @@ function SendMessage({ sessionId }) {
       if (data.sessionId === sessionId) {
         console.log("✅ WhatsApp Ready! Refreshing data...");
         dispatch(fetchGroups(sessionId));
+        dispatch(fetchContactSlice());
         fetchChatsWithMessages();
       }
     };
 
+    const handleContactsSynced = (data) => {
+      if (data.sessionId === sessionId) {
+        console.log("✅ Contacts synced! Refreshing UI list...");
+        dispatch(fetchContactSlice());
+        toast.success(`Synced ${data.count} contacts`);
+      }
+    };
+
     socket.on("ready", handleReady);
+    socket.on("contacts-synced", handleContactsSynced);
     return () => {
       socket.off("ready", handleReady);
+      socket.off("contacts-synced", handleContactsSynced);
     };
   }, [sessionId, dispatch]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
     console.log(chatMessages);
-    
   }, [chatMessages, isChatMode]);
 
   const sendMessage = async () => {
@@ -387,7 +401,11 @@ function SendMessage({ sessionId }) {
                 key={tab.id}
                 onClick={tab.onClick}
                 className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-full transition-all ${
-                  (tab.id === "chat" ? isChatMode : !isChatMode && activeMode === tab.id)
+                  (
+                    tab.id === "chat"
+                      ? isChatMode
+                      : !isChatMode && activeMode === tab.id
+                  )
                     ? "bg-white text-(--primary) shadow-sm"
                     : "text-(--text-secondary) hover:bg-white/50"
                 }`}
@@ -397,7 +415,7 @@ function SendMessage({ sessionId }) {
             ))}
           </div>
           {isChatMode && (
-            <button 
+            <button
               onClick={() => setIsChatMode(false)}
               className="ml-auto text-xs font-bold text-(--primary) hover:underline"
             >
@@ -418,9 +436,13 @@ function SendMessage({ sessionId }) {
                 <div>
                   <h3 className="font-semibold text-sm">{name || number}</h3>
                   <div className="flex items-center gap-2">
-                    <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Active Chat</p>
-                    <button 
-                      onClick={() => fetchChatMessages(selectedContactWhatsappId)}
+                    <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">
+                      Active Chat
+                    </p>
+                    <button
+                      onClick={() =>
+                        fetchChatMessages(selectedContactWhatsappId)
+                      }
                       className="text-[10px] text-(--primary) hover:underline"
                     >
                       Refresh History
@@ -430,7 +452,7 @@ function SendMessage({ sessionId }) {
               </div>
 
               {/* Chat Messages Area */}
-              <div 
+              <div
                 ref={chatContainerRef}
                 className="flex-1 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-3 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-opacity-10"
               >
@@ -449,11 +471,18 @@ function SendMessage({ sessionId }) {
                       }`}
                     >
                       <p className="leading-relaxed">{msg.body}</p>
-                      <span className={`text-[9px] mt-1 block opacity-50 text-right`}>
-                        {new Date(msg.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <span
+                        className={`text-[9px] mt-1 block opacity-50 text-right`}
+                      >
+                        {new Date(msg.timestamp * 1000).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                       {/* Bubble Tail pseudo-element replacement with CSS logic */}
-                      <div className={`absolute top-0 w-2 h-2 ${msg.fromMe ? "-right-1 bg-[#dcf8c6] [clip-path:polygon(0_0,0_100%,100%_0)]" : "-left-1 bg-white [clip-path:polygon(0_0,100%_100%,100%_0)]"}`}></div>
+                      <div
+                        className={`absolute top-0 w-2 h-2 ${msg.fromMe ? "-right-1 bg-[#dcf8c6] [clip-path:polygon(0_0,0_100%,100%_0)]" : "-left-1 bg-white [clip-path:polygon(0_0,100%_100%,100%_0)]"}`}
+                      ></div>
                     </div>
                   ))
                 )}
@@ -466,7 +495,7 @@ function SendMessage({ sessionId }) {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
+                    if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       sendMessage();
                     }
@@ -490,7 +519,8 @@ function SendMessage({ sessionId }) {
             <div className="w-full max-w-2xl bg-(--bg-primary) rounded-2xl shadow-xl overflow-hidden border border-(--border)">
               <div className="p-4 bg-(--bg-secondary)/50 border-b border-(--border) flex items-center justify-between">
                 <h3 className="font-semibold text-sm">
-                  Send {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)}{" "}
+                  Send{" "}
+                  {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)}{" "}
                   Message
                 </h3>
                 <div className="flex items-center gap-2">
@@ -511,11 +541,12 @@ function SendMessage({ sessionId }) {
                 {/* RECIPIENTS DISPLAY (for multiple/group) */}
                 {(activeMode === "multiple" || activeMode === "group") && (
                   <div className="p-3 bg-(--bg-secondary)/30 rounded-xl border border-dashed border-(--border) min-h-[100px] max-h-[150px] overflow-y-auto flex flex-wrap gap-2">
-                    {activeMode === "multiple" && multipleNumber.length === 0 && (
-                      <p className="text-xs text-(--text-secondary) m-auto italic">
-                        Select contacts from the left sidebar
-                      </p>
-                    )}
+                    {activeMode === "multiple" &&
+                      multipleNumber.length === 0 && (
+                        <p className="text-xs text-(--text-secondary) m-auto italic">
+                          Select contacts from the left sidebar
+                        </p>
+                      )}
                     {activeMode === "group" && multipleGroup.length === 0 && (
                       <p className="text-xs text-(--text-secondary) m-auto italic">
                         Select groups from the left sidebar
@@ -611,7 +642,7 @@ function SendMessage({ sessionId }) {
                       <label className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider">
                         Recent History
                       </label>
-                      <button 
+                      <button
                         onClick={() => setIsChatMode(true)}
                         className="text-[10px] font-bold text-(--primary) hover:underline"
                       >
@@ -646,7 +677,8 @@ function SendMessage({ sessionId }) {
                   }
                   disabled={
                     messageSending ||
-                    (activeMode === "multiple" && multipleNumber.length === 0) ||
+                    (activeMode === "multiple" &&
+                      multipleNumber.length === 0) ||
                     (activeMode === "group" && multipleGroup.length === 0)
                   }
                   className="w-full py-4 bg-(--primary) text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:shadow-none mt-2 active:scale-[0.98]"

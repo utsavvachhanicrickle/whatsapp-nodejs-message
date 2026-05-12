@@ -32,8 +32,6 @@ export const saveMessage = async (messageData) => {
       timestamp,
     ];
     const { rows } = await pool.query(query, values);
-    console.log(rows);
-
     return rows[0];
   } catch (err) {
     // Fallback if ON CONFLICT fails (e.g. unique constraint missing)
@@ -61,24 +59,30 @@ export const saveMessage = async (messageData) => {
   }
 };
 
+
+
+
 export const getMessagesBySessionAndContact = async (
   sessionId,
   contactWhatsappId,
 ) => {
-  // Normalize the input ID to ensure we match both with and without suffix
+  // Normalize the input ID
   const cleanId = contactWhatsappId.split("@")[0];
 
   const query = `
-    SELECT * FROM messages 
-    WHERE "sessionId" = $1 
+    SELECT m.* 
+    FROM messages m
+    LEFT JOIN contacts c ON (c."whatsappId" = $2 OR c.lid = $2)
+    WHERE m."sessionId" = $1 
       AND (
-        "from" = $2 OR "to" = $2 OR 
-        "from" = $3 OR "to" = $3 OR
-        "from" LIKE $4 OR "to" LIKE $4
+        m."from" = $2 OR m."to" = $2 OR 
+        m."from" = c."whatsappId" OR m."to" = c."whatsappId" OR
+        m."from" = c.lid OR m."to" = c.lid OR
+        m."from" = $3 OR m."to" = $3 OR
+        m."from" LIKE $4 OR m."to" LIKE $4
       )
-    ORDER BY timestamp ASC;
+    ORDER BY m.timestamp ASC;
   `;
-  // $2: raw ID, $3: clean ID, $4: clean ID with prefix match
   const values = [sessionId, contactWhatsappId, cleanId, `${cleanId}@%`];
   const { rows } = await pool.query(query, values);
   return rows;
@@ -100,12 +104,20 @@ export const getContactsWithMessages = async (sessionId) => {
         AND "from" NOT LIKE '%@newsletter%'
         AND "to" NOT LIKE '%@newsletter%'
     )
-    SELECT "contactId", body, timestamp, "fromMe"
-    FROM LastMessages
-    WHERE rn = 1
-    ORDER BY timestamp DESC;
+    SELECT 
+      lm."contactId", 
+      lm.body, 
+      lm.timestamp, 
+      lm."fromMe",
+      COALESCE(c1.name, c2.name) as "name"
+    FROM LastMessages lm
+    LEFT JOIN contacts c1 ON c1."whatsappId" = lm."contactId"
+    LEFT JOIN contacts c2 ON c2.lid = lm."contactId"
+    WHERE lm.rn = 1
+    ORDER BY lm.timestamp DESC;
   `;
   const values = [sessionId];
   const { rows } = await pool.query(query, values);
   return rows;
 };
+

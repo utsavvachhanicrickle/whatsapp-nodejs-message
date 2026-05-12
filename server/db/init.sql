@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS contacts (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "whatsappId" VARCHAR(100),
+    lid VARCHAR(255),
     name VARCHAR(255),
+
     "pushName" VARCHAR(255),
     "phoneNumber" VARCHAR(20) NOT NULL,
     "userId" UUID NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
@@ -60,3 +62,12 @@ CREATE TABLE IF NOT EXISTS messages (
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE ("whatsappId")
 );
+
+-- Migration: Add lid column to contacts if not exists
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contacts' AND column_name='lid') THEN
+        ALTER TABLE contacts ADD COLUMN lid VARCHAR(255);
+    END IF;
+END $$;
+

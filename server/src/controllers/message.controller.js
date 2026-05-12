@@ -31,20 +31,38 @@ export const messageSendController = async (req, res, next) => {
     try {
       const result = await safeClientCall(client, 'sendMessage', [formatted, message]);
 
-      // 🔥 Manually save the sent message to ensure it's in the history immediately
+      // 🔥 Manually save the sent message with canonical ID resolution
       if (result) {
+        const contact = await result.getContact();
+        const chat = await result.getChat();
+        
+        let canonicalFrom = contact.id._serialized;
+        if (canonicalFrom.includes('@lid') && contact.number) {
+          canonicalFrom = `${contact.number}@c.us`;
+        }
+
+        let canonicalTo = chat.id._serialized;
+        if (canonicalTo.includes('@lid')) {
+          const chatContact = await chat.getContact().catch(() => null);
+          if (chatContact && chatContact.number) {
+            canonicalTo = `${chatContact.number}@c.us`;
+          }
+        }
+
         const { saveMessage } = await import("../services/message.service.js");
         await saveMessage({
           sessionId,
           whatsappId: result.id?._serialized,
-          from: result.from,
-          to: result.to,
+          from: canonicalFrom,
+          to: canonicalTo,
           body: result.body,
           type: result.type,
           fromMe: result.fromMe,
           timestamp: result.timestamp,
         });
       }
+
+
 
       res.json({ success: true, message: result });
     } catch (sendErr) {
@@ -115,23 +133,41 @@ export const multipleMessageSendController = async (req, res, next) => {
       try {
         const result = await safeClientCall(client, 'sendMessage', [formatted, message]);
         
-        // 🔥 Save each sent message to history
+        // 🔥 Save each sent message with canonical ID resolution
         if (result) {
+          const contact = await result.getContact();
+          const chat = await result.getChat();
+
+          let canonicalFrom = contact.id._serialized;
+          if (canonicalFrom.includes('@lid') && contact.number) {
+            canonicalFrom = `${contact.number}@c.us`;
+          }
+
+          let canonicalTo = chat.id._serialized;
+          if (canonicalTo.includes('@lid')) {
+            const chatContact = await chat.getContact().catch(() => null);
+            if (chatContact && chatContact.number) {
+              canonicalTo = `${chatContact.number}@c.us`;
+            }
+          }
+
           const { saveMessage } = await import("../services/message.service.js");
           await saveMessage({
             sessionId,
             whatsappId: result.id?._serialized,
-            from: result.from,
-            to: result.to,
+            from: canonicalFrom,
+            to: canonicalTo,
             body: result.body,
             type: result.type,
             fromMe: result.fromMe,
             timestamp: result.timestamp,
           });
         }
+
         
         success++;
       } catch (err) {
+
         console.log("❌ Failed:", formatted, err.message);
         failed++;
       }

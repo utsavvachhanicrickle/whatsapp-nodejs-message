@@ -9,7 +9,8 @@ const initializing = {}; // 🔥 prevent duplicate init
 const syncing = {}; // 🔥 prevent duplicate sync
 
 // ================= SYNC CONTACTS =================
-const syncContacts = async (client, sessionId) => {
+const syncContacts = async (client, sessionId, io) => {
+
   if (syncing[sessionId]) {
     console.log("ℹ️ Sync already in progress for:", sessionId);
     return;
@@ -34,21 +35,23 @@ const syncContacts = async (client, sessionId) => {
     const contacts = await safeClientCall(client, 'getContacts');
     
     const userContacts = contacts
-      .filter((c) => c.isUser && !c.isGroup && c.number && (c.name) )
+      .filter((c) => c.isUser && !c.isGroup && c.number && c.id._serialized.endsWith('@c.us') && (c.name) )
       .map((c) => ({
         whatsappId: c.id._serialized,
+        lid: c.id.lid || null,
         name: c.name || null,
         pushName: c.pushname || null,
         phoneNumber: c.number,
         userId: userId,
       }));
 
-
     if (userContacts.length > 0) {
       const { upsertWhatsappContacts } = await import("./services/contact.service.js");
       await upsertWhatsappContacts(userContacts);
       console.log(`✅ Successfully synced ${userContacts.length} contacts for:`, sessionId);
+      io.to(`session_${sessionId}`).emit("contacts-synced", { sessionId, count: userContacts.length });
     } else {
+
       console.log("ℹ️ No user contacts found to sync for:", sessionId);
     }
   } catch (err) {
@@ -78,7 +81,7 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
     // ✅ IMPORTANT: if already logged in and ready → emit ready and sync
     if (client.isReady) {
       io.to(`session_${sessionId}`).emit("ready", { sessionId });
-      syncContacts(client, sessionId);
+      syncContacts(client, sessionId, io);
     }
     
     return;
@@ -97,9 +100,10 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
     authStrategy: new LocalAuth({ clientId: sessionId }),
     puppeteer: {
       headless: false,
-      protocolTimeout: 120000,
+      protocolTimeout: 300000, 
       args: ["--no-sandbox"],
     },
+
   });
 
   clients[sessionId] = client;
@@ -130,19 +134,38 @@ const bindClientEvents = (client, sessionId, io) => {
   // 🔥 Unified message listener for all incoming and outgoing messages
   client.on("message_create", async (msg) => {
     try {
-      console.log(`📩 message_create received: from=${msg.from}, to=${msg.to}, body=${msg.body?.substring(0, 20)}...`);
+      // 🚀 BEST SOLUTION: Resolve the actual contact identity (canonical @c.us)
+      const contact = await msg.getContact();
+      const chat = await msg.getChat();
+
+      // 🔥 FORCE @c.us conversion if still @lid by using the phone number
+      let canonicalFrom = contact.id._serialized;
+      if (canonicalFrom.includes('@lid') && contact.number) {
+        canonicalFrom = `${contact.number}@c.us`;
+      }
+
+      let canonicalTo = msg.fromMe ? chat.id._serialized : (client.info?.wid?._serialized || msg.to);
+      if (canonicalTo.includes('@lid')) {
+        const chatContact = await chat.getContact().catch(() => null);
+        if (chatContact && chatContact.number) {
+          canonicalTo = `${chatContact.number}@c.us`;
+        }
+      }
+
+      console.log(`📩 message_create resolved: from=${canonicalFrom}, to=${canonicalTo}, body=${msg.body?.substring(0, 20)}...`);
       
       const { saveMessage } = await import("./services/message.service.js");
       const messageData = {
         sessionId,
         whatsappId: msg.id._serialized,
-        from: msg.from,
-        to: msg.to,
+        from: canonicalFrom, 
+        to: canonicalTo,
         body: msg.body,
         type: msg.type,
         fromMe: msg.fromMe,
         timestamp: msg.timestamp,
       };
+
       
       // Save to database
       const saved = await saveMessage(messageData);
@@ -152,6 +175,7 @@ const bindClientEvents = (client, sessionId, io) => {
         console.log(`✅ Message saved: ${msg.id._serialized}`);
         io.to(`session_${sessionId}`).emit("new-message", messageData);
       }
+
 
 
     } catch (err) {
@@ -179,7 +203,7 @@ const bindClientEvents = (client, sessionId, io) => {
     io.to(`session_${sessionId}`).emit("ready", { sessionId });
     
     // 🔥 Initial sync when transitioning to ready
-    await syncContacts(client, sessionId);
+    await syncContacts(client, sessionId, io);
   });
 
   client.on("disconnected", async () => {

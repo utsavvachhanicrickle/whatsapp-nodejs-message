@@ -56,7 +56,7 @@ function ContactSidebar({
         const existing = contactMap.get(chat.contactId) || contactMap.get(chatPhoneKey);
         
         if (existing) {
-          return { ...existing, lastChat: chat };
+          return { ...existing, lastChat: chat, name: existing.name || chat.name };
         }
         
         // Create a virtual contact for someone not in saved contacts
@@ -64,11 +64,12 @@ function ContactSidebar({
           _id: chat.contactId,
           whatsappId: chat.contactId,
           phoneNumber: chatPhoneKey,
-          name: chatPhoneKey || "Unknown",
+          name: chat.name || chatPhoneKey || "Unknown",
           isVirtual: true,
           lastChat: chat
         };
       });
+
 
       // Filter out duplicates (if any) and handle search
       const seen = new Set();
