@@ -1,13 +1,21 @@
 import pkg from "whatsapp-web.js";
 import qrcode from "qrcode";
+import { safeClientCall } from "./utils/whatsappUtils.js";
 
 const { Client, LocalAuth } = pkg;
 
 export const clients = {};
 const initializing = {}; // 🔥 prevent duplicate init
+const syncing = {}; // 🔥 prevent duplicate sync
 
 // ================= SYNC CONTACTS =================
 const syncContacts = async (client, sessionId) => {
+  if (syncing[sessionId]) {
+    console.log("ℹ️ Sync already in progress for:", sessionId);
+    return;
+  }
+  
+  syncing[sessionId] = true;
   try {
     console.log("🔄 Syncing contacts for session:", sessionId);
     
@@ -21,7 +29,9 @@ const syncContacts = async (client, sessionId) => {
     }
 
     const userId = section.userId;
-    const contacts = await client.getContacts();
+    
+    // Use safeClientCall with retries
+    const contacts = await safeClientCall(client, 'getContacts');
     
     const userContacts = contacts
       .filter((c) => c.isUser && !c.isGroup && c.number && !c.id._serialized.includes('@lid') && (c.name) )
@@ -42,6 +52,8 @@ const syncContacts = async (client, sessionId) => {
     }
   } catch (err) {
     console.error("❌ Sync contacts error:", err.message);
+  } finally {
+    syncing[sessionId] = false;
   }
 };
 
@@ -49,22 +61,25 @@ const syncContacts = async (client, sessionId) => {
 export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
   let client = clients[sessionId];
 
+  // Join room for this session first
+  const socket = io.sockets.sockets.get(socketId);
+  if (socket) socket.join(`session_${sessionId}`);
+
   // ✅ REUSE EXISTING CLIENT
   if (client) {
     console.log("♻️ Reusing existing session:", sessionId);
 
-    bindClientEvents(client, sessionId, socketId, io);
+    // If client is already initialized, just re-bind the socket-specific events
+    // but don't wipe all listeners if we don't have to.
+    // Actually, bindClientEvents handles removeAllListeners which is a bit aggressive but ensures no leaks.
+    bindClientEvents(client, sessionId, io);
 
-    // ✅ IMPORTANT: if already logged in → emit ready and sync
-    if (client.info) {
-      io.to(socketId).emit("ready", { sessionId });
+    // ✅ IMPORTANT: if already logged in and ready → emit ready and sync
+    if (client.isReady) {
+      io.to(`session_${sessionId}`).emit("ready", { sessionId });
       syncContacts(client, sessionId);
     }
     
-    // Join room for this session
-    const socket = io.sockets.sockets.get(socketId);
-    if (socket) socket.join(`session_${sessionId}`);
-
     return;
   }
 
@@ -88,13 +103,10 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
 
   clients[sessionId] = client;
 
-  bindClientEvents(client, sessionId, socketId, io);
+  bindClientEvents(client, sessionId, io);
 
   try {
     await client.initialize();
-    // Join room after initialization
-    const socket = io.sockets.sockets.get(socketId);
-    if (socket) socket.join(`session_${sessionId}`);
   } catch (err) {
     console.log("❌ Init error:", err.message);
     delete clients[sessionId];
@@ -104,8 +116,15 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
 };
 
 // ================= EVENTS =================
-const bindClientEvents = (client, sessionId, socketId, io) => {
-  client.removeAllListeners();
+const bindClientEvents = (client, sessionId, io) => {
+  // Only remove listeners if we are setting them up for the first time or if we really need to refresh them.
+  // To avoid duplicate message_create listeners, we check if one already exists.
+  if (client.listeners('message_create').length > 0) {
+    console.log(`ℹ️ Listeners already bound for session ${sessionId}, skipping re-bind.`);
+    return;
+  }
+
+  console.log(`🔗 Binding events for session ${sessionId}`);
 
   // 🔥 Unified message listener for all incoming and outgoing messages
   client.on("message_create", async (msg) => {
@@ -125,12 +144,9 @@ const bindClientEvents = (client, sessionId, socketId, io) => {
       };
       
       // Save to database
-      console.log(`💾 Attempting to save message to DB for session: ${sessionId}`);
       const saved = await saveMessage(messageData);
-      console.log(`✅ Save result: ${saved ? 'Success' : 'Duplicate/Skipped'}`);
-
-      // Notify all clients in the session room (including sender tabs)
-      console.log(`📣 Emitting new-message to room session_${sessionId}`);
+      
+      // Notify all clients in the session room
       io.to(`session_${sessionId}`).emit("new-message", messageData);
     } catch (err) {
       console.error("❌ Error handling message_create:", err);
@@ -139,10 +155,8 @@ const bindClientEvents = (client, sessionId, socketId, io) => {
 
   client.on("qr", async (qr) => {
     const qrImage = await qrcode.toDataURL(qr);
-
     console.log("📲 QR sent:", sessionId);
-
-    io.to(socketId).emit("qr", {
+    io.to(`session_${sessionId}`).emit("qr", {
       sessionId,
       qr: qrImage,
     });
@@ -150,44 +164,42 @@ const bindClientEvents = (client, sessionId, socketId, io) => {
 
   client.on("authenticated", () => {
     console.log("🔐 Authenticated:", sessionId);
-
-    io.to(socketId).emit("authenticated", { sessionId });
+    io.to(`session_${sessionId}`).emit("authenticated", { sessionId });
   });
 
   client.on("ready", async () => {
+    client.isReady = true; // 🔥 Set ready flag
     console.log("✅ Ready:", sessionId);
-
-    io.to(socketId).emit("ready", { sessionId });
+    io.to(`session_${sessionId}`).emit("ready", { sessionId });
     
     // 🔥 Initial sync when transitioning to ready
     await syncContacts(client, sessionId);
   });
 
   client.on("disconnected", async () => {
+    client.isReady = false;
     console.log("❌ Disconnected:", sessionId);
 
     try {
       await client.destroy();
-      await client.pupBrowser?.close();
     } catch (err) {
       console.warn("Destroy error:", err.message);
     }
 
     delete clients[sessionId];
-
     io.emit("session-removed", { sessionId });
   });
 
   client.on("auth_failure", async () => {
+    client.isReady = false;
     console.log("❌ Auth failure:", sessionId);
-
     try {
       await client.destroy();
-      await client.pupBrowser?.close();
     } catch (err) {}
 
     delete clients[sessionId];
-
     io.emit("session-removed", { sessionId });
   });
 };
+
+

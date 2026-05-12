@@ -1,6 +1,7 @@
 import { clients } from "../socket.js";
 import { MESSAGES } from "../utils/Messages.js";
 import AppError from "../utils/AppError.js";
+import { safeClientCall } from "../utils/whatsappUtils.js";
 
 export const messageSendController = async (req, res, next) => {
   try {
@@ -12,13 +13,14 @@ export const messageSendController = async (req, res, next) => {
       return next(new AppError(MESSAGES.CLIENT_NOT_FOUND, 400));
     }
 
+    if (!client.isReady) {
+      return next(new AppError("WhatsApp is still initializing. Please wait a moment.", 400));
+    }
+
     // Smart formatting: ensure number has @c.us and avoid double 91 prefix
     let formatted = number;
     if (!formatted.includes("@c.us")) {
-      // Remove any non-digit characters
       const digits = formatted.replace(/\D/g, "");
-      // If it starts with 91 and has 12 digits, it's already got the country code
-      // Otherwise, if it's 10 digits, prepend 91 (assuming India by default, or better yet, don't prepend if not sure)
       if (digits.length === 10) {
         formatted = `91${digits}@c.us`;
       } else {
@@ -27,7 +29,7 @@ export const messageSendController = async (req, res, next) => {
     }
 
     try {
-      await client.sendMessage(formatted, message);
+      await safeClientCall(client, 'sendMessage', [formatted, message]);
       res.json({ success: true });
     } catch (sendErr) {
       console.error("❌ WhatsApp Send Error:", sendErr.message);
@@ -75,6 +77,10 @@ export const multipleMessageSendController = async (req, res, next) => {
       return next(new AppError(MESSAGES.CLIENT_NOT_FOUND, 400));
     }
 
+    if (!client.isReady) {
+      return next(new AppError("WhatsApp is still initializing. Please wait a moment.", 400));
+    }
+
     let success = 0;
     let failed = 0;
 
@@ -90,7 +96,7 @@ export const multipleMessageSendController = async (req, res, next) => {
       }
 
       try {
-        await client.sendMessage(formatted, message);
+        await safeClientCall(client, 'sendMessage', [formatted, message]);
         success++;
       } catch (err) {
         console.log("❌ Failed:", formatted, err.message);
@@ -105,7 +111,7 @@ export const multipleMessageSendController = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error("Bulk message error:", error);
+    console.error("Bulk message error:", error.message);
     return next(new AppError(MESSAGES.WHATSAPP_MESSAGE_ERROR, 500));
   }
-};
+};

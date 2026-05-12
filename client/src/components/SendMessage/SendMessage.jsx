@@ -137,6 +137,21 @@ function SendMessage({ sessionId }) {
   }, [sessionId, selectedContactWhatsappId]);
 
   useEffect(() => {
+    const handleReady = (data) => {
+      if (data.sessionId === sessionId) {
+        console.log("✅ WhatsApp Ready! Refreshing data...");
+        dispatch(fetchGroups(sessionId));
+        fetchChatsWithMessages();
+      }
+    };
+
+    socket.on("ready", handleReady);
+    return () => {
+      socket.off("ready", handleReady);
+    };
+  }, [sessionId, dispatch]);
+
+  useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
