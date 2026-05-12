@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
+import { DarkModeContext } from "../../context/darkModeContext";
 import { messageModules } from "../../modules/messageModules";
+
 import {
   contectFormData,
   messageTempleteFormData,
@@ -73,6 +75,7 @@ function SendMessage({ sessionId }) {
   const [isChatMode, setIsChatMode] = useState(false);
   const chatContainerRef = useRef(null);
 
+  const { darkMode } = useContext(DarkModeContext);
   const dispatch = useDispatch();
   const contacts = useSelector((state) => state.contact.contacts);
   const defaulMessages = useSelector(
@@ -310,10 +313,21 @@ function SendMessage({ sessionId }) {
       </div>
 
       {/* 2. CENTER: Composer Area */}
-      <div className="flex-1 h-full flex flex-col relative min-w-0 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat opacity-95">
+      <div className="flex-1 h-full flex flex-col relative min-w-0 bg-(--bg-chat)">
+        {/* Background Pattern Overlay */}
+        <div
+          className={`absolute inset-0 pointer-events-none z-0 ${darkMode ? "invert grayscale opacity-[0.2]" : "opacity-[0.4]"}`}
+          style={{
+            backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
+            backgroundRepeat: "repeat",
+            backgroundSize: "400px",
+          }}
+        />
+
+
         {/* Overlay for Form modals */}
         {(openBox || multipleContentAdd) && (
-          <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="absolute inset-0 z-50 bg-(--bg-chat)/40 backdrop-blur-sm flex items-center justify-center p-6">
             <div className="w-full max-w-xl animate-fade-in">
               {multipleContentAdd ? (
                 <FileUploadModal
@@ -454,34 +468,48 @@ function SendMessage({ sessionId }) {
               {/* Chat Messages Area */}
               <div
                 ref={chatContainerRef}
-                className="flex-1 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-3 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-opacity-10"
+                className={`flex-1 p-4 overflow-y-auto custom-scrollbar flex flex-col gap-2 relative`}
               >
                 {chatMessages.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center opacity-30 italic text-sm">
+                  <div className="flex-1 flex items-center justify-center opacity-30 italic text-sm relative z-10">
                     No messages yet. Say hi!
                   </div>
                 ) : (
                   chatMessages.map((msg, idx) => (
                     <div
                       key={idx}
-                      className={`max-w-[75%] p-3 rounded-2xl text-sm relative shadow-sm ${
+                      className={`max-w-[85%] p-2 px-3 rounded-xl text-sm relative shadow-sm z-10 ${
                         msg.fromMe
-                          ? "bg-[#dcf8c6] text-gray-800 self-end rounded-tr-none"
-                          : "bg-white text-gray-800 self-start rounded-tl-none"
+                          ? darkMode
+                            ? "bg-[#005c4b] text-white self-end rounded-tr-none"
+                            : "bg-[#dcf8c6] text-gray-800 self-end rounded-tr-none"
+                          : darkMode
+                            ? "bg-[#202c33] text-white self-start rounded-tl-none"
+                            : "bg-white text-gray-800 self-start rounded-tl-none"
                       }`}
                     >
-                      <p className="leading-relaxed">{msg.body}</p>
-                      <span
-                        className={`text-[9px] mt-1 block opacity-50 text-right`}
-                      >
-                        {new Date(msg.timestamp * 1000).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                      {/* Bubble Tail pseudo-element replacement with CSS logic */}
+                      <p className="leading-normal">{msg.body}</p>
+                      <div className="flex items-center justify-end gap-1 mt-0.5">
+                        <span className={`text-[9px] opacity-60`}>
+                          {new Date(msg.timestamp * 1000).toLocaleTimeString(
+                            [],
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </span>
+                        {msg.fromMe && (
+                          <span className="text-[10px] text-blue-400">✓</span>
+                        )}
+                      </div>
+                      {/* Bubble Tail */}
                       <div
-                        className={`absolute top-0 w-2 h-2 ${msg.fromMe ? "-right-1 bg-[#dcf8c6] [clip-path:polygon(0_0,0_100%,100%_0)]" : "-left-1 bg-white [clip-path:polygon(0_0,100%_100%,100%_0)]"}`}
+                        className={`absolute top-0 w-2 h-2 ${
+                          msg.fromMe
+                            ? `-right-1 ${darkMode ? "bg-[#005c4b]" : "bg-[#dcf8c6]"} [clip-path:polygon(0_0,0_100%,100%_0)]`
+                            : `-left-1 ${darkMode ? "bg-[#202c33]" : "bg-white"} [clip-path:polygon(0_0,100%_100%,100%_0)]`
+                        }`}
                       ></div>
                     </div>
                   ))
@@ -500,8 +528,9 @@ function SendMessage({ sessionId }) {
                       sendMessage();
                     }
                   }}
-                  className="flex-1 p-3 text-sm border-none rounded-xl bg-white focus:ring-1 focus:ring-(--primary) outline-none text-(--text-primary) max-h-[100px] resize-none"
+                  className={`flex-1 p-3 text-sm border-none rounded-xl bg-(--bg-primary) focus:ring-1 focus:ring-(--primary) outline-none text-(--text-primary) max-h-[100px] resize-none ${darkMode ? "text-white" : "text-gray-800"}`}
                 />
+
                 <button
                   onClick={sendMessage}
                   disabled={!message.trim() || messageSending}

@@ -276,7 +276,6 @@ function ContactSidebar({
                             if (!chat) return c.phoneNumber;
                             return (
                               <span className="flex items-center gap-1">
-                                {chat.fromMe && <span className="text-blue-400">✓✓</span>}
                                 {chat.body}
                               </span>
                             );
