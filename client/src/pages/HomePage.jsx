@@ -142,7 +142,7 @@ function HomePage() {
           </div>
         ) : (
           <div className="h-full w-full flex flex-col">
-            <div className="h-[60px] bg-(--header) border-b border-(--border) flex items-center justify-between px-6 shrink-0 z-30">
+            <div className="h-15 bg-(--header) border-b border-(--border) flex items-center justify-between px-6 shrink-0 z-30">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shadow-sm">
                   {activeUser.slice(-2)}

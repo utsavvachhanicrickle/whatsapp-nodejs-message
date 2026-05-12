@@ -7,6 +7,8 @@ const { Client, LocalAuth } = pkg;
 export const clients = {};
 const initializing = {}; // 🔥 prevent duplicate init
 const syncing = {}; // 🔥 prevent duplicate sync
+const lastQR = {}; // 🔥 track the last QR code for each session
+
 
 // ================= SYNC CONTACTS =================
 const syncContacts = async (client, sessionId, io) => {
@@ -82,7 +84,11 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
     if (client.isReady) {
       io.to(`session_${sessionId}`).emit("ready", { sessionId });
       syncContacts(client, sessionId, io);
+    } else if (lastQR[sessionId]) {
+      // 🔥 If not ready but we have a QR, send it so the new client can see it immediately
+      io.to(`session_${sessionId}`).emit("qr", { qr: lastQR[sessionId], sessionId });
     }
+
     
     return;
   }
@@ -103,8 +109,8 @@ export const startWhatsAppSession = async ({ sessionId, socketId, io }) => {
       protocolTimeout: 300000, 
       args: ["--no-sandbox"],
     },
-
   });
+
 
   clients[sessionId] = client;
 
@@ -184,13 +190,15 @@ const bindClientEvents = (client, sessionId, io) => {
   });
 
   client.on("qr", async (qr) => {
-    const qrImage = await qrcode.toDataURL(qr);
     console.log("📲 QR sent:", sessionId);
+    const qrImage = await qrcode.toDataURL(qr);
+    lastQR[sessionId] = qrImage; // 🔥 Store the IMAGE data URL
     io.to(`session_${sessionId}`).emit("qr", {
       sessionId,
       qr: qrImage,
     });
   });
+
 
   client.on("authenticated", () => {
     console.log("🔐 Authenticated:", sessionId);
@@ -199,6 +207,7 @@ const bindClientEvents = (client, sessionId, io) => {
 
   client.on("ready", async () => {
     client.isReady = true; // 🔥 Set ready flag
+    lastQR[sessionId] = null; // 🔥 Clear QR once ready
     console.log("✅ Ready:", sessionId);
     io.to(`session_${sessionId}`).emit("ready", { sessionId });
     

@@ -370,7 +370,7 @@ function SendMessage({ sessionId }) {
         )}
 
         {/* Composer Header (Tab Switcher) */}
-        <div className="h-[50px] bg-(--header)/90 backdrop-blur-md border-b border-(--border) flex items-center justify-center px-4 shrink-0 z-20">
+        <div className="h-12.5 bg-(--header)/90 backdrop-blur-md border-b border-(--border) flex items-center justify-center px-4 shrink-0 z-20">
           <div className="flex bg-(--bg-secondary) p-1 rounded-full gap-1">
             {[
               {
@@ -528,7 +528,7 @@ function SendMessage({ sessionId }) {
                       sendMessage();
                     }
                   }}
-                  className={`flex-1 p-3 text-sm border-none rounded-xl bg-(--bg-primary) focus:ring-1 focus:ring-(--primary) outline-none text-(--text-primary) max-h-[100px] resize-none ${darkMode ? "text-white" : "text-gray-800"}`}
+                  className={`flex-1 p-3 text-sm border-none rounded-xl bg-(--bg-primary) focus:ring-1 focus:ring-(--primary) outline-none text-(--text-primary) max-h-25 resize-none ${darkMode ? "text-white" : "text-gray-800"}`}
                 />
 
                 <button
@@ -569,7 +569,7 @@ function SendMessage({ sessionId }) {
               <div className="p-6 flex flex-col gap-5">
                 {/* RECIPIENTS DISPLAY (for multiple/group) */}
                 {(activeMode === "multiple" || activeMode === "group") && (
-                  <div className="p-3 bg-(--bg-secondary)/30 rounded-xl border border-dashed border-(--border) min-h-[100px] max-h-[150px] overflow-y-auto flex flex-wrap gap-2">
+                  <div className="p-3 bg-(--bg-secondary)/30 rounded-xl border border-dashed border-(--border) min-h-25 max-h-37.5 overflow-y-auto flex flex-wrap gap-2">
                     {activeMode === "multiple" &&
                       multipleNumber.length === 0 && (
                         <p className="text-xs text-(--text-secondary) m-auto italic">
@@ -660,7 +660,7 @@ function SendMessage({ sessionId }) {
                     placeholder="Type your message here..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className="p-4 text-sm border-none rounded-2xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) min-h-[180px] resize-none leading-relaxed"
+                    className="p-4 text-sm border-none rounded-2xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) min-h-45 resize-none leading-relaxed"
                   />
                 </div>
 
@@ -678,7 +678,7 @@ function SendMessage({ sessionId }) {
                         Full Chat View
                       </button>
                     </div>
-                    <div className="flex flex-col gap-2 p-4 bg-(--bg-secondary)/50 rounded-2xl max-h-[200px] overflow-y-auto custom-scrollbar border border-(--border)">
+                    <div className="flex flex-col gap-2 p-4 bg-(--bg-secondary)/50 rounded-2xl max-h-50 overflow-y-auto custom-scrollbar border border-(--border)">
                       {chatMessages.slice(-5).map((msg, idx) => (
                         <div
                           key={idx}
@@ -731,7 +731,7 @@ function SendMessage({ sessionId }) {
 
       {/* 3. RIGHT SIDEBAR (Default Messages) */}
       <div className="h-full shrink-0 flex flex-col bg-(--sidebar) border-l border-(--border)">
-        <div className="p-4 h-[60px] flex items-center justify-between bg-(--header) border-b border-(--border)">
+        <div className="p-4 h-15 flex items-center justify-between bg-(--header) border-b border-(--border)">
           <div className="flex items-center gap-2">
             <LibraryBooksIcon className="text-(--primary)" fontSize="small" />
             <h3 className="font-semibold text-sm">Templates</h3>
