@@ -59,7 +59,7 @@ function ChatView({
           {/* Avatar */}
           <div className="relative shrink-0">
             <div
-              className={`w-13 h-13 rounded-full bg-gradient-to-br ${getRandomGradient(
+              className={`w-13 h-13 rounded-full bg-linear-to-br ${getRandomGradient(
                 name || number,
               )} flex items-center justify-center text-white font-bold text-lg shadow-lg`}
             >
@@ -183,7 +183,7 @@ function ChatView({
                   )}
 
                   {/* Message */}
-                  <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                  <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed">
                     {msg.body || (
                       <span className="italic opacity-50">
                         Empty message

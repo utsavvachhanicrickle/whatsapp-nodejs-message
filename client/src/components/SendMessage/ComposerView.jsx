@@ -1,11 +1,18 @@
 import SendIcon from "@mui/icons-material/Send";
 import ClearIcon from "@mui/icons-material/Clear";
 
+import PersonIcon from "@mui/icons-material/Person";
+import GroupsIcon from "@mui/icons-material/Groups";
+import PeopleIcon from "@mui/icons-material/People";
+import ChatIcon from "@mui/icons-material/Chat";
+import HistoryIcon from "@mui/icons-material/History";
+import PhoneIcon from "@mui/icons-material/Phone";
+
 function ComposerView({
   activeMode,
-  multipleNumber,
+  multipleNumber = [],
   setMultipleNumber,
-  multipleGroup,
+  multipleGroup = [],
   setMultipleGroup,
   name,
   setName,
@@ -17,7 +24,7 @@ function ComposerView({
   sendMultipleMessages,
   sendMultipleGroupMessages,
   messageSending,
-  chatMessages,
+  chatMessages = [],
   setIsChatMode,
 }) {
   const handleSubmit = () => {
@@ -35,146 +42,261 @@ function ComposerView({
     (activeMode === "multiple" && multipleNumber.length === 0) ||
     (activeMode === "group" && multipleGroup.length === 0);
 
+  const getModeIcon = () => {
+    if (activeMode === "single") {
+      return <PersonIcon fontSize="small" />;
+    }
+
+    if (activeMode === "multiple") {
+      return <PeopleIcon fontSize="small" />;
+    }
+
+    return <GroupsIcon fontSize="small" />;
+  };
+
   return (
-    <div className="w-full max-w-2xl bg-(--bg-primary) rounded-2xl shadow-xl overflow-hidden border border-(--border)">
-      <div className="p-4 bg-(--bg-secondary)/50 border-b border-(--border) flex items-center justify-between">
-        <h3 className="font-semibold text-sm">
-          Send {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} Message
-        </h3>
-        <div className="flex items-center gap-2">
-          {activeMode === "multiple" && (
-            <span className="text-[10px] bg-(--primary) text-white px-2 py-0.5 rounded-full font-bold">
-              {multipleNumber.length} SELECTED
-            </span>
-          )}
-          {activeMode === "group" && (
-            <span className="text-[10px] bg-(--primary) text-white px-2 py-0.5 rounded-full font-bold">
-              {multipleGroup.length} SELECTED
-            </span>
-          )}
+    <div className="w-full max-w-3xl bg-(--bg-primary) rounded-3xl shadow-2xl overflow-hidden border border-(--border)">
+      {/* HEADER */}
+      <div className="px-6 py-5 bg-(--bg-secondary)/70 backdrop-blur-xl border-b border-(--border) flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-(--primary)/10 text-(--primary) flex items-center justify-center">
+            {getModeIcon()}
+          </div>
+
+          <div>
+            <h3 className="font-bold text-base text-(--text-primary)">
+              {activeMode === "single" && "Single Message"}
+              {activeMode === "multiple" && "Multiple Contacts"}
+              {activeMode === "group" && "Group Broadcast"}
+            </h3>
+
+            <p className="text-xs text-(--text-secondary)">
+              {activeMode === "single" && "Send message to one contact"}
+              {activeMode === "multiple" &&
+                "Send same message to multiple contacts"}
+              {activeMode === "group" && "Send message to selected groups"}
+            </p>
+          </div>
         </div>
+
+        {/* COUNTER */}
+        {(activeMode === "multiple" || activeMode === "group") && (
+          <div
+            className={`px-3 py-2 rounded-2xl text-xs font-bold shadow-sm ${
+              activeMode === "multiple"
+                ? "bg-blue-500/10 text-blue-500"
+                : "bg-green-500/10 text-green-500"
+            }`}
+          >
+            {activeMode === "multiple"
+              ? `${multipleNumber.length} CONTACTS`
+              : `${multipleGroup.length} GROUPS`}
+          </div>
+        )}
       </div>
 
-      <div className="p-6 flex flex-col gap-5">
-        {/* RECIPIENTS DISPLAY (for multiple/group) */}
+      {/* BODY */}
+      <div className="p-6 flex flex-col gap-6">
+        {/* SELECTED RECIPIENTS */}
         {(activeMode === "multiple" || activeMode === "group") && (
-          <div className="p-3 bg-(--bg-secondary)/30 rounded-xl border border-dashed border-(--border) min-h-25 max-h-37.5 overflow-y-auto flex flex-wrap gap-2">
-            {activeMode === "multiple" && multipleNumber.length === 0 && (
-              <p className="text-xs text-(--text-secondary) m-auto italic">
-                Select contacts from the left sidebar
-              </p>
-            )}
-            {activeMode === "group" && multipleGroup.length === 0 && (
-              <p className="text-xs text-(--text-secondary) m-auto italic">
-                Select groups from the left sidebar
-              </p>
-            )}
+          <div className="rounded-3xl border border-dashed border-(--border) bg-(--bg-secondary)/30 p-4 min-h-30 max-h-45 overflow-y-auto custom-scrollbar">
+            <div className="flex items-center gap-2 mb-4">
+              {activeMode === "multiple" ? (
+                <PeopleIcon fontSize="small" className="text-blue-500" />
+              ) : (
+                <GroupsIcon fontSize="small" className="text-green-500" />
+              )}
 
-            {activeMode === "multiple" &&
-              multipleNumber.map((c) => (
-                <div
-                  key={c._id}
-                  className="flex  max-h-8 items-center gap-2 px-3 py-1 bg-(--primary)/10 text-(--primary) text-xs font-medium rounded-full border border-(--primary)/20"
-                >
-                  {c.name || c.phoneNumber}
-                  <button
-                    onClick={() =>
-                      setMultipleNumber((prev) => prev.filter((p) => p._id !== c._id))
-                    }
-                    className="hover:text-red-500"
-                  >
-                    <ClearIcon sx={{ fontSize: 14 }} />
-                  </button>
+              <h4 className="text-sm font-semibold text-(--text-primary)">
+                Selected {activeMode === "multiple" ? "Contacts" : "Groups"}
+              </h4>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {activeMode === "multiple" && multipleNumber.length === 0 && (
+                <div className="w-full flex flex-col items-center justify-center py-6 opacity-50">
+                  <PeopleIcon sx={{ fontSize: 36 }} />
+
+                  <p className="text-xs mt-2">Select contacts from sidebar</p>
                 </div>
-              ))}
-            {activeMode === "group" &&
-              multipleGroup.map((g) => (
-                <div
-                  key={g.id || g._id}
-                  className="flex max-h-8 items-center gap-2 px-3 py-1 bg-teal-500/10 text-teal-700 text-xs font-medium rounded-full border border-teal-500/20"
-                >
-                  {g.name}
-                  <button
-                    onClick={() =>
-                      setMultipleGroup((prev) =>
-                        prev.filter((p) => (p.id || p._id) !== (g.id || g._id))
-                      )
-                    }
-                    className="hover:text-red-500"
-                  >
-                    <ClearIcon sx={{ fontSize: 14 }} />
-                  </button>
+              )}
+
+              {activeMode === "group" && multipleGroup.length === 0 && (
+                <div className="w-full flex flex-col items-center justify-center py-6 opacity-50">
+                  <GroupsIcon sx={{ fontSize: 36 }} />
+
+                  <p className="text-xs mt-2">Select groups from sidebar</p>
                 </div>
-              ))}
+              )}
+
+              {/* MULTIPLE CONTACTS */}
+              {activeMode === "multiple" &&
+                multipleNumber.map((c) => (
+                  <div
+                    key={c._id}
+                    className="group flex items-center gap-3 px-3 py-2 rounded-2xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/15 transition-all"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      {(c.name || "U").charAt(0).toUpperCase()}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-blue-500 truncate">
+                        {c.name || "Unknown"}
+                      </p>
+
+                      <p className="text-[10px] text-(--text-secondary)">
+                        {c.phoneNumber}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        setMultipleNumber((prev) =>
+                          prev.filter((p) => p._id !== c._id),
+                        )
+                      }
+                      className="ml-1 opacity-60 hover:opacity-100 hover:text-red-500 transition-all"
+                    >
+                      <ClearIcon sx={{ fontSize: 16 }} />
+                    </button>
+                  </div>
+                ))}
+
+              {/* GROUPS */}
+              {activeMode === "group" &&
+                multipleGroup.map((g) => (
+                  <div
+                    key={g.id || g._id}
+                    className="group flex items-center gap-3 px-3 py-2 rounded-2xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/15 transition-all"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0">
+                      <GroupsIcon sx={{ fontSize: 16 }} />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-green-500 truncate">
+                        {g.name}
+                      </p>
+
+                      <p className="text-[10px] text-(--text-secondary)">
+                        Group Chat
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        setMultipleGroup((prev) =>
+                          prev.filter(
+                            (p) => (p.id || p._id) !== (g.id || g._id),
+                          ),
+                        )
+                      }
+                      className="ml-1 opacity-60 hover:opacity-100 hover:text-red-500 transition-all"
+                    >
+                      <ClearIcon sx={{ fontSize: 16 }} />
+                    </button>
+                  </div>
+                ))}
+            </div>
           </div>
         )}
 
-        {/* SINGLE RECIPIENT INPUTS */}
+        {/* SINGLE MODE INPUTS */}
         {activeMode === "single" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider ml-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* NAME */}
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-(--text-secondary)">
+                <PersonIcon sx={{ fontSize: 14 }} />
                 Contact Name
               </label>
-              <input
-                placeholder="Search or enter name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="p-3 text-sm border-none rounded-xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary)"
-              />
+
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-(--bg-secondary)">
+                <PersonIcon
+                  fontSize="small"
+                  className="text-(--text-secondary)"
+                />
+
+                <input
+                  placeholder="Enter contact name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="bg-transparent outline-none text-sm w-full text-(--text-primary)"
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider ml-1">
+
+            {/* PHONE */}
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-(--text-secondary)">
+                <PhoneIcon sx={{ fontSize: 14 }} />
                 Phone Number
               </label>
-              <input
-                placeholder="e.g. 919876543210"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-                className="p-3 text-sm border-none rounded-xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary)"
-              />
+
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-(--bg-secondary)">
+                <PhoneIcon
+                  fontSize="small"
+                  className="text-(--text-secondary)"
+                />
+
+                <input
+                  placeholder="e.g. 919876543210"
+                  value={number}
+                  onChange={(e) => setNumber(e.target.value)}
+                  className="bg-transparent outline-none text-sm w-full text-(--text-primary)"
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* MESSAGE TEXTAREA */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider ml-1">
+        {/* MESSAGE */}
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-(--text-secondary)">
+            <ChatIcon sx={{ fontSize: 14 }} />
             Your Message
           </label>
+
           <textarea
             placeholder="Type your message here..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="p-4 text-sm border-none rounded-2xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) min-h-45 resize-none leading-relaxed"
+            className="p-5 text-sm border-none rounded-3xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) min-h-52 resize-none leading-relaxed"
           />
         </div>
 
-        {/* MESSAGE HISTORY (Preview in Composer) */}
+        {/* RECENT HISTORY */}
         {activeMode === "single" && chatMessages.length > 0 && (
-          <div className="flex flex-col gap-1.5 mt-2">
-            <div className="flex justify-between items-center px-1">
-              <label className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider">
-                Recent History
-              </label>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HistoryIcon fontSize="small" className="text-(--primary)" />
+
+                <label className="text-[11px] font-bold uppercase tracking-wider text-(--text-secondary)">
+                  Recent History
+                </label>
+              </div>
+
               <button
                 onClick={() => setIsChatMode(true)}
-                className="text-[10px] font-bold text-(--primary) hover:underline"
+                className="text-[11px] font-bold text-(--primary) hover:underline"
               >
-                Full Chat View
+                Open Full Chat
               </button>
             </div>
-            <div className="flex flex-col gap-2 p-4 bg-(--bg-secondary)/50 rounded-2xl max-h-50 overflow-y-auto custom-scrollbar border border-(--border)">
+
+            <div className="flex flex-col gap-3 p-4 bg-(--bg-secondary)/40 rounded-3xl max-h-60 overflow-y-auto custom-scrollbar border border-(--border)">
               {chatMessages.slice(-5).map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`max-w-[85%] p-2 rounded-xl text-xs ${
+                  className={`max-w-[85%] px-4 py-3 rounded-2xl text-xs shadow-sm ${
                     msg.fromMe
-                      ? "bg-(--primary) text-white self-end rounded-tr-none"
-                      : "bg-(--bg-secondary) text-(--text-primary) self-start rounded-tl-none shadow-sm"
+                      ? "bg-(--primary) text-white self-end rounded-br-sm"
+                      : "bg-(--bg-primary) text-(--text-primary) self-start rounded-bl-sm border border-(--border)"
                   }`}
                 >
-                  <p>{msg.body}</p>
+                  <p className="whitespace-pre-wrap wrap-break-word">{msg.body}</p>
                 </div>
               ))}
             </div>
@@ -185,14 +307,19 @@ function ComposerView({
         <button
           onClick={handleSubmit}
           disabled={isButtonDisabled}
-          className="w-full py-4 bg-(--primary) text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:shadow-none mt-2 active:scale-[0.98]"
+          className="w-full py-4 rounded-3xl bg-(--primary) text-white font-bold shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:shadow-none active:scale-[0.99]"
         >
           {!messageSending ? (
             <>
               <SendIcon fontSize="small" />
-              {activeMode === "single"
-                ? "Send Message"
-                : `Send to ${activeMode === "multiple" ? multipleNumber.length : multipleGroup.length} ${activeMode === "multiple" ? "Contacts" : "Groups"}`}
+
+              {activeMode === "single" && "Send Message"}
+
+              {activeMode === "multiple" &&
+                `Send to ${multipleNumber.length} Contacts`}
+
+              {activeMode === "group" &&
+                `Send to ${multipleGroup.length} Groups`}
             </>
           ) : (
             <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
