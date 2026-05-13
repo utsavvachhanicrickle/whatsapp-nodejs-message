@@ -1,8 +1,18 @@
 import pool from "../../config/db.js";
 
 export const saveMessage = async (messageData) => {
-  const { sessionId, whatsappId, from, to, body, type, fromMe, timestamp, rawData } =
-    messageData;
+  const {
+    sessionId,
+    whatsappId,
+    from,
+    to,
+    body,
+    chatId,
+    type,
+    fromMe,
+    timestamp,
+    rawData,
+  } = messageData;
 
   // 🔥 Skip broadcast and newsletters
   if (
@@ -26,24 +36,23 @@ export const saveMessage = async (messageData) => {
 
     // 2. Save to specific table
     const specificQuery = `
-      INSERT INTO ${tableName} ( "from", "to", body, "type", "fromMe", timestamp)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO ${tableName} ( "from", "to","chatId", body, "type", "fromMe", timestamp)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING _id;
     `;
-    const specificValues = [
-      from,
-      to,
-      body,
-      type,
-      fromMe,
-      timestamp,
-    ];
-    const { rows: specificRows } = await pool.query(specificQuery, specificValues);
-    
+    const specificValues = [from, to, chatId, body, type, fromMe, timestamp];
+    const { rows: specificRows } = await pool.query(
+      specificQuery,
+      specificValues,
+    );
+
     // If it was a duplicate, we might need to find the existing ID
     let messageRecordId = specificRows.length > 0 ? specificRows[0]._id : null;
     if (!messageRecordId) {
-      const existingRows = await pool.query(`SELECT _id FROM ${tableName} WHERE "whatsappId" = $1`, [whatsappId]);
+      const existingRows = await pool.query(
+        `SELECT _id FROM ${tableName} WHERE "whatsappId" = $1`,
+        [whatsappId],
+      );
       messageRecordId = existingRows.rows[0]?._id;
     }
 
@@ -62,7 +71,7 @@ export const saveMessage = async (messageData) => {
       rawData ? JSON.stringify(rawData) : null,
     ];
     const { rows: masterRows } = await pool.query(masterQuery, masterValues);
-    
+
     // For backward compatibility, return an object that looks like the old message structure
     return {
       sessionId,
@@ -73,16 +82,13 @@ export const saveMessage = async (messageData) => {
       type,
       fromMe,
       timestamp,
-      rawData
+      rawData,
     };
   } catch (err) {
     console.error(`❌ Save message polymorphic error:`, err.message);
     throw err;
   }
 };
-
-
-
 
 export const getMessagesBySessionAndContact = async (
   sessionId,
@@ -157,4 +163,3 @@ export const getContactsWithMessages = async (sessionId) => {
   const { rows } = await pool.query(query, values);
   return rows;
 };
-

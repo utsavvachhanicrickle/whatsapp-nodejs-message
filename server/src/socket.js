@@ -189,6 +189,8 @@ const bindClientEvents = (client, sessionId, io) => {
         canonicalFrom = msg.from;
       }
 
+      let fromMeData = msg.fromMe ? canonicalTo : canonicalFrom;
+
       console.log(
         `📩 message_create resolved: from=${canonicalFrom}, to=${canonicalTo}, body=${msg.body?.substring(0, 20)}...`,
       );
@@ -200,6 +202,7 @@ const bindClientEvents = (client, sessionId, io) => {
         from: canonicalFrom,
         to: canonicalTo,
         body: msg.body,
+        chatId: fromMeData,
         type: msg.type,
         fromMe: msg.fromMe,
         timestamp: msg.timestamp,
