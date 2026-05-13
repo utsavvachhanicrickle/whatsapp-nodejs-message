@@ -1,234 +1,309 @@
-# 🚀 WhatsApp Messaging Portal (v5.0)
+# 🚀 WhatsApp Messaging Portal (v6.0)
 
-A next-generation real-time WhatsApp automation platform built using **MERN + Socket.IO + whatsapp-web.js + PostgreSQL**, designed for powerful communication workflows, contact synchronization, bulk messaging, and modern SaaS-style management.
+A powerful next-generation real-time WhatsApp automation and communication platform built using **MERN + Socket.IO + whatsapp-web.js + PostgreSQL**, designed for scalable messaging workflows, direct contact synchronization, personal chat management, bulk broadcasting, and modern SaaS-style communication systems.
 
-Version **v5.0** introduces a major upgrade with:
+Version **v6.0** introduces major upgrades with:
 
-- 📲 Direct WhatsApp Contact Fetching
-- 📥 Direct WhatsApp Contact Fetching
-- 🎨 Enhanced Modern UI/UX
-- 👥 Advanced Messaging Workflows
-- 🔥 Better Group & Multi-contact Management
+* 💬 Personal Chat System
+* 📥 Advanced WhatsApp Contact Synchronization
+* 👥 Enhanced Group Messaging
+* 📤 Faster Multi-contact Broadcasting
+* 🧠 Better Real-time Session Management
+* 🎨 Fully Improved SaaS UI/UX
+* ⚡ Optimized Real-time Architecture
 
 ---
 
-# 🆕 What’s New in v5.0
+# 🆕 What’s New in v6.0
 
 ## ✨ Major Upgrades
 
-### 📥 Direct WhatsApp Contact Fetching (NEW 🔥)
+### 💬 Personal Chat System (NEW 🔥)
 
-The system can now:
+v6.0 now introduces a fully integrated **Personal Chat Module** allowing users to communicate directly with WhatsApp contacts in real-time.
 
-- Fetch all WhatsApp contacts directly from active sessions
-- Sync saved and unsaved contacts automatically
-- Store contacts into PostgreSQL database
-- Detect new contacts in real-time
-- Support multi-user contact synchronization
+Features include:
+
+* Real-time personal chat interface
+* Live incoming & outgoing messages
+* Chat history management
+* Persistent conversation storage
+* Fast session-based communication
+* WhatsApp-style messaging experience
+
+✔ One-to-one messaging
+✔ Real-time updates
+✔ Persistent chat storage
+✔ Modern conversation UI
+✔ Incoming message detection
+
+---
+
+### 📥 Advanced WhatsApp Contact Synchronization
+
+The platform can now:
+
+* Fetch all WhatsApp contacts directly
+* Sync saved & unsaved numbers
+* Auto-store contacts into PostgreSQL
+* Detect new contacts instantly
+* Perform session-based synchronization
+* Handle multi-user syncing efficiently
 
 ✔ Real-time contact importing
-✔ Database auto-save support
-✔ Session-based fetching
-✔ Optimized sync handling
+✔ Automatic database synchronization
+✔ Improved fetch performance
+✔ Session-aware syncing
 
 ---
 
-### 🎨 Improved Modern UI/UX
+### 👥 Improved Group Messaging System
 
-v5.0 introduces a cleaner SaaS-style interface with:
+Enhanced group communication workflows with:
 
-- Better layout structure
-- Improved responsive design
-- Modern dashboard styling
-- Cleaner messaging flows
-- Enhanced navigation experience
-- Better WhatsApp session visualization
-
----
-
-### 👥 Advanced Group Messaging
-
-Now improved with:
-
-- Real-time group fetching
-- Better group selection flow
-- Faster bulk delivery
-- Improved delivery tracking
+* Real-time group fetching
+* Better group selection experience
+* Improved delivery speed
+* Group-based broadcast optimization
+* Delivery & failure tracking
 
 ---
 
-### 📤 Enhanced Multi-Contact Messaging
+### 📤 Enhanced Multi-Contact Broadcasting
 
-- Send one message to multiple contacts instantly
-- Optimized bulk delivery flow
-- Better success/failure tracking
-- Improved real-time updates
+Broadcast one message to multiple contacts instantly with:
+
+* Faster message queue handling
+* Improved delivery tracking
+* Better failure handling
+* Real-time status updates
+* Optimized Socket.IO communication
+
+---
+
+### 🧾 Smart Template System
+
+Save and reuse frequently used messages.
+
+Features:
+
+* Reusable templates
+* Dynamic placeholders
+* Faster communication workflows
+* Quick template selection
 
 ---
 
-### 🧾 Template System
+### 🎨 Fully Redesigned Modern UI/UX
 
-- Save reusable templates
-- Faster communication workflows
-- Dynamic message handling
+v6.0 introduces a more polished and production-ready SaaS experience.
 
----
+Improvements include:
+
+* Cleaner dashboard design
+* Better responsive layouts
+* Improved navigation
+* Enhanced chat UI
+* Better messaging workflows
+* Modern session visualization
+* Better user interaction flow
 
 ---
 
 # 🏗️ Tech Stack
 
-| Technology      | Usage                |
-| --------------- | -------------------- |
-| React.js        | Frontend             |
-| Node.js         | Backend Runtime      |
-| Express.js      | API Layer            |
-| PostgreSQL      | Database             |
-| whatsapp-web.js | WhatsApp Integration |
-| JWT             | Authentication       |
-| bcrypt          | Password Security    |
+| Technology      | Usage                   |
+| --------------- | ----------------------- |
+| React.js        | Frontend                |
+| Node.js         | Backend Runtime         |
+| Express.js      | REST API Layer          |
+| PostgreSQL      | Database                |
+| Socket.IO       | Real-time Communication |
+| whatsapp-web.js | WhatsApp Integration    |
+| JWT             | Authentication          |
+| bcrypt          | Password Security       |
 
 ---
 
-# 📸 UI Screens (v5.0)
+# 📸 UI Screens (v6.0)
 
-## 🖥️ Main Dashboard
+## 🔐 Authentication System
 
-### 🟢 Improved Home Screen
+### 🟢 Signup Screen
 
-Modernized dashboard with improved messaging controls and session visibility.
+Secure user registration system.
 
-![Home Screen](./utils/version-05/homeScreen.png)
-
----
-
-## 📡 WhatsApp Session System
-
-### 🟢 Connecting WhatsApp Session
-
-Displays real-time WhatsApp session connection process.
-
-![Connecting Session](./utils/version-05/connectingScreen.png)
+![Signup](./utils/version-06/01_signup.png)
 
 ---
 
-### 🟢 QR Authentication System
+### 🟢 Login Screen
 
-Secure QR-based authentication flow for WhatsApp sessions.
+JWT-based secure login authentication.
 
-![QR Code](./utils/version-05/qrCode.png)
+![Login](./utils/version-06/02_login.png)
+
+---
+
+## 🖥️ Dashboard System
+
+### 🟢 Modern Home Dashboard
+
+Modern SaaS-style dashboard with improved messaging workflows and session visibility.
+
+![Home Screen](./utils/version-06/03_homeScreen.png)
+
+---
+
+## 📱 WhatsApp Session Management
+
+### 🟢 WhatsApp Session Initialization
+
+Displays real-time WhatsApp session connection flow.
+
+![Session Screen](./utils/version-06/05_orScreen.png)
+
+---
+
+### 🟢 WhatsApp QR Authentication
+
+Secure QR-based WhatsApp authentication system.
 
 Features:
 
-- QR Scan Authentication
-- Session Persistence
-- Reconnection Support
-- Real-time Status
+* QR Scan Authentication
+* Persistent Sessions
+* Automatic Reconnection
+* Real-time Session Status
+
+![QR Authentication](./utils/version-06/04_addedWhatsappSection.png)
 
 ---
 
 ## 👥 Contact Management System
 
-### 🟢 Add Single Contact
+### 🟢 Single Contact Management
 
-Allows manual contact creation.
+Add and manage individual contacts.
 
-![Single Contact](./utils/version-05/addedsignlecontect.png)
-
----
-
-### 🟢 Multi-Contact Management
-
-Manage and organize multiple contacts efficiently.
-
-![Multiple Contacts](./utils/version-05/addednesession.png)
+![Single Contact](./utils/version-06/10_singleContectAdded.png)
 
 ---
 
+### 🟢 Bulk Contact Management
 
-## 👥 WhatsApp Group Messaging
+Efficient multi-contact organization system.
 
-### 🟢 Group Messaging System
+![Multiple Contacts](./utils/version-06/11_blunkContectAdded.png)
+
+---
+
+### 🟢 WhatsApp Contact Synchronization 🔥
+
+Directly fetch contacts from connected WhatsApp sessions.
+
+Features:
+
+* Real-time contact fetching
+* Database auto-save
+* Session-based synchronization
+* Multi-user support
+
+![Contact Sync](./utils/version-06/12_templateAdded.png)
+
+---
+
+## 💬 Personal Chat System (NEW 🔥)
+
+### 🟢 Real-time Personal Messaging
+
+Chat directly with WhatsApp contacts in real-time.
+
+Features:
+
+* Live messaging
+* Incoming message detection
+* Persistent conversation history
+* Fast chat synchronization
+* Modern chat interface
+
+![Personal Chat](./utils/version-06/06_singleMessageScreen.png)
+
+---
+
+## 📤 Multi-Contact Messaging
+
+### 🟢 Bulk Messaging System
+
+Broadcast one message to multiple contacts instantly.
+
+Features:
+
+* Bulk message delivery
+* Delivery tracking
+* Failed message handling
+* Real-time updates
+
+![Bulk Messaging](./utils/version-06/07_multipleMessageSheringScreen.png)
+
+---
+
+## 👥 Group Messaging System
+
+### 🟢 WhatsApp Group Messaging
 
 Send messages directly to WhatsApp groups.
 
-![Group Messaging](./utils/version-05/groupmessage.png)
+Features:
+
+* Fetch joined groups
+* Group broadcasting
+* Real-time delivery tracking
+* Multiple group support
+
+![Group Messaging](./utils/version-06/08_groupBlunkMessage.png)
+
+---
+
+## 💬 Chat Mode Interface
+
+### 🟢 Modern Chat Workflow
+
+Enhanced WhatsApp-style communication layout.
 
 Features:
 
-- Fetch joined groups
-- Send bulk group messages
-- Real-time delivery handling
-- Multiple group support
+* Better messaging flow
+* Modern UI experience
+* Real-time communication
+* Improved responsiveness
+
+![Chat Mode](./utils/version-06/09_chateModeScreen.png)
 
 ---
 
-## 💬 Messaging System
+# ⚙️ Core Features
 
-### 🟢 Single Contact Messaging
-
-Send messages to individual users.
-
-![Single Message](./utils/version-05/Singlemessage.png)
-
----
-
-### 🟢 Multi-Contact Messaging 🔥
-
-Broadcast one message to multiple contacts.
-
-![Multiple Message](./utils/version-05/multipleContectAdded.png)
-
-Features:
-
-- Bulk sending
-- Delivery tracking
-- Failure handling
-- Real-time updates
+| Feature                | Description                    |
+| ---------------------- | ------------------------------ |
+| 🔐 Authentication      | Secure Login & Signup          |
+| 📱 QR Session          | WhatsApp Authentication        |
+| 📥 Contact Sync        | Fetch WhatsApp Contacts        |
+| 👥 Contacts            | Contact Management             |
+| 💬 Personal Chat       | Real-time One-to-One Messaging |
+| 📤 Bulk Messaging      | Multi-contact Broadcasting     |
+| 👥 Group Messaging     | WhatsApp Group Messaging       |
+| 🧾 Templates           | Reusable Message Templates     |
+| ⚡ Socket.IO            | Real-time Communication        |
+| 🗄️ PostgreSQL         | Database Management            |
+| 🔄 Session Persistence | Stable WhatsApp Sessions       |
+| 🎨 Modern UI           | SaaS-style Interface           |
 
 ---
 
-## 📡 Session & Delivery Status
+# 🔥 Core Workflows
 
-### 🟢 Real-Time Message Response System
-
-The system provides:
-
-- ✅ Message Sent Status
-- 📩 Incoming Message Detection
-- ⚠️ Failed Delivery Alerts
-- 🔄 Session State Updates
-
----
-
-## 🔐 Session Management
-
-### 🟢 Added Session Handling
-
-Improved session management architecture for stable WhatsApp connectivity.
----
-
-# ⚙️ Key Features
-
-| Feature            | Description                |
-| ------------------ | -------------------------- |
-| 🔐 Authentication  | Secure Login & Register    |
-| 📱 QR Session      | WhatsApp Authentication    |
-| 📥 Contact Sync    | Fetch WhatsApp Contacts    |
-| 👥 Contacts        | Manage Contacts            |
-| 💬 Messaging       | Real-time Messaging        |
-| 📤 Bulk Messaging  | Multi-contact Broadcasting |
-| 👥 Group Messaging | WhatsApp Group Messaging   |
-| 🧾 Templates       | Reusable Message Templates |
-| ⚡ Socket.IO       | Live Real-time Updates     |
-| 🗄️ PostgreSQL      | Database Management        |
-| 🌙 Modern UI       | Improved Interface         |
-
----
-
-# 🔥 Core Workflow
-
-## 📥 Contact Sync Flow
+## 📥 Contact Synchronization Flow
 
 ```text
 Connect WhatsApp → Fetch Contacts → Save to PostgreSQL → Real-time Sync
@@ -236,10 +311,18 @@ Connect WhatsApp → Fetch Contacts → Save to PostgreSQL → Real-time Sync
 
 ---
 
+## 💬 Personal Chat Flow
+
+```text
+Select Contact → Open Chat → Send/Receive Messages → Save Conversation
+```
+
+---
+
 ## 📤 Multi-Contact Messaging Flow
 
 ```text
-Select Contacts → Write Message → Send → Track Delivery → Real-time Status
+Select Contacts → Write Message → Send → Track Delivery → Real-time Updates
 ```
 
 ---
@@ -247,90 +330,103 @@ Select Contacts → Write Message → Send → Track Delivery → Real-time Stat
 ## 👥 Group Messaging Flow
 
 ```text
-Fetch Groups → Select Group(s) → Write Message → Send → Delivered
+Fetch Groups → Select Groups → Write Message → Send → Delivered
 ```
 
----
-
-# 🗄️ Database Architecture
-
-v5.0 now supports improved PostgreSQL structures:
-
-```text
-users
-contacts
-messages
-default_messages
-whatsapp_sessions
-groups
-group_members
-logs
-media_files
-```
 
 ---
 
----
+# ⚡ Real-Time System Features
+
+The platform now provides:
+
+* ✅ Real-time incoming messages
+* ✅ Instant delivery updates
+* ✅ Live session monitoring
+* ✅ Socket.IO-based communication
+* ✅ Automatic reconnection handling
+* ✅ Real-time synchronization
 
 ---
 
-# ✅ Improvements Made in v5.0
+# 🔐 Session Management
 
-- ✅ Added Direct WhatsApp Contact Fetching
-- ✅ Improved UI/UX Design
-- ✅ Better Session Handling
-- ✅ Improved Messaging Flow
-- ✅ Enhanced Group Messaging
-- ✅ Improved WhatsApp Contact Synchronization
-- ✅ Improved SaaS-style Documentation
+Enhanced WhatsApp session architecture provides:
+
+* Persistent login sessions
+* Stable WhatsApp connectivity
+* Session recovery support
+* Real-time session state updates
+* Improved reconnection handling
+
+---
+
+# ✅ Improvements Made in v6.0
+
+* ✅ Added Personal Chat System
+* ✅ Improved WhatsApp Contact Synchronization
+* ✅ Enhanced Group Messaging
+* ✅ Faster Multi-contact Broadcasting
+* ✅ Better Real-time Messaging
+* ✅ Improved Session Stability
+* ✅ Better SaaS-style UI/UX
+* ✅ Improved Database Architecture
+* ✅ Enhanced Socket.IO Communication
+* ✅ Better Delivery Tracking
 
 ---
 
 # 🚀 Future Scope
 
-This platform is designed to scale into a complete:
+This platform is designed to evolve into a complete:
 
-- WhatsApp CRM
-- Customer Support System
-- Marketing Automation Platform
-- SaaS Messaging Solution
-- AI-powered Communication System
+* WhatsApp CRM
+* AI-powered Messaging Platform
+* Customer Support System
+* Marketing Automation Solution
+* Multi-user SaaS Communication Platform
+* Enterprise Messaging Infrastructure
 
 ---
 
 # 💡 Highlights
 
 ✔ Real-time WhatsApp Integration
+✔ Personal Chat System
+✔ WhatsApp Contact Synchronization
 ✔ PostgreSQL Database Support
-✔ Modern SaaS UI Design
 ✔ Bulk Messaging System
 ✔ Group Messaging Support
-✔ Direct Contact Fetching
-✔ Session Persistence
-✔ Production-style Architecture
+✔ Template Management
+✔ Modern SaaS UI
+✔ Persistent Sessions
+✔ Production-ready Architecture
 
 ---
 
 # 🚀 Project Vision
 
-The goal of v5.0 is to provide a scalable and production-ready WhatsApp communication platform capable of:
+The vision of **v6.0** is to provide a scalable and production-ready WhatsApp communication ecosystem capable of:
 
-- WhatsApp contact synchronization
-- Better bulk messaging workflows
-- Group messaging support
-- Cleaner user management
-- Improved WhatsApp session handling
+* Real-time personal chatting
+* Advanced bulk messaging
+* Group communication workflows
+* WhatsApp contact synchronization
+* Stable session management
+* Enterprise-level messaging workflows
 
 ---
 
 # ⭐ Conclusion
 
-Version **v5.0** transforms the project from a basic WhatsApp sender into a more advanced real-time communication platform with:
+Version **v6.0** transforms the project into a complete real-time WhatsApp communication platform with:
 
-- WhatsApp contact synchronization
-- Group messaging
-- Bulk messaging
-- PostgreSQL integration
-- Modern SaaS UI experience
+* 💬 Personal Chat System
+* 📥 Contact Synchronization
+* 👥 Group Messaging
+* 📤 Bulk Messaging
+* 🗄️ PostgreSQL Integration
+* ⚡ Real-time Socket.IO Communication
+* 🎨 Modern SaaS-style UI/UX
 
-This version now feels much closer to a real-world production messaging platform.
+This version now feels significantly closer to a real-world production-grade WhatsApp communication and automation platform.
