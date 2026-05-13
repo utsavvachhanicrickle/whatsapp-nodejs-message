@@ -1,6 +1,5 @@
 import { useEffect, useContext, useState } from "react";
 import { SocketContext } from "../context/scoketContext";
-import { DarkModeContext } from "../context/darkModeContext";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers, addUser, removeUser } from "../store/slices/userSlice";
 import { socket } from "../socket";
@@ -12,8 +11,6 @@ import VerticalNav from "../components/VerticalNav";
 import QRModal from "../components/QRModal";
 import AddSessionModal from "../components/AddSessionModal";
 import SendMessage from "../components/SendMessage/SendMessage";
-import SearchIcon from "@mui/icons-material/Search";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import LogoutIcon from "@mui/icons-material/Logout";
 

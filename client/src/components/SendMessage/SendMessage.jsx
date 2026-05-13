@@ -44,6 +44,7 @@ import { socket } from "../../socket";
 function SendMessage({ sessionId }) {
   const [number, setNumber] = useState("");
   const [name, setName] = useState("");
+  const [isGroupBollean, setIsGroupBollean] = useState(false);
   const [multipleNumber, setMultipleNumber] = useState([]);
   const [message, setMessage] = useState("");
   const [messageSending, setMessageSEnding] = useState(false);
@@ -90,7 +91,6 @@ function SendMessage({ sessionId }) {
       fetchChatsWithMessages();
     }
   }, [dispatch, sessionId]);
-
 
   const fetchChatsWithMessages = async () => {
     if (!sessionId) return;
@@ -254,6 +254,7 @@ function SendMessage({ sessionId }) {
           setIsMultiple(false);
           setName(c.name);
           setNumber(c.phoneNumber);
+          setIsGroupBollean(c.isGroup || false);
           setSelectedContactWhatsappId(c.whatsappId || c.phoneNumber);
           fetchChatMessages(c.whatsappId || c.phoneNumber);
         }}
@@ -427,6 +428,7 @@ function SendMessage({ sessionId }) {
               darkMode={darkMode}
               selectedContactWhatsappId={selectedContactWhatsappId}
               fetchChatMessages={fetchChatMessages}
+              isGroupBollean={isGroupBollean}
             />
           ) : (
             <ComposerView

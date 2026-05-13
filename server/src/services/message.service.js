@@ -90,6 +90,106 @@ export const saveMessage = async (messageData) => {
   }
 };
 
+export const getContactsWithMessages = async (sessionId) => {
+  const query = `
+    WITH UnifiedMessages AS (
+
+      -- Personal chat messages
+      SELECT 
+        m."sessionId",
+        sd."fromMe",
+        sd."to",
+        sd."from",
+        sd.body,
+        sd.timestamp,
+        sd."chatId",
+        sd."isGroup"
+      FROM messages m
+      JOIN chat_messages sd
+        ON sd._id = m."chatMessageId"
+
+      UNION ALL
+
+      -- Group messages
+      SELECT 
+        m."sessionId",
+        sd."fromMe",
+        sd."to",
+        sd."from",
+        sd.body,
+        sd.timestamp,
+        sd."chatId",
+        sd."isGroup"
+      FROM messages m
+      JOIN group_messages sd
+        ON sd._id = m."groupMessageId"
+    ),
+
+    LastMessages AS (
+      SELECT 
+        CASE 
+          WHEN "fromMe" = true THEN "to"
+          ELSE "from"
+        END AS "contactId",
+
+        body,
+        timestamp,
+        "fromMe",
+        "chatId",
+        "isGroup",
+
+        ROW_NUMBER() OVER (
+          PARTITION BY 
+            CASE 
+              WHEN "fromMe" = true THEN "to"
+              ELSE "from"
+            END
+          ORDER BY timestamp DESC
+        ) AS rn
+
+      FROM UnifiedMessages
+
+      WHERE "sessionId" = $1
+        AND "from" NOT LIKE '%status@broadcast%'
+        AND "to" NOT LIKE '%status@broadcast%'
+        AND "from" NOT LIKE '%@newsletter%'
+        AND "to" NOT LIKE '%@newsletter%'
+    )
+
+    SELECT 
+      lm."contactId",
+      lm.body,
+      lm.timestamp,
+      lm."fromMe",
+      lm."chatId",
+      lm."isGroup",
+
+      COALESCE(
+        c1.name,
+        c2.name,
+        lm."contactId"
+      ) AS "name"
+
+    FROM LastMessages lm
+
+    LEFT JOIN contacts c1
+      ON c1."whatsappId" = lm."contactId"
+
+    LEFT JOIN contacts c2
+      ON c2.lid = lm."contactId"
+
+    WHERE lm.rn = 1
+
+    ORDER BY lm.timestamp DESC;
+  `;
+
+  const values = [sessionId];
+
+  const { rows } = await pool.query(query, values);
+
+  return rows;
+};
+
 export const getMessagesBySessionAndContact = async (
   sessionId,
   contactWhatsappId,
@@ -118,48 +218,6 @@ export const getMessagesBySessionAndContact = async (
     ORDER BY sd.timestamp ASC;
   `;
   const values = [sessionId, contactWhatsappId, cleanId, `${cleanId}@%`];
-  const { rows } = await pool.query(query, values);
-  return rows;
-};
-
-export const getContactsWithMessages = async (sessionId) => {
-  const query = `
-    WITH UnifiedMessages AS (
-      SELECT m."sessionId", sd."fromMe", sd."to", sd."from", sd.body, sd.timestamp 
-      FROM messages m
-      JOIN chat_messages sd ON sd._id = m."chatMessageId"
-      UNION ALL
-      SELECT m."sessionId", sd."fromMe", sd."to", sd."from", sd.body, sd.timestamp 
-      FROM messages m
-      JOIN group_messages sd ON sd._id = m."groupMessageId"
-    ),
-    LastMessages AS (
-      SELECT 
-        CASE WHEN "fromMe" = true THEN "to" ELSE "from" END as "contactId",
-        body,
-        timestamp,
-        "fromMe",
-        ROW_NUMBER() OVER(PARTITION BY CASE WHEN "fromMe" = true THEN "to" ELSE "from" END ORDER BY timestamp DESC) as rn
-      FROM UnifiedMessages
-      WHERE "sessionId" = $1 
-        AND "from" NOT LIKE '%status@broadcast%'
-        AND "to" NOT LIKE '%status@broadcast%'
-        AND "from" NOT LIKE '%@newsletter%'
-        AND "to" NOT LIKE '%@newsletter%'
-    )
-    SELECT 
-      lm."contactId", 
-      lm.body, 
-      lm.timestamp, 
-      lm."fromMe",
-      COALESCE(c1.name, c2.name, lm."contactId") as "name"
-    FROM LastMessages lm
-    LEFT JOIN contacts c1 ON c1."whatsappId" = lm."contactId"
-    LEFT JOIN contacts c2 ON c2.lid = lm."contactId"
-    WHERE lm.rn = 1
-    ORDER BY lm.timestamp DESC;
-  `;
-  const values = [sessionId];
   const { rows } = await pool.query(query, values);
   return rows;
 };
