@@ -171,7 +171,7 @@ function ComposerView({
                   className={`max-w-[85%] p-2 rounded-xl text-xs ${
                     msg.fromMe
                       ? "bg-(--primary) text-white self-end rounded-tr-none"
-                      : "bg-white text-(--text-primary) self-start rounded-tl-none shadow-sm"
+                      : "bg-(--bg-secondary) text-(--text-primary) self-start rounded-tl-none shadow-sm"
                   }`}
                 >
                   <p>{msg.body}</p>

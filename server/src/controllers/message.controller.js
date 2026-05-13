@@ -32,42 +32,40 @@ export const messageSendController = async (req, res, next) => {
       const result = await safeClientCall(client, 'sendMessage', [formatted, message]);
 
       // 🔥 Manually save the sent message with canonical ID resolution
-      if (result) {
-        const { safeClientCall } = await import("../utils/whatsappUtils.js");
+      // if (result) {
+      //   const { safeClientCall } = await import("../utils/whatsappUtils.js");
         
-        // Use safeClientCall on the message object itself to handle transient errors
-        const contact = await safeClientCall(result, 'getContact').catch(() => null);
-        const chat = await safeClientCall(result, 'getChat').catch(() => null);
+      //   // Use safeClientCall on the message object itself to handle transient errors
+      //   const contact = await safeClientCall(result, 'getContact').catch(() => null);
+      //   const chat = await safeClientCall(result, 'getChat').catch(() => null);
         
-        if (contact && chat) {
-          let canonicalFrom = contact.id._serialized;
-          if (canonicalFrom.includes('@lid') && contact.number) {
-            canonicalFrom = `${contact.number}@c.us`;
-          }
+      //   if (contact && chat) {
+      //     let canonicalFrom = contact.id._serialized;
+      //     if (canonicalFrom.includes('@lid') && contact.number) {
+      //       canonicalFrom = `${contact.number}@c.us`;
+      //     }
 
-          let canonicalTo = chat.id._serialized;
-          if (canonicalTo.includes('@lid')) {
-            const chatContact = await safeClientCall(chat, 'getContact').catch(() => null);
-            if (chatContact && chatContact.number) {
-              canonicalTo = `${chatContact.number}@c.us`;
-            }
-          }
+      //     let canonicalTo = chat.id._serialized;
+      //     if (canonicalTo.includes('@lid')) {
+      //       const chatContact = await safeClientCall(chat, 'getContact').catch(() => null);
+      //       if (chatContact && chatContact.number) {
+      //         canonicalTo = `${chatContact.number}@c.us`;
+      //       }
+      //     }
 
-          const { saveMessage } = await import("../services/message.service.js");
-          await saveMessage({
-            sessionId,
-            whatsappId: result.id?._serialized,
-            from: canonicalFrom,
-            to: canonicalTo,
-            body: result.body,
-            type: result.type,
-            fromMe: result.fromMe,
-            timestamp: result.timestamp,
-          });
-        }
-      }
-
-
+      //     const { saveMessage } = await import("../services/message.service.js");
+      //     await saveMessage({
+      //       sessionId,
+      //       whatsappId: result.id?._serialized,
+      //       from: canonicalFrom,
+      //       to: canonicalTo,
+      //       body: result.body,
+      //       type: result.type,
+      //       fromMe: result.fromMe,
+      //       timestamp: result.timestamp,
+      //     });
+      //   }
+      // }
 
 
       res.json({ success: true, message: result });
@@ -195,4 +193,4 @@ export const multipleMessageSendController = async (req, res, next) => {
     console.error("Bulk message error:", error.message);
     return next(new AppError(MESSAGES.WHATSAPP_MESSAGE_ERROR, 500));
   }
-};
+};

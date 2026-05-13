@@ -82,16 +82,18 @@ function SendMessage({ sessionId }) {
   const groups = useSelector((state) => state.groups.groups);
 
   useEffect(() => {
-    dispatch(fetchContactSlice());
-    dispatch(fetchDefaultMessage());
-  }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(fetchGroups(sessionId));
-    fetchChatsWithMessages();
+    if (sessionId) {
+      console.log("Initial fetch for session:", sessionId);
+      dispatch(fetchContactSlice());
+      dispatch(fetchDefaultMessage());
+      dispatch(fetchGroups(sessionId));
+      fetchChatsWithMessages();
+    }
   }, [dispatch, sessionId]);
 
+
   const fetchChatsWithMessages = async () => {
+    if (!sessionId) return;
     const chatIds = await messageModules.getChats(sessionId);
     setChatsWithMessages(chatIds);
   };
@@ -137,6 +139,7 @@ function SendMessage({ sessionId }) {
   useEffect(() => {
     const handleReady = (data) => {
       if (data.sessionId === sessionId) {
+        console.log("Session ready, fetching groups...");
         dispatch(fetchGroups(sessionId));
         dispatch(fetchContactSlice());
         fetchChatsWithMessages();

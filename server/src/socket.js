@@ -144,6 +144,9 @@ const bindClientEvents = (client, sessionId, io) => {
       const contact = await msg.getContact();
       const chat = await msg.getChat();
 
+      console.log(msg);
+      
+
       // 🔥 FORCE @c.us conversion if still @lid by using the phone number
       let canonicalFrom = contact.id._serialized;
       if (canonicalFrom.includes('@lid') && contact.number) {
