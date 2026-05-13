@@ -34,7 +34,7 @@ function QRModal({ qr, onClose }) {
         </div>
 
         {/* Right Side: QR Code */}
-        <div className="w-full md:w-80 bg-white p-12 flex flex-col items-center justify-center relative">
+        <div className="w-full md:w-80  p-12 flex flex-col items-center justify-center relative">
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all"
@@ -42,7 +42,7 @@ function QRModal({ qr, onClose }) {
             <CloseIcon />
           </button>
           
-          <div className="relative p-2 bg-white rounded-lg whatsapp-shadow">
+          <div className="relative p-2  rounded-lg whatsapp-shadow">
             <img src={qr} alt="WhatsApp QR Code" className="w-56 h-56" />
             <div className="absolute inset-0 border-2 border-(--primary)/20 rounded-lg pointer-events-none" />
           </div>

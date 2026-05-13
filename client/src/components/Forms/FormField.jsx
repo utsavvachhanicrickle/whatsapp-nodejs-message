@@ -54,7 +54,7 @@ function FormField({ header = "", fields, onSubmit, buttons, footer = {} }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className=" rounded-2xl border p-6 shadow-xl
+      className=" rounded-2xl border p-6 shadow-xl w-full max-w-md
         bg-(--bg-primary)
         border-(--border)
         text-(--text-primary)
