@@ -1,6 +1,5 @@
 import { useEffect, useContext, useState } from "react";
 import { SocketContext } from "../context/scoketContext";
-import { DarkModeContext } from "../context/darkModeContext";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers, addUser, removeUser } from "../store/slices/userSlice";
 import { socket } from "../socket";
@@ -12,8 +11,6 @@ import VerticalNav from "../components/VerticalNav";
 import QRModal from "../components/QRModal";
 import AddSessionModal from "../components/AddSessionModal";
 import SendMessage from "../components/SendMessage/SendMessage";
-import SearchIcon from "@mui/icons-material/Search";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import LogoutIcon from "@mui/icons-material/Logout";
 
@@ -142,7 +139,7 @@ function HomePage() {
           </div>
         ) : (
           <div className="h-full w-full flex flex-col">
-            <div className="h-[60px] bg-(--header) border-b border-(--border) flex items-center justify-between px-6 shrink-0 z-30">
+            <div className="h-15 bg-(--header) border-b border-(--border) flex items-center justify-between px-6 shrink-0 z-30">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold shadow-sm">
                   {activeUser.slice(-2)}

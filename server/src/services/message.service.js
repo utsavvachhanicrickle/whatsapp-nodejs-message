@@ -1,8 +1,18 @@
 import pool from "../../config/db.js";
 
 export const saveMessage = async (messageData) => {
-  const { sessionId, whatsappId, from, to, body, type, fromMe, timestamp } =
-    messageData;
+  const {
+    sessionId,
+    whatsappId,
+    from,
+    to,
+    body,
+    chatId,
+    type,
+    fromMe,
+    timestamp,
+    rawData,
+  } = messageData;
 
   // 🔥 Skip broadcast and newsletters
   if (
@@ -14,14 +24,56 @@ export const saveMessage = async (messageData) => {
     return null;
   }
 
+  const isGroup = from?.includes("@g.us") || to?.includes("@g.us");
+  const tableName = isGroup ? "group_messages" : "chat_messages";
+  const linkingColumn = isGroup ? "groupMessageId" : "chatMessageId";
+
   try {
-    const query = `
-      INSERT INTO messages ("sessionId", "whatsappId", "from", "to", body, "type", "fromMe", timestamp)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    // 1. Resolve userId from sessionId (number)
+    const sectionQuery = `SELECT "userId" FROM whatsapp_sections WHERE "number" = $1 LIMIT 1`;
+    const { rows: sectionRows } = await pool.query(sectionQuery, [sessionId]);
+    const userId = sectionRows.length > 0 ? sectionRows[0].userId : null;
+
+    // 2. Save to specific table
+    const specificQuery = `
+      INSERT INTO ${tableName} ( "from", "to","chatId", body, "type", "fromMe", timestamp)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING _id;
+    `;
+    const specificValues = [from, to, chatId, body, type, fromMe, timestamp];
+    const { rows: specificRows } = await pool.query(
+      specificQuery,
+      specificValues,
+    );
+
+    // If it was a duplicate, we might need to find the existing ID
+    let messageRecordId = specificRows.length > 0 ? specificRows[0]._id : null;
+    if (!messageRecordId) {
+      const existingRows = await pool.query(
+        `SELECT _id FROM ${tableName} WHERE "whatsappId" = $1`,
+        [whatsappId],
+      );
+      messageRecordId = existingRows.rows[0]?._id;
+    }
+
+    // 3. Save to master linking table
+    const masterQuery = `
+      INSERT INTO messages ("sessionId", "userId", "${linkingColumn}", "whatsappId", "rawData")
+      VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT ("whatsappId") DO NOTHING
       RETURNING *;
     `;
-    const values = [
+    const masterValues = [
+      sessionId,
+      userId,
+      messageRecordId,
+      whatsappId,
+      rawData ? JSON.stringify(rawData) : null,
+    ];
+    const { rows: masterRows } = await pool.query(masterQuery, masterValues);
+
+    // For backward compatibility, return an object that looks like the old message structure
+    return {
       sessionId,
       whatsappId,
       from,
@@ -30,37 +82,113 @@ export const saveMessage = async (messageData) => {
       type,
       fromMe,
       timestamp,
-    ];
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+      rawData,
+    };
   } catch (err) {
-    // Fallback if ON CONFLICT fails (e.g. unique constraint missing)
-    if (err.code === "42P10") {
-      // undefined_column / missing index for conflict
-      const query = `
-        INSERT INTO messages ("sessionId", "whatsappId", "from", "to", body, "type", "fromMe", timestamp)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *;
-      `;
-      const values = [
-        sessionId,
-        whatsappId,
-        from,
-        to,
-        body,
-        type,
-        fromMe,
-        timestamp,
-      ];
-      const { rows } = await pool.query(query, values);
-      return rows[0];
-    }
+    console.error(`❌ Save message polymorphic error:`, err.message);
     throw err;
   }
 };
 
+export const getContactsWithMessages = async (sessionId) => {
+  const query = `
+    WITH UnifiedMessages AS (
 
+      -- Personal chat messages
+      SELECT 
+        m."sessionId",
+        sd."fromMe",
+        sd."to",
+        sd."from",
+        sd.body,
+        sd.timestamp,
+        sd."chatId",
+        sd."isGroup"
+      FROM messages m
+      JOIN chat_messages sd
+        ON sd._id = m."chatMessageId"
 
+      UNION ALL
+
+      -- Group messages
+      SELECT 
+        m."sessionId",
+        sd."fromMe",
+        sd."to",
+        sd."from",
+        sd.body,
+        sd.timestamp,
+        sd."chatId",
+        sd."isGroup"
+      FROM messages m
+      JOIN group_messages sd
+        ON sd._id = m."groupMessageId"
+    ),
+
+    LastMessages AS (
+      SELECT 
+        CASE 
+          WHEN "fromMe" = true THEN "to"
+          ELSE "from"
+        END AS "contactId",
+
+        body,
+        timestamp,
+        "fromMe",
+        "chatId",
+        "isGroup",
+
+        ROW_NUMBER() OVER (
+          PARTITION BY 
+            CASE 
+              WHEN "fromMe" = true THEN "to"
+              ELSE "from"
+            END
+          ORDER BY timestamp DESC
+        ) AS rn
+
+      FROM UnifiedMessages
+
+      WHERE "sessionId" = $1
+        AND "from" NOT LIKE '%status@broadcast%'
+        AND "to" NOT LIKE '%status@broadcast%'
+        AND "from" NOT LIKE '%@newsletter%'
+        AND "to" NOT LIKE '%@newsletter%'
+    )
+
+    SELECT 
+      lm."contactId",
+      lm.body,
+      lm.timestamp,
+      lm."fromMe",
+      lm."chatId",
+      lm."isGroup",
+
+      COALESCE(
+        c1.name,
+        c2.name,
+        lm."contactId"
+      ) AS "name"
+
+    FROM LastMessages lm
+
+    LEFT JOIN contacts c1
+      ON c1."whatsappId" = lm."contactId"
+
+    LEFT JOIN contacts c2
+      ON c2.lid = lm."contactId"
+
+    WHERE lm.rn = 1
+
+    ORDER BY lm.timestamp DESC;
+  `;
+
+  const values = [sessionId];
+
+  const { rows } = await pool.query(query, values);
+
+  return rows;
+};
 
 export const getMessagesBySessionAndContact = async (
   sessionId,
@@ -68,56 +196,28 @@ export const getMessagesBySessionAndContact = async (
 ) => {
   // Normalize the input ID
   const cleanId = contactWhatsappId.split("@")[0];
+  const isGroup = contactWhatsappId.includes("@g.us");
+  const tableName = isGroup ? "group_messages" : "chat_messages";
+  const linkingColumn = isGroup ? "groupMessageId" : "chatMessageId";
 
   const query = `
-    SELECT m.* 
+    SELECT 
+      m._id as master_id,
+      sd.*
     FROM messages m
+    JOIN ${tableName} sd ON sd._id = m."${linkingColumn}"
     LEFT JOIN contacts c ON (c."whatsappId" = $2 OR c.lid = $2)
     WHERE m."sessionId" = $1 
       AND (
-        m."from" = $2 OR m."to" = $2 OR 
-        m."from" = c."whatsappId" OR m."to" = c."whatsappId" OR
-        m."from" = c.lid OR m."to" = c.lid OR
-        m."from" = $3 OR m."to" = $3 OR
-        m."from" LIKE $4 OR m."to" LIKE $4
+        sd."from" = $2 OR sd."to" = $2 OR 
+        sd."from" = c."whatsappId" OR sd."to" = c."whatsappId" OR
+        sd."from" = c.lid OR sd."to" = c.lid OR
+        sd."from" = $3 OR sd."to" = $3 OR
+        sd."from" LIKE $4 OR sd."to" LIKE $4
       )
-    ORDER BY m.timestamp ASC;
+    ORDER BY sd.timestamp ASC;
   `;
   const values = [sessionId, contactWhatsappId, cleanId, `${cleanId}@%`];
   const { rows } = await pool.query(query, values);
   return rows;
 };
-
-export const getContactsWithMessages = async (sessionId) => {
-  const query = `
-    WITH LastMessages AS (
-      SELECT 
-        CASE WHEN "fromMe" = true THEN "to" ELSE "from" END as "contactId",
-        body,
-        timestamp,
-        "fromMe",
-        ROW_NUMBER() OVER(PARTITION BY CASE WHEN "fromMe" = true THEN "to" ELSE "from" END ORDER BY timestamp DESC) as rn
-      FROM messages
-      WHERE "sessionId" = $1 
-        AND "from" NOT LIKE '%status@broadcast%'
-        AND "to" NOT LIKE '%status@broadcast%'
-        AND "from" NOT LIKE '%@newsletter%'
-        AND "to" NOT LIKE '%@newsletter%'
-    )
-    SELECT 
-      lm."contactId", 
-      lm.body, 
-      lm.timestamp, 
-      lm."fromMe",
-      COALESCE(c1.name, c2.name) as "name"
-    FROM LastMessages lm
-    LEFT JOIN contacts c1 ON c1."whatsappId" = lm."contactId"
-    LEFT JOIN contacts c2 ON c2.lid = lm."contactId"
-    WHERE lm.rn = 1
-    ORDER BY lm.timestamp DESC;
-  `;
-  const values = [sessionId];
-  const { rows } = await pool.query(query, values);
-  return rows;
-};
-

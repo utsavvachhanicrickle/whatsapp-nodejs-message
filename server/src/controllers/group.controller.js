@@ -13,12 +13,10 @@ export const getGroupsController = async (req, res, next) => {
       return next(new AppError(MESSAGES.CLIENT_NOT_FOUND, 400));
     }
 
-    if (!client.isReady) {
-      return next(new AppError("WhatsApp is still initializing. Please wait a moment.", 400));
-    }
+    // Proceed directly to safeClientCall which handles retries if initializing
 
     // Use safeClientCall to handle timing issues during initialization
-    const chats = await safeClientCall(client, 'getChats');
+    const chats = await safeClientCall(client, "getChats");
 
     const groups = chats
       .filter((chat) => chat.isGroup)
@@ -26,6 +24,9 @@ export const getGroupsController = async (req, res, next) => {
         id: g.id._serialized,
         name: g.name,
       }));
+    console.log(
+      `[Groups] Found ${chats?.length || 0} chats, ${groups.length} groups for session ${sessionId}`,
+    );
 
     return res.status(200).json({
       success: true,
@@ -33,27 +34,38 @@ export const getGroupsController = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Get groups error:", error.message);
-    return next(new AppError("Failed to fetch groups. WhatsApp might still be loading.", 500));
+    return next(
+      new AppError(
+        "Failed to fetch groups. WhatsApp might still be loading.",
+        500,
+      ),
+    );
   }
 };
-
 
 export const sendMultipleGroupMessageController = async (req, res, next) => {
   try {
     const { sessionId, multipleGroup, message } = req.body;
 
     if (!Array.isArray(multipleGroup) || multipleGroup.length === 0) {
-      return next(new AppError("Selection is empty. Please select at least one group.", 400));
+      return next(
+        new AppError(
+          "Selection is empty. Please select at least one group.",
+          400,
+        ),
+      );
     }
 
     const client = clients[sessionId];
     if (!client) {
-      return next(new AppError("WhatsApp client not found. Please re-login.", 400));
+      return next(
+        new AppError("WhatsApp client not found. Please re-login.", 400),
+      );
     }
 
     const sendPromises = multipleGroup.map((group) => {
       // Use safeClientCall for each message to handle transient errors
-      return safeClientCall(client, 'sendMessage', [group.id, message]);
+      return safeClientCall(client, "sendMessage", [group.id, message]);
     });
 
     await Promise.all(sendPromises);
