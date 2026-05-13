@@ -24,12 +24,12 @@ import {
   deleteDefaultMessage,
 } from "../../store/slices/defaultMessagesSlices";
 import { fetchGroups } from "../../store/slices/groupSlices.js";
-import UnifiedSidebar from "./UnifiedSidebar";
+import UnifiedSidebar from "./sidebar/UnifiedSidebar";
+import DefaultMessageSidebar from "./sidebar/DefaultMessageSidebar";
 import ChatView from "./ChatView";
 import ComposerView from "./ComposerView";
 
 import toast from "../../utils/Toast";
-import DefaultMessageSidebar from "./DefaultMessageSidebar";
 import AddEntityForm from "./AddEntityForm";
 
 import SendIcon from "@mui/icons-material/Send";

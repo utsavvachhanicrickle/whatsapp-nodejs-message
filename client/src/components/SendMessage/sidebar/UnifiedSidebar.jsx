@@ -3,10 +3,10 @@ import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
 import DeleteIcon from "@mui/icons-material/Delete";
+
 import ContactsSidebar from "./ContactsSidebar";
 import ChatsSidebar from "./ChatsSidebar";
 import WhatsappGroupMessageSidebar from "./WhatsappGroupMessageSidebar";
-import Button from "../Button";
 
 function UnifiedSidebar({
   contacts,
