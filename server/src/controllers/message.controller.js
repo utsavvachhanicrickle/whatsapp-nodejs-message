@@ -168,6 +168,7 @@ export const multipleMessageSendController = async (req, res, next) => {
               type: result.type,
               fromMe: result.fromMe,
               timestamp: result.timestamp,
+              rawData: result,
             });
           }
         }
