@@ -53,30 +53,24 @@ CREATE TABLE IF NOT EXISTS whatsapp_sections (
 -- Chat Messages Table
 CREATE TABLE IF NOT EXISTS chat_messages (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "sessionId" VARCHAR(255) NOT NULL,
-    "whatsappId" VARCHAR(255) UNIQUE NOT NULL,
     "from" VARCHAR(255) NOT NULL,
     "to" VARCHAR(255) NOT NULL,
     body TEXT,
     "type" VARCHAR(50) DEFAULT 'chat',
     "fromMe" BOOLEAN DEFAULT false,
     timestamp BIGINT,
-    "rawData" JSONB,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Group Messages Table
 CREATE TABLE IF NOT EXISTS group_messages (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "sessionId" VARCHAR(255) NOT NULL,
-    "whatsappId" VARCHAR(255) UNIQUE NOT NULL,
     "from" VARCHAR(255) NOT NULL,
     "to" VARCHAR(255) NOT NULL,
     body TEXT,
     "type" VARCHAR(50) DEFAULT 'chat',
     "fromMe" BOOLEAN DEFAULT false,
     timestamp BIGINT,
-    "rawData" JSONB,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -26,21 +26,17 @@ export const saveMessage = async (messageData) => {
 
     // 2. Save to specific table
     const specificQuery = `
-      INSERT INTO ${tableName} ("sessionId", "whatsappId", "from", "to", body, "type", "fromMe", timestamp, "rawData")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      ON CONFLICT ("whatsappId") DO NOTHING
+      INSERT INTO ${tableName} ( "from", "to", body, "type", "fromMe", timestamp)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING _id;
     `;
     const specificValues = [
-      sessionId,
-      whatsappId,
       from,
       to,
       body,
       type,
       fromMe,
       timestamp,
-      rawData ? JSON.stringify(rawData) : null,
     ];
     const { rows: specificRows } = await pool.query(specificQuery, specificValues);
     

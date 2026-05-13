@@ -1,26 +1,28 @@
 {
   "id": {
-    "id": "3EB092E2E264560D249F1A",
+    "id": "3EB098CB44D2471E134F5C",
     "fromMe": true,
-    "remote": "52948524597386@lid",
-    "_serialized": "true_52948524597386@lid_3EB092E2E264560D249F1A"
+    "remote": "120363260753592465@g.us",
+    "_serialized": "true_120363260753592465@g.us_3EB098CB44D2471E134F5C_161486659928212@lid",
+    "participant": "161486659928212@lid"
   },
-  "to": "52948524597386@lid",
+  "to": "120363260753592465@g.us",
   "ack": 0,
-  "body": "shu banvan che sanje ?",
+  "body": "hello\n",
   "from": "161486659928212@lid",
   "type": "chat",
   "_data": {
-    "t": 1778667105,
+    "t": 1778666152,
     "id": {
-      "id": "3EB092E2E264560D249F1A",
+      "id": "3EB098CB44D2471E134F5C",
       "fromMe": true,
-      "remote": "52948524597386@lid",
-      "_serialized": "true_52948524597386@lid_3EB092E2E264560D249F1A"
+      "remote": "120363260753592465@g.us",
+      "_serialized": "true_120363260753592465@g.us_3EB098CB44D2471E134F5C_161486659928212@lid",
+      "participant": "161486659928212@lid"
     },
-    "to": "52948524597386@lid",
+    "to": "120363260753592465@g.us",
     "ack": 0,
-    "body": "shu banvan che sanje ?",
+    "body": "hello\n",
     "from": "161486659928212@lid",
     "star": false,
     "type": "chat",
@@ -103,7 +105,7 @@
   "hasMedia": false,
   "isStatus": false,
   "isStarred": false,
-  "timestamp": 1778667105,
+  "timestamp": 1778666152,
   "deviceType": "android",
   "hasReaction": false,
   "isForwarded": false,

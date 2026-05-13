@@ -164,7 +164,7 @@ const bindClientEvents = (client, sessionId, io) => {
 
       // console.log(msg);
 
-      if (msg.from === "status@broadcast") {
+      if (msg.from === "status@broadcast" || msg.type === "e2e_notification") {
         console.log("---------- Status Message ----------");
         return;
       }
@@ -174,7 +174,7 @@ const bindClientEvents = (client, sessionId, io) => {
       if (canonicalFrom.includes("@lid") && contact.number) {
         canonicalFrom = `${contact.number}@c.us`;
       }
-      
+
       let canonicalTo = msg.fromMe
         ? chat.id._serialized
         : client.info?.wid?._serialized || msg.to;
@@ -183,6 +183,10 @@ const bindClientEvents = (client, sessionId, io) => {
         if (chatContact && chatContact.number) {
           canonicalTo = `${chatContact.number}@c.us`;
         }
+      }
+
+      if (msg.from.includes("@g.us")) {
+        canonicalFrom = msg.from;
       }
 
       console.log(
@@ -199,7 +203,7 @@ const bindClientEvents = (client, sessionId, io) => {
         type: msg.type,
         fromMe: msg.fromMe,
         timestamp: msg.timestamp,
-        rawData: msg, // 🔥 Save the entire message object
+        rawData: msg,
       };
 
       // Save to database
