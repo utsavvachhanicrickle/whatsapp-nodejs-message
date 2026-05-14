@@ -52,9 +52,18 @@ export const contactModules = {
 
   bulkDeleteContacts: async (contacts) => {
     try {
-      const res = await API.post(APIENDPOINTS.BULK_DELETE_CONTACTS, contacts);
+      const chunkSize = 50;
+      const deletedIds = [];
+      for (let i = 0; i < contacts.contacts.length; i += chunkSize) {
+        const chunk = contacts.contacts.slice(i, i + chunkSize);
+
+        const res = await API.post(APIENDPOINTS.BULK_DELETE_CONTACTS, {
+          contacts: chunk,
+        });
+        deletedIds.push(...res.data.deletedId);
+      }
       toast.success(MESSAGES.BULK_DELETE_SUCCESS);
-      return res;
+      return deletedIds;
     } catch (err) {
       toast.error(MESSAGES.BULK_DELETE_ERROR);
       throw err;

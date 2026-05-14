@@ -40,7 +40,7 @@ const syncContacts = async (client, sessionId, io) => {
     // Use safeClientCall with retries
     const contacts = await safeClientCall(client, "getContacts");
 
-    const userContacts = contacts
+    const userContactsRaw = contacts
       .filter(
         (c) =>
           c.isUser &&
@@ -57,6 +57,15 @@ const syncContacts = async (client, sessionId, io) => {
         phoneNumber: c.number,
         userId: userId,
       }));
+
+    // 🔥 Deduplicate by phoneNumber to avoid "ON CONFLICT DO UPDATE cannot affect row a second time"
+    const uniqueMap = new Map();
+    userContactsRaw.forEach((c) => {
+      if (!uniqueMap.has(c.phoneNumber)) {
+        uniqueMap.set(c.phoneNumber, c);
+      }
+    });
+    const userContacts = Array.from(uniqueMap.values());
 
     if (userContacts.length > 0) {
       const { upsertWhatsappContacts } =
