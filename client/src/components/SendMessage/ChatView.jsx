@@ -5,6 +5,8 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import PersonIcon from "@mui/icons-material/Person";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import LockIcon from "@mui/icons-material/Lock";
+import CallIcon from "@mui/icons-material/Call";
+import VideocamIcon from "@mui/icons-material/Videocam";
 
 function ChatView({
   name,
@@ -214,6 +216,37 @@ function ChatView({
                   <span className="flex items-center gap-1.5 italic text-xs opacity-60">
                     {icons[msgType] || "📎"} {msgType} (processing...)
                   </span>
+                );
+              }
+
+              if (msgType === "call_log") {
+                const isVideo =
+                  msg.rawData?.isVideo ||
+                  msg.body?.toLowerCase().includes("video");
+                return (
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-(--border) min-w-[180px]">
+                    <div
+                      className={`p-2 rounded-full ${
+                        isVideo
+                          ? "bg-purple-500/20 text-purple-500"
+                          : "bg-green-500/20 text-green-500"
+                      }`}
+                    >
+                      {isVideo ? (
+                        <VideocamIcon sx={{ fontSize: 20 }} />
+                      ) : (
+                        <CallIcon sx={{ fontSize: 20 }} />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold leading-none">
+                        {isVideo ? "Video Call" : "Voice Call"}
+                      </p>
+                      <p className="text-[10px] opacity-60 mt-1 uppercase font-bold tracking-tighter">
+                        {msg.fromMe ? "Outgoing" : "Incoming"}
+                      </p>
+                    </div>
+                  </div>
                 );
               }
 

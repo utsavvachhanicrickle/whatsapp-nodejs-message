@@ -166,6 +166,47 @@ const bindClientEvents = (client, sessionId, io) => {
 
   console.log(`🔗 Binding events for session ${sessionId}`);
 
+  // 📞 Listen for incoming calls
+  client.on("incoming_call", async (call) => {
+    try {
+      console.log(
+        `📞 Incoming ${call.isVideo ? "Video" : "Voice"} call from ${call.from}`,
+      );
+
+      const { saveMessage } = await import("./services/message.service.js");
+
+      const callData = {
+        sessionId,
+        whatsappId: call.id,
+        from: call.from,
+        to: client.info?.wid?._serialized || "me",
+        body: call.isVideo ? "Video Call" : "Voice Call",
+        chatId: call.from,
+        type: "call_log",
+        fromMe: call.fromMe || false,
+        timestamp: call.timestamp || Math.floor(Date.now() / 1000),
+        author: call.isGroup ? call.from : null,
+        rawData: {
+          id: call.id,
+          isVideo: call.isVideo,
+          isGroup: call.isGroup,
+          participants: call.participants,
+        },
+      };
+
+      const saved = await saveMessage(callData);
+
+      if (saved) {
+        io.to(`session_${sessionId}`).emit("new-message", {
+          ...callData,
+          masterId: saved.masterId,
+        });
+      }
+    } catch (err) {
+      console.error("❌ Incoming call log error:", err.message);
+    }
+  });
+
   // 🔥 Unified message listener for all incoming and outgoing messages
   client.on("message_create", async (msg) => {
     try {
