@@ -1,10 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
--- -- Force a clean slate for the contacts table to ensure all columns match the code
--- DROP TABLE IF EXISTS whatsapp_sections CASCADE;
--- DROP TABLE IF EXISTS contacts CASCADE;
--- DROP TABLE IF EXISTS messages CASCADE;
--- DROP TABLE IF EXISTS group_messages CASCADE;
--- DROP TABLE IF EXISTS chat_messages CASCADE;
+
 -- Users Table
 CREATE TABLE IF NOT EXISTS users (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -14,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
     "refreshToken" TEXT,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
--- Contacts Table (Recreated to ensure "userId" and "phoneNumber" columns exist with correct casing)
+
+-- Contacts Table
 CREATE TABLE IF NOT EXISTS contacts (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "whatsappId" VARCHAR(100),
@@ -27,6 +23,7 @@ CREATE TABLE IF NOT EXISTS contacts (
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE ("phoneNumber", "userId")
 );
+
 -- Default Messages Table
 CREATE TABLE IF NOT EXISTS default_messages (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -36,6 +33,7 @@ CREATE TABLE IF NOT EXISTS default_messages (
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
 -- Whatsapp Sections Table
 CREATE TABLE IF NOT EXISTS whatsapp_sections (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -43,8 +41,9 @@ CREATE TABLE IF NOT EXISTS whatsapp_sections (
     "userId" UUID NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
--- Chat Messages Table
-CREATE TABLE IF NOT EXISTS chat_messages (
+
+-- Personal Messages Table (private chats only)
+CREATE TABLE IF NOT EXISTS personal_messages (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "from" VARCHAR(255) NOT NULL,
     "to" VARCHAR(255) NOT NULL,
@@ -56,12 +55,14 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     timestamp BIGINT,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
--- Group Messages Table
+
+-- Group Messages Table (group chats only)
 CREATE TABLE IF NOT EXISTS group_messages (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "from" VARCHAR(255) NOT NULL,
     "to" VARCHAR(255) NOT NULL,
     "chatId" VARCHAR(255) NOT NULL,
+    "author" VARCHAR(255),
     "isGroup" BOOLEAN DEFAULT true,
     body TEXT,
     "type" VARCHAR(50) DEFAULT 'chat',
@@ -69,97 +70,124 @@ CREATE TABLE IF NOT EXISTS group_messages (
     timestamp BIGINT,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
--- Messages Table (Master/Linking Table)
+
+-- Messages Table (Master / Linking Table)
 CREATE TABLE IF NOT EXISTS messages (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "sessionId" VARCHAR(255) NOT NULL,
     "userId" UUID REFERENCES users(_id) ON DELETE CASCADE,
-    "chatMessageId" UUID REFERENCES chat_messages(_id) ON DELETE CASCADE,
+    "personalMessageId" UUID REFERENCES personal_messages(_id) ON DELETE CASCADE,
     "groupMessageId" UUID REFERENCES group_messages(_id) ON DELETE CASCADE,
     "whatsappId" VARCHAR(255) UNIQUE NOT NULL,
     "rawData" JSONB,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Media Files Table
+CREATE TABLE IF NOT EXISTS media_files (
+    _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "messageId" UUID REFERENCES messages(_id) ON DELETE CASCADE,
+    "mediaType" VARCHAR(50),
+    "mimeType" VARCHAR(255),
+    "publicUrl" TEXT,
+    "localPath" TEXT,
+    "fileName" TEXT,
+    "fileSize" BIGINT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- MIGRATIONS (safe, idempotent)
+-- ============================================================
+
 -- Migration: Add lid column to contacts if not exists
-DO $$ BEGIN IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'contacts'
-        AND column_name = 'lid'
-) THEN
-ALTER TABLE contacts
-ADD COLUMN lid VARCHAR(255);
-END IF;
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'contacts' AND column_name = 'lid'
+    ) THEN
+        ALTER TABLE contacts ADD COLUMN lid VARCHAR(255);
+    END IF;
 END $$;
--- Migration: Ensure chat_messages and group_messages exist with correct structure
-DO $$ BEGIN IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.tables
-    WHERE table_name = 'chat_messages'
-) THEN CREATE TABLE chat_messages (
-    _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "sessionId" VARCHAR(255) NOT NULL,
-    "whatsappId" VARCHAR(255) UNIQUE NOT NULL,
-    "from" VARCHAR(255) NOT NULL,
-    "to" VARCHAR(255) NOT NULL,
-    body TEXT,
-    "type" VARCHAR(50) DEFAULT 'chat',
-    "fromMe" BOOLEAN DEFAULT false,
-    timestamp BIGINT,
-    "rawData" JSONB,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-END IF;
-IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.tables
-    WHERE table_name = 'group_messages'
-) THEN CREATE TABLE group_messages (
-    _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "sessionId" VARCHAR(255) NOT NULL,
-    "whatsappId" VARCHAR(255) UNIQUE NOT NULL,
-    "from" VARCHAR(255) NOT NULL,
-    "to" VARCHAR(255) NOT NULL,
-    body TEXT,
-    "type" VARCHAR(50) DEFAULT 'chat',
-    "fromMe" BOOLEAN DEFAULT false,
-    timestamp BIGINT,
-    "rawData" JSONB,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-END IF;
+
+-- Migration: Rename chat_messages → personal_messages if old table still exists
+DO $$ BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables WHERE table_name = 'chat_messages'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.tables WHERE table_name = 'personal_messages'
+    ) THEN
+        ALTER TABLE chat_messages RENAME TO personal_messages;
+    END IF;
 END $$;
--- Migration: Update master messages table structure
-DO $$ BEGIN -- Add linking columns if they don't exist
-IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'messages'
-        AND column_name = 'userId'
-) THEN
-ALTER TABLE messages
-ADD COLUMN "userId" UUID REFERENCES users(_id) ON DELETE CASCADE;
-END IF;
-IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'messages'
-        AND column_name = 'chatMessageId'
-) THEN
-ALTER TABLE messages
-ADD COLUMN "chatMessageId" UUID REFERENCES chat_messages(_id) ON DELETE CASCADE;
-END IF;
-IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'messages'
-        AND column_name = 'groupMessageId'
-) THEN
-ALTER TABLE messages
-ADD COLUMN "groupMessageId" UUID REFERENCES group_messages(_id) ON DELETE CASCADE;
-END IF;
--- Optional: Remove old columns if you want to be strict, but safer to keep them for a while
--- ALTER TABLE messages DROP COLUMN IF EXISTS "from";
--- ALTER TABLE messages DROP COLUMN IF EXISTS "to";
--- ALTER TABLE messages DROP COLUMN IF EXISTS "body";
+
+-- Migration: Add author column to group_messages if missing
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'group_messages' AND column_name = 'author'
+    ) THEN
+        ALTER TABLE group_messages ADD COLUMN "author" VARCHAR(255);
+    END IF;
+END $$;
+
+-- Migration: Add personalMessageId to messages (replacing chatMessageId)
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'messages' AND column_name = 'personalMessageId'
+    ) THEN
+        ALTER TABLE messages ADD COLUMN "personalMessageId" UUID REFERENCES personal_messages(_id) ON DELETE CASCADE;
+        -- Only copy values that have a matching row in personal_messages (avoid FK violations)
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'messages' AND column_name = 'chatMessageId'
+        ) THEN
+            UPDATE messages m
+            SET "personalMessageId" = m."chatMessageId"
+            WHERE m."chatMessageId" IS NOT NULL
+              AND EXISTS (
+                  SELECT 1 FROM personal_messages pm WHERE pm._id = m."chatMessageId"
+              );
+        END IF;
+    END IF;
+END $$;
+
+-- Migration: Add groupMessageId to messages if missing
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'messages' AND column_name = 'groupMessageId'
+    ) THEN
+        ALTER TABLE messages ADD COLUMN "groupMessageId" UUID REFERENCES group_messages(_id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
+-- Migration: Add userId to messages if missing
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'messages' AND column_name = 'userId'
+    ) THEN
+        ALTER TABLE messages ADD COLUMN "userId" UUID REFERENCES users(_id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
+-- Migration: Create media_files table if missing (already handled above, belt-and-suspenders)
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables WHERE table_name = 'media_files'
+    ) THEN
+        CREATE TABLE media_files (
+            _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            "messageId" UUID REFERENCES messages(_id) ON DELETE CASCADE,
+            "mediaType" VARCHAR(50),
+            "mimeType" VARCHAR(255),
+            "publicUrl" TEXT,
+            "localPath" TEXT,
+            "fileName" TEXT,
+            "fileSize" BIGINT,
+            "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+    END IF;
 END $$;

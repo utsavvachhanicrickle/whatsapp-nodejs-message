@@ -1,6 +1,8 @@
 import pkg from "whatsapp-web.js";
 import qrcode from "qrcode";
 import { safeClientCall } from "./utils/whatsappUtils.js";
+import fs from "fs";
+import path from "path";
 
 const { Client, LocalAuth } = pkg;
 
@@ -164,7 +166,12 @@ const bindClientEvents = (client, sessionId, io) => {
 
       // console.log(msg);
 
-      if (msg.from === "status@broadcast" || msg.type === "e2e_notification") {
+      if (
+        msg.from === "status@broadcast" ||
+        msg.type === "e2e_notification" ||
+        msg.type === "notification_template" ||
+        msg.type === "protocol"
+      ) {
         console.log("---------- Status Message ----------");
         return;
       }
@@ -196,23 +203,171 @@ const bindClientEvents = (client, sessionId, io) => {
       );
 
       const { saveMessage } = await import("./services/message.service.js");
+
+      // Resolve author for group messages (the actual participant who sent)
+      let author = null;
+      if (msg.from.includes("@g.us")) {
+        author = msg.author || msg._data?.participant || null;
+        // Normalize @lid author to @c.us if possible
+        if (author?.includes("@lid") && contact.number) {
+          author = `${contact.number}@c.us`;
+        }
+      }
+
+      // Safe rawData: strip circular refs / methods from the live msg object
+      const safeRawData = {
+        id: msg.id,
+        body: msg.body,
+        type: msg.type,
+        timestamp: msg.timestamp,
+        from: msg.from,
+        to: msg.to,
+        author: msg.author || null,
+        fromMe: msg.fromMe,
+        hasMedia: msg.hasMedia,
+        ack: msg.ack,
+        isForwarded: msg.isForwarded,
+        isStatus: msg.isStatus,
+        isStarred: msg.isStarred,
+        hasQuotedMsg: msg.hasQuotedMsg,
+        deviceType: msg.deviceType,
+        _data: (() => {
+          try { return JSON.parse(JSON.stringify(msg._data)); } catch { return null; }
+        })(),
+      };
+
+      // For media messages, body may contain raw base64 — don't store it as text
+      const MEDIA_TYPES = ["image", "video", "document", "audio", "ptt", "sticker"];
+      const isMediaType = MEDIA_TYPES.includes(msg.type);
+      const bodyForDb = isMediaType && !msg.body?.startsWith("http") && msg.body?.length > 100
+        ? "" // don't store base64 blob as body text
+        : msg.body;
+
       const messageData = {
         sessionId,
         whatsappId: msg.id._serialized,
         from: canonicalFrom,
         to: canonicalTo,
-        body: msg.body,
+        body: bodyForDb,
         chatId: fromMeData,
         type: msg.type,
         fromMe: msg.fromMe,
         timestamp: msg.timestamp,
-        rawData: msg,
+        author,
+        rawData: safeRawData,
       };
 
       // Save to database
       const saved = await saveMessage(messageData);
+      
+      // --- MEDIA DOWNLOAD & SAVE ---
+      const bodyIsBase64 = isMediaType && msg.body && msg.body.length > 100 && !msg.body.startsWith("http");
 
-      // Notify all clients in the session room if it was a valid message (not filtered)
+      // Determine if we can actually get media data:
+      //  PATH 1 — body has base64 (self-sent image from Android)
+      //  PATH 2 — hasMedia=true → downloadMedia() works (incoming or web-sent)
+      //  PATH 3 — fromMe=false, hasMedia=false → try downloadMedia() (rare, incoming edge case)
+      //  SKIP   — fromMe=true, hasMedia=false, body="" → Android outgoing doc/sticker/video
+      //           WhatsApp Web does NOT provide decryption keys for these; downloadMedia() → null
+      const canFetchMedia =
+        bodyIsBase64 ||
+        msg.hasMedia ||
+        (!msg.fromMe && isMediaType);
+
+      if (saved && isMediaType && canFetchMedia) {
+        console.log(`📎 Media [${msg.type}] path=${bodyIsBase64 ? "body-base64" : "download"} id=${msg.id._serialized}`);
+        try {
+          let media = null;
+
+          if (bodyIsBase64) {
+            // ── PATH 1: base64 in body (self-sent image from Android) ──
+            const mimetype = msg._data?.mimetype || "image/jpeg";
+            media = {
+              data: msg.body,
+              mimetype,
+              filename: msg._data?.filename || null,
+            };
+            console.log(`📋 Body base64: mimetype=${mimetype}, length=${msg.body.length}`);
+          } else {
+            // ── PATH 2/3: incoming or web-sent — use downloadMedia() ──
+            console.log(`📡 downloadMedia() for type=${msg.type} fromMe=${msg.fromMe}...`);
+            media = await Promise.race([
+              msg.downloadMedia(),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("downloadMedia timeout 60s")), 60000)
+              ),
+            ]);
+            if (media) {
+              console.log(`📥 Downloaded: mimetype=${media.mimetype}`);
+            } else {
+              console.warn(`⚠️ downloadMedia() null — skipping media save for ${msg.id._serialized}`);
+            }
+          }
+
+          if (media && media.data) {
+            const folderMap = {
+              image: "images",
+              video: "videos",
+              document: "docs",
+              audio: "audio",
+              sticker: "stickers",
+              ptt: "audio",
+            };
+            const folder = folderMap[msg.type] || "docs";
+
+            // Safely derive extension
+            const rawExt = (media.mimetype || "application/octet-stream")
+              .split("/")[1]
+              ?.split(";")[0]
+              ?.replace(/[^a-zA-Z0-9]/g, "") || "bin";
+            const ext = rawExt.length > 10 ? "bin" : rawExt;
+            const originalName = media.filename || msg._data?.filename || "";
+            const baseName = originalName
+              ? originalName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80)
+              : `${Date.now()}_${msg.id.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 40)}.${ext}`;
+
+            const localDir = path.join(process.cwd(), "resources", folder);
+            const localPath = path.join(localDir, baseName);
+
+            fs.mkdirSync(localDir, { recursive: true });
+            const fileBuffer = Buffer.from(media.data, "base64");
+            fs.writeFileSync(localPath, fileBuffer);
+
+            const publicUrl = `/resources/${folder}/${baseName}`;
+            const fileSize = fileBuffer.length;
+            console.log(`💾 File written: ${localPath} (${fileSize} bytes)`);
+
+            if (!saved.masterId) {
+              console.error("❌ masterId is null — cannot link media_files");
+            } else {
+              const { saveMedia } = await import("./services/message.service.js");
+              const mediaRecord = await saveMedia({
+                masterId: saved.masterId,
+                mediaType: msg.type,
+                mimeType: media.mimetype,
+                publicUrl,
+                localPath,
+                fileName: baseName,
+                fileSize,
+              });
+              console.log(`✅ media_files saved: ${mediaRecord._id} → ${publicUrl}`);
+
+              messageData.publicUrl = publicUrl;
+              messageData.mediaType = msg.type;
+              messageData.mimeType = media.mimetype;
+              messageData.fileName = baseName;
+            }
+          } else if (media && !media.data) {
+            console.warn(`⚠️ media object exists but data is empty for ${msg.id._serialized}`);
+          }
+        } catch (mediaErr) {
+          console.error(`❌ Media error [${msg.type}]: ${mediaErr.message}`);
+        }
+      }
+      // --- END MEDIA ---
+
+
+      // Notify all clients in the session room if it was a valid message
       if (saved) {
         console.log(`✅ Message saved: ${msg.id._serialized}`);
         io.to(`session_${sessionId}`).emit("new-message", messageData);

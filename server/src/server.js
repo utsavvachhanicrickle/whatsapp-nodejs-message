@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import http from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
@@ -37,6 +38,9 @@ app.get("/", (req, res) => {
 
 app.set("io", io);
 app.use("/api", apiRoute);
+
+// Static media files
+app.use("/resources", express.static(path.join(process.cwd(), "resources")));
 
 // Global Error Handler
 app.use((err, req, res, next) => {

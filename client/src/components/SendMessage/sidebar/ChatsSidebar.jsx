@@ -77,21 +77,6 @@ function ChatsSidebar({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* SEARCH */}
-      <div className="p-3 border-b border-(--border)">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-(--bg-secondary)">
-          <SearchIcon className="text-(--text-secondary)" fontSize="small" />
-
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search chats..."
-            className="bg-transparent outline-none text-sm w-full text-(--text-primary)"
-          />
-        </div>
-      </div>
-
       {/* CHAT LIST */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {filteredChats.length === 0 ? (

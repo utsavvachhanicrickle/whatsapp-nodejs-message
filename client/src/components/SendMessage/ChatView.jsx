@@ -156,6 +156,90 @@ function ChatView({
         ) : (
           chatMessages.map((msg, idx) => {
             const isMine = msg.fromMe;
+            const BASE_URL = (import.meta.env.VITE_SERVER_URL || "http://localhost:3000").replace(/\/$/, "");
+
+            const renderMediaContent = () => {
+              const mediaUrl = msg.publicUrl ? BASE_URL + msg.publicUrl : null;
+              const msgType = msg.mediaType || msg.type;
+
+              if (msgType === "image" && mediaUrl) {
+                return (
+                  <a href={mediaUrl} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={mediaUrl}
+                      alt="Image"
+                      className="rounded-xl max-w-[250px] w-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    />
+                  </a>
+                );
+              }
+
+              if (msgType === "video" && mediaUrl) {
+                return (
+                  <video
+                    controls
+                    className="rounded-xl max-w-[300px] w-full"
+                  >
+                    <source src={mediaUrl} type={msg.mimeType || "video/mp4"} />
+                    Your browser does not support video.
+                  </video>
+                );
+              }
+
+              if ((msgType === "document" || msgType === "pdf") && mediaUrl) {
+                return (
+                  <a
+                    href={mediaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/10 hover:bg-black/20 transition-colors text-sm font-semibold underline"
+                  >
+                    📄 {msg.fileName || "Download Document"}
+                  </a>
+                );
+              }
+
+              if ((msgType === "audio" || msgType === "ptt") && mediaUrl) {
+                return (
+                  <audio controls className="max-w-[250px] w-full rounded-lg">
+                    <source src={mediaUrl} type={msg.mimeType || "audio/ogg"} />
+                    Your browser does not support audio.
+                  </audio>
+                );
+              }
+
+              if (msgType === "sticker" && mediaUrl) {
+                return (
+                  <img
+                    src={mediaUrl}
+                    alt="Sticker"
+                    className="w-24 h-24 object-contain"
+                  />
+                );
+              }
+
+              // Media message but publicUrl not yet available (still processing)
+              const mediaTypes = ["image", "video", "document", "audio", "ptt", "sticker"];
+              if (mediaTypes.includes(msgType) && !mediaUrl) {
+                const icons = { image: "🖼️", video: "🎥", document: "📄", audio: "🎵", ptt: "🎤", sticker: "🎭" };
+                return (
+                  <span className="flex items-center gap-1.5 italic text-xs opacity-60">
+                    {icons[msgType] || "📎"} {msgType} (processing...)
+                  </span>
+                );
+              }
+
+              // Default: plain text
+              return (
+                <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed">
+                  {msg.body || (
+                    <span className="italic opacity-50">
+                      Empty message
+                    </span>
+                  )}
+                </p>
+              );
+            };
 
             return (
               <div
@@ -178,18 +262,19 @@ function ChatView({
                   {/* Sender Name for Groups */}
                   {isGroupBollean && !isMine && (
                     <div className="text-[10px] font-bold text-teal-400 mb-1 truncate">
-                      {msg.from}
+                      {msg.author || msg.from}
                     </div>
                   )}
 
-                  {/* Message */}
-                  <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed">
-                    {msg.body || (
-                      <span className="italic opacity-50">
-                        Empty message
-                      </span>
-                    )}
-                  </p>
+                  {/* Media / Text Content */}
+                  {renderMediaContent()}
+
+                  {/* Caption (body shown below media if present) */}
+                  {msg.publicUrl && msg.body && (
+                    <p className="text-sm mt-1 whitespace-pre-wrap wrap-break-word leading-relaxed">
+                      {msg.body}
+                    </p>
+                  )}
 
                   {/* Footer */}
                   <div className="flex items-center justify-end gap-1 mt-2">

@@ -12,6 +12,7 @@ export const saveMessage = async (messageData) => {
     fromMe,
     timestamp,
     rawData,
+    author,
   } = messageData;
 
   // 🔥 Skip broadcast and newsletters
@@ -25,8 +26,8 @@ export const saveMessage = async (messageData) => {
   }
 
   const isGroup = from?.includes("@g.us") || to?.includes("@g.us");
-  const tableName = isGroup ? "group_messages" : "chat_messages";
-  const linkingColumn = isGroup ? "groupMessageId" : "chatMessageId";
+  const tableName = isGroup ? "group_messages" : "personal_messages";
+  const linkingColumn = isGroup ? "groupMessageId" : "personalMessageId";
 
   try {
     // 1. Resolve userId from sessionId (number)
@@ -34,27 +35,28 @@ export const saveMessage = async (messageData) => {
     const { rows: sectionRows } = await pool.query(sectionQuery, [sessionId]);
     const userId = sectionRows.length > 0 ? sectionRows[0].userId : null;
 
-    // 2. Save to specific table
-    const specificQuery = `
-      INSERT INTO ${tableName} ( "from", "to","chatId", body, "type", "fromMe", timestamp)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING _id;
-    `;
-    const specificValues = [from, to, chatId, body, type, fromMe, timestamp];
-    const { rows: specificRows } = await pool.query(
-      specificQuery,
-      specificValues,
-    );
+    // 2. Save to specific table (personal or group)
+    let specificQuery;
+    let specificValues;
 
-    // If it was a duplicate, we might need to find the existing ID
-    let messageRecordId = specificRows.length > 0 ? specificRows[0]._id : null;
-    if (!messageRecordId) {
-      const existingRows = await pool.query(
-        `SELECT _id FROM ${tableName} WHERE "whatsappId" = $1`,
-        [whatsappId],
-      );
-      messageRecordId = existingRows.rows[0]?._id;
+    if (isGroup) {
+      specificQuery = `
+        INSERT INTO group_messages ("from", "to", "chatId", "author", body, "type", "fromMe", timestamp)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING _id;
+      `;
+      specificValues = [from, to, chatId, author || null, body, type, fromMe, timestamp];
+    } else {
+      specificQuery = `
+        INSERT INTO personal_messages ("from", "to", "chatId", body, "type", "fromMe", timestamp)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING _id;
+      `;
+      specificValues = [from, to, chatId, body, type, fromMe, timestamp];
     }
+
+    const { rows: specificRows } = await pool.query(specificQuery, specificValues);
+    const messageRecordId = specificRows.length > 0 ? specificRows[0]._id : null;
 
     // 3. Save to master linking table
     const masterQuery = `
@@ -68,12 +70,22 @@ export const saveMessage = async (messageData) => {
       userId,
       messageRecordId,
       whatsappId,
-      rawData ? JSON.stringify(rawData) : null,
+      rawData ? (() => { try { return JSON.stringify(rawData); } catch { return null; } })() : null,
     ];
     const { rows: masterRows } = await pool.query(masterQuery, masterValues);
 
-    // For backward compatibility, return an object that looks like the old message structure
+    // 🔥 CRITICAL: ON CONFLICT DO NOTHING returns empty rows — fetch existing _id
+    let masterId = masterRows.length > 0 ? masterRows[0]._id : null;
+    if (!masterId) {
+      const existing = await pool.query(
+        `SELECT _id FROM messages WHERE "whatsappId" = $1`,
+        [whatsappId]
+      );
+      masterId = existing.rows[0]?._id || null;
+    }
+
     return {
+      masterId,
       sessionId,
       whatsappId,
       from,
@@ -82,10 +94,30 @@ export const saveMessage = async (messageData) => {
       type,
       fromMe,
       timestamp,
-      rawData,
+      isGroup,
     };
   } catch (err) {
-    console.error(`❌ Save message polymorphic error:`, err.message);
+    console.error(`❌ Save message error:`, err.message);
+    throw err;
+  }
+};
+
+/**
+ * Save media metadata to media_files table.
+ * Called after a media file has been saved to disk.
+ */
+export const saveMedia = async ({ masterId, mediaType, mimeType, publicUrl, localPath, fileName, fileSize }) => {
+  try {
+    const query = `
+      INSERT INTO media_files ("messageId", "mediaType", "mimeType", "publicUrl", "localPath", "fileName", "fileSize")
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+    `;
+    const values = [masterId, mediaType, mimeType, publicUrl, localPath, fileName, fileSize || null];
+    const { rows } = await pool.query(query, values);
+    return rows[0];
+  } catch (err) {
+    console.error(`❌ Save media error:`, err.message);
     throw err;
   }
 };
@@ -105,8 +137,8 @@ export const getContactsWithMessages = async (sessionId) => {
         sd."chatId",
         sd."isGroup"
       FROM messages m
-      JOIN chat_messages sd
-        ON sd._id = m."chatMessageId"
+      JOIN personal_messages sd
+        ON sd._id = m."personalMessageId"
 
       UNION ALL
 
@@ -184,9 +216,7 @@ export const getContactsWithMessages = async (sessionId) => {
   `;
 
   const values = [sessionId];
-
   const { rows } = await pool.query(query, values);
-
   return rows;
 };
 
@@ -194,18 +224,23 @@ export const getMessagesBySessionAndContact = async (
   sessionId,
   contactWhatsappId,
 ) => {
-  // Normalize the input ID
   const cleanId = contactWhatsappId.split("@")[0];
   const isGroup = contactWhatsappId.includes("@g.us");
-  const tableName = isGroup ? "group_messages" : "chat_messages";
-  const linkingColumn = isGroup ? "groupMessageId" : "chatMessageId";
+  const tableName = isGroup ? "group_messages" : "personal_messages";
+  const linkingColumn = isGroup ? "groupMessageId" : "personalMessageId";
 
   const query = `
     SELECT 
       m._id as master_id,
-      sd.*
+      sd.*,
+      mf."publicUrl",
+      mf."mediaType",
+      mf."mimeType",
+      mf."fileName",
+      mf."fileSize"
     FROM messages m
     JOIN ${tableName} sd ON sd._id = m."${linkingColumn}"
+    LEFT JOIN media_files mf ON mf."messageId" = m._id
     LEFT JOIN contacts c ON (c."whatsappId" = $2 OR c.lid = $2)
     WHERE m."sessionId" = $1 
       AND (
