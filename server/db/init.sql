@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS media_files (
     "localPath" TEXT,
     "fileName" TEXT,
     "fileSize" BIGINT,
+    "caption" TEXT,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

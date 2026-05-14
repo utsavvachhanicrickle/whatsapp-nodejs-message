@@ -249,7 +249,7 @@ const bindClientEvents = (client, sessionId, io) => {
       const MEDIA_TYPES = ["image", "video", "document", "audio", "ptt", "sticker"];
       const isMediaType = MEDIA_TYPES.includes(msg.type);
       const bodyForDb = isMediaType && !msg.body?.startsWith("http") && msg.body?.length > 100
-        ? "" // don't store base64 blob as body text
+        ? "" 
         : msg.body;
 
       const messageData = {
@@ -278,10 +278,7 @@ const bindClientEvents = (client, sessionId, io) => {
       //  PATH 3 — fromMe=false, hasMedia=false → try downloadMedia() (rare, incoming edge case)
       //  SKIP   — fromMe=true, hasMedia=false, body="" → Android outgoing doc/sticker/video
       //           WhatsApp Web does NOT provide decryption keys for these; downloadMedia() → null
-      const canFetchMedia =
-        bodyIsBase64 ||
-        msg.hasMedia ||
-        (!msg.fromMe && isMediaType);
+      const canFetchMedia = isMediaType;
 
       if (saved && isMediaType && canFetchMedia) {
         console.log(`📎 Media [${msg.type}] path=${bodyIsBase64 ? "body-base64" : "download"} id=${msg.id._serialized}`);
@@ -344,7 +341,9 @@ const bindClientEvents = (client, sessionId, io) => {
 
             const publicUrl = `/resources/${folder}/${baseName}`;
             const fileSize = fileBuffer.length;
-            console.log(`💾 File written: ${localPath} (${fileSize} bytes)`);
+            const caption = msg.caption || msg._data?.caption || (msg.type !== 'image' ? bodyForDb : "");
+
+            console.log(`💾 File written: ${localPath} (${fileSize} bytes) type=${msg.type}`);
 
             if (!saved.masterId) {
               console.error("❌ masterId is null — cannot link media_files");
@@ -358,6 +357,7 @@ const bindClientEvents = (client, sessionId, io) => {
                 localPath,
                 fileName: baseName,
                 fileSize,
+                caption,
               });
               console.log(`✅ media_files saved: ${mediaRecord._id} → ${publicUrl}`);
 
@@ -365,6 +365,7 @@ const bindClientEvents = (client, sessionId, io) => {
               messageData.mediaType = msg.type;
               messageData.mimeType = media.mimetype;
               messageData.fileName = baseName;
+              messageData.caption = caption;
             }
           } else if (media && !media.data) {
             console.warn(`⚠️ media object exists but data is empty for ${msg.id._serialized}`);

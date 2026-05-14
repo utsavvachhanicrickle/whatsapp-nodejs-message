@@ -147,9 +147,18 @@ function ChatsSidebar({
                   </div>
 
                   {/* MIDDLE */}
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-xs truncate text-(--text-secondary)">
-                      {chat.lastChat?.body || "No messages"}
+                  <div className="flex items-center gap-1.5 mt-1 overflow-hidden">
+                    <p className="text-xs truncate text-(--text-secondary) flex items-center gap-1.5 min-w-0">
+                      {chat.lastChat?.type === "image" && "📷 "}
+                      {chat.lastChat?.type === "video" && "🎥 "}
+                      {chat.lastChat?.type === "audio" && "🎵 "}
+                      {chat.lastChat?.type === "ptt" && "🎤 "}
+                      {chat.lastChat?.type === "document" && "📄 "}
+                      {chat.lastChat?.type === "sticker" && "🎭 "}
+                      
+                      <span className="truncate">
+                        {chat.lastChat?.caption || chat.lastChat?.body || (chat.lastChat?.type !== "chat" ? chat.lastChat?.type : "No messages")}
+                      </span>
                     </p>
                   </div>
 

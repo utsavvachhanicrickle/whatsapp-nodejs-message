@@ -18,8 +18,22 @@ function ChatView({
   selectedContactWhatsappId,
   fetchChatMessages,
   isGroupBollean,
+  contacts = [],
 }) {
   const chatContainerRef = useRef(null);
+
+  const resolveSenderName = (authorId) => {
+    if (!authorId) return "Unknown";
+    const cleanId = authorId.split("@")[0].replace(/\D/g, "");
+
+    const contact = contacts.find((c) => {
+      const cId = (c.whatsappId || "").split("@")[0].replace(/\D/g, "");
+      const cPhone = (c.phoneNumber || "").replace(/\D/g, "");
+      return cId === cleanId || cPhone === cleanId;
+    });
+
+    return contact?.name || authorId.split("@")[0];
+  };
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -241,8 +255,8 @@ function ChatView({
                 >
                   {/* Sender Name for Groups */}
                   {isGroupBollean && !isMine && (
-                    <div className="text-[10px] font-bold text-teal-400 mb-1 truncate">
-                      {msg.author || msg.from}
+                    <div className="text-[10px] font-bold text-teal-500 mb-1 truncate opacity-80">
+                      {resolveSenderName(msg.author || msg.from)}
                     </div>
                   )}
 
@@ -250,9 +264,9 @@ function ChatView({
                   {renderMediaContent()}
 
                   {/* Caption (body shown below media if present) */}
-                  {msg.publicUrl && msg.body && (
+                  {msg.publicUrl && (msg.caption || msg.body) && (
                     <p className="text-sm mt-1 whitespace-pre-wrap wrap-break-word leading-relaxed">
-                      {msg.body}
+                      {msg.caption || msg.body}
                     </p>
                   )}
 

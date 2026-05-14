@@ -106,14 +106,14 @@ export const saveMessage = async (messageData) => {
  * Save media metadata to media_files table.
  * Called after a media file has been saved to disk.
  */
-export const saveMedia = async ({ masterId, mediaType, mimeType, publicUrl, localPath, fileName, fileSize }) => {
+export const saveMedia = async ({ masterId, mediaType, mimeType, publicUrl, localPath, fileName, fileSize, caption }) => {
   try {
     const query = `
-      INSERT INTO media_files ("messageId", "mediaType", "mimeType", "publicUrl", "localPath", "fileName", "fileSize")
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO media_files ("messageId", "mediaType", "mimeType", "publicUrl", "localPath", "fileName", "fileSize", "caption")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *;
     `;
-    const values = [masterId, mediaType, mimeType, publicUrl, localPath, fileName, fileSize || null];
+    const values = [masterId, mediaType, mimeType, publicUrl, localPath, fileName, fileSize || null, caption || null];
     const { rows } = await pool.query(query, values);
     return rows[0];
   } catch (err) {
@@ -133,12 +133,16 @@ export const getContactsWithMessages = async (sessionId) => {
         sd."to",
         sd."from",
         sd.body,
+        sd."type",
+        mf.caption,
         sd.timestamp,
         sd."chatId",
         sd."isGroup"
       FROM messages m
       JOIN personal_messages sd
         ON sd._id = m."personalMessageId"
+      LEFT JOIN media_files mf 
+        ON mf."messageId" = m._id
 
       UNION ALL
 
@@ -149,12 +153,16 @@ export const getContactsWithMessages = async (sessionId) => {
         sd."to",
         sd."from",
         sd.body,
+        sd."type",
+        mf.caption,
         sd.timestamp,
         sd."chatId",
         sd."isGroup"
       FROM messages m
       JOIN group_messages sd
         ON sd._id = m."groupMessageId"
+      LEFT JOIN media_files mf 
+        ON mf."messageId" = m._id
     ),
 
     LastMessages AS (
@@ -165,6 +173,8 @@ export const getContactsWithMessages = async (sessionId) => {
         END AS "contactId",
 
         body,
+        "type",
+        caption,
         timestamp,
         "fromMe",
         "chatId",
@@ -191,6 +201,8 @@ export const getContactsWithMessages = async (sessionId) => {
     SELECT 
       lm."contactId",
       lm.body,
+      lm."type",
+      lm.caption,
       lm.timestamp,
       lm."fromMe",
       lm."chatId",
@@ -237,7 +249,8 @@ export const getMessagesBySessionAndContact = async (
       mf."mediaType",
       mf."mimeType",
       mf."fileName",
-      mf."fileSize"
+      mf."fileSize",
+      mf."caption"
     FROM messages m
     JOIN ${tableName} sd ON sd._id = m."${linkingColumn}"
     LEFT JOIN media_files mf ON mf."messageId" = m._id
