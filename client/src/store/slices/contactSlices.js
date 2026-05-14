@@ -66,7 +66,7 @@ export const bulkDeleteContactsSlice = createAsyncThunk(
   async (contacts, thunkAPI) => {
     try {
       const res = await contactModules.bulkDeleteContacts({ contacts });
-      return res.data.deletedId;
+      return res;
     } catch (error) {
       return thunkAPI.rejectWithValue("Bulk Delete failed");
     }

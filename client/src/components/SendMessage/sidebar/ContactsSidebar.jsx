@@ -1,3 +1,4 @@
+import { Avatar } from "../../Forms/Avatar";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
@@ -63,12 +64,7 @@ function ContactsSidebar({
                 />
               </div>
 
-              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-(--text-secondary) font-bold shrink-0 overflow-hidden">
-                <img
-                  src={`https://ui-avatars.com/api/?name=${c.name || "U"}&background=random`}
-                  alt="AV"
-                />
-              </div>
+              <Avatar name={c.name} className="w-10! h-10!" />
 
               <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-medium text-(--text-primary) truncate">

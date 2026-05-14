@@ -1,3 +1,4 @@
+import { Avatar } from "../../Forms/Avatar";
 import SearchIcon from "@mui/icons-material/Search";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PersonIcon from "@mui/icons-material/Person";
@@ -7,12 +8,14 @@ import { useMemo } from "react";
 function ChatsSidebar({
   chatsWithMessages = [],
   contacts = [],
+  groups = [],
   onSelect,
   search = "",
-  setSearch,
+  selectedContactWhatsappId,
 }) {
   const filteredChats = useMemo(() => {
     const contactMap = new Map();
+    const groupMap = new Map();
 
     contacts.forEach((c) => {
       if (c.whatsappId) {
@@ -20,19 +23,24 @@ function ChatsSidebar({
       }
 
       const phoneKey = (c.phoneNumber || "").replace(/\D/g, "");
-
       if (phoneKey) {
         contactMap.set(phoneKey, c);
       }
     });
 
+    groups.forEach((g) => {
+      if (g.id) {
+        groupMap.set(g.id, g);
+      }
+    });
+
     const mappedChats = chatsWithMessages.map((chat) => {
       const chatId = chat.chatId || chat.contactId;
-
       const cleanNumber = (chatId || "").split("@")[0].replace(/\D/g, "");
 
       const existingContact =
         contactMap.get(chatId) || contactMap.get(cleanNumber);
+      const existingGroup = groupMap.get(chatId);
 
       const isGroup = chat.isGroup || chatId?.includes("@g.us");
 
@@ -44,7 +52,10 @@ function ChatsSidebar({
         phoneNumber: cleanNumber,
 
         name: isGroup
-          ? existingContact?.name || chat.name || "Unknown Group"
+          ? existingGroup?.name ||
+            existingContact?.name ||
+            chat.name ||
+            "Unknown Group"
           : existingContact?.name || chat.name || cleanNumber || "Unknown",
 
         lastChat: chat,
@@ -77,21 +88,6 @@ function ChatsSidebar({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* SEARCH */}
-      <div className="p-3 border-b border-(--border)">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-(--bg-secondary)">
-          <SearchIcon className="text-(--text-secondary)" fontSize="small" />
-
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search chats..."
-            className="bg-transparent outline-none text-sm w-full text-(--text-primary)"
-          />
-        </div>
-      </div>
-
       {/* CHAT LIST */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {filteredChats.length === 0 ? (
@@ -102,34 +98,28 @@ function ChatsSidebar({
           </div>
         ) : (
           filteredChats.map((chat, index) => {
+            const isActive = selectedContactWhatsappId === chat.chatId;
             return (
               <div
                 key={chat._id || index}
                 onClick={() => onSelect(chat)}
-                className="group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-(--border)/40 hover:bg-(--bg-secondary) transition-all duration-200"
+                className={`group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-(--border)/40 transition-all duration-200
+                  ${isActive ? "bg-(--bg-active)" : "hover:bg-(--bg-secondary)"}`}
               >
                 {/* AVATAR */}
                 <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                    <img
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        chat.name || "U",
-                      )}&background=random&color=fff&bold=true`}
-                      alt="avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  <Avatar name={chat.name} className="w-10! h-10!" />
 
                   {/* TYPE BADGE */}
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-(--bg-chat) border border-(--border) flex items-center justify-center shadow-sm">
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-(--bg-chat) border border-(--border) flex items-center justify-center shadow-sm">
                     {chat.isGroup ? (
                       <GroupsIcon
-                        sx={{ fontSize: 12 }}
+                        sx={{ fontSize: 10 }}
                         className="text-green-500"
                       />
                     ) : (
                       <PersonIcon
-                        sx={{ fontSize: 12 }}
+                        sx={{ fontSize: 10 }}
                         className="text-blue-500"
                       />
                     )}
@@ -157,11 +147,18 @@ function ChatsSidebar({
                   </div>
 
                   {/* MIDDLE */}
-                  <div className="flex items-center gap-2 mt-1">
-                    
-
-                    <p className="text-xs truncate text-(--text-secondary)">
-                      {chat.lastChat?.body || "No messages"}
+                  <div className="flex items-center gap-1.5 mt-1 overflow-hidden">
+                    <p className="text-xs truncate text-(--text-secondary) flex items-center gap-1.5 min-w-0">
+                      {chat.lastChat?.type === "image" && "📷 "}
+                      {chat.lastChat?.type === "video" && "🎥 "}
+                      {chat.lastChat?.type === "audio" && "🎵 "}
+                      {chat.lastChat?.type === "ptt" && "🎤 "}
+                      {chat.lastChat?.type === "document" && "📄 "}
+                      {chat.lastChat?.type === "sticker" && "🎭 "}
+                      
+                      <span className="truncate">
+                        {chat.lastChat?.caption || chat.lastChat?.body || (chat.lastChat?.type !== "chat" ? chat.lastChat?.type : "No messages")}
+                      </span>
                     </p>
                   </div>
 

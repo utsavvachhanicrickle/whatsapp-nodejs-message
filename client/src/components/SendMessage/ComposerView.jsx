@@ -1,3 +1,4 @@
+import { Avatar } from "../Forms/Avatar";
 import SendIcon from "@mui/icons-material/Send";
 import ClearIcon from "@mui/icons-material/Clear";
 
@@ -114,17 +115,15 @@ function ComposerView({
 
             <div className="flex flex-wrap gap-3">
               {activeMode === "multiple" && multipleNumber.length === 0 && (
-                <div className="w-full flex flex-col items-center justify-center py-6 opacity-50">
+                <div className="w-full flex flex-col items-center justify-center py-6 opacity-40">
                   <PeopleIcon sx={{ fontSize: 36 }} />
-
                   <p className="text-xs mt-2">Select contacts from sidebar</p>
                 </div>
               )}
 
               {activeMode === "group" && multipleGroup.length === 0 && (
-                <div className="w-full flex flex-col items-center justify-center py-6 opacity-50">
+                <div className="w-full flex flex-col items-center justify-center py-6 opacity-40">
                   <GroupsIcon sx={{ fontSize: 36 }} />
-
                   <p className="text-xs mt-2">Select groups from sidebar</p>
                 </div>
               )}
@@ -134,18 +133,15 @@ function ComposerView({
                 multipleNumber.map((c) => (
                   <div
                     key={c._id}
-                    className="group flex items-center gap-3 px-3 py-2 rounded-2xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/15 transition-all"
+                    className="group flex items-center gap-3 px-3 py-2 rounded-2xl bg-(--bg-primary) border border-(--border) hover:border-(--primary)/30 transition-all shadow-sm"
                   >
-                    <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                      {(c.name || "U").charAt(0).toUpperCase()}
-                    </div>
+                    <Avatar name={c.name} className="w-8! h-8!" />
 
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-blue-500 truncate">
+                      <p className="text-xs font-semibold text-(--text-primary) truncate">
                         {c.name || "Unknown"}
                       </p>
-
-                      <p className="text-[10px] text-(--text-secondary)">
+                      <p className="text-[10px] text-(--text-secondary) opacity-60">
                         {c.phoneNumber}
                       </p>
                     </div>
@@ -156,9 +152,9 @@ function ComposerView({
                           prev.filter((p) => p._id !== c._id),
                         )
                       }
-                      className="ml-1 opacity-60 hover:opacity-100 hover:text-red-500 transition-all"
+                      className="ml-1 opacity-40 hover:opacity-100 hover:text-red-500 transition-all"
                     >
-                      <ClearIcon sx={{ fontSize: 16 }} />
+                      <ClearIcon sx={{ fontSize: 14 }} />
                     </button>
                   </div>
                 ))}
@@ -168,18 +164,15 @@ function ComposerView({
                 multipleGroup.map((g) => (
                   <div
                     key={g.id || g._id}
-                    className="group flex items-center gap-3 px-3 py-2 rounded-2xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/15 transition-all"
+                    className="group flex items-center gap-3 px-3 py-2 rounded-2xl bg-(--bg-primary) border border-(--border) hover:border-(--primary)/30 transition-all shadow-sm"
                   >
-                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0">
-                      <GroupsIcon sx={{ fontSize: 16 }} />
-                    </div>
+                    <Avatar name={g.name} className="w-8! h-8!" />
 
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-green-500 truncate">
+                      <p className="text-xs font-semibold text-(--text-primary) truncate">
                         {g.name}
                       </p>
-
-                      <p className="text-[10px] text-(--text-secondary)">
+                      <p className="text-[10px] text-(--text-secondary) opacity-60">
                         Group Chat
                       </p>
                     </div>
@@ -192,9 +185,9 @@ function ComposerView({
                           ),
                         )
                       }
-                      className="ml-1 opacity-60 hover:opacity-100 hover:text-red-500 transition-all"
+                      className="ml-1 opacity-40 hover:opacity-100 hover:text-red-500 transition-all"
                     >
-                      <ClearIcon sx={{ fontSize: 16 }} />
+                      <ClearIcon sx={{ fontSize: 14 }} />
                     </button>
                   </div>
                 ))}
@@ -212,10 +205,10 @@ function ComposerView({
                 Contact Name
               </label>
 
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-(--bg-secondary)">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-(--bg-secondary) border border-transparent focus-within:border-(--primary)/30 transition-all">
                 <PersonIcon
                   fontSize="small"
-                  className="text-(--text-secondary)"
+                  className="text-(--text-secondary) opacity-50"
                 />
 
                 <input
@@ -234,10 +227,10 @@ function ComposerView({
                 Phone Number
               </label>
 
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-(--bg-secondary)">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-(--bg-secondary) border border-transparent focus-within:border-(--primary)/30 transition-all">
                 <PhoneIcon
                   fontSize="small"
-                  className="text-(--text-secondary)"
+                  className="text-(--text-secondary) opacity-50"
                 />
 
                 <input
@@ -262,7 +255,7 @@ function ComposerView({
             placeholder="Type your message here..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="p-5 text-sm border-none rounded-3xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) min-h-52 resize-none leading-relaxed"
+            className="p-5 text-sm border-none rounded-3xl bg-(--bg-secondary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) min-h-52 resize-none leading-relaxed transition-all"
           />
         </div>
 
@@ -296,7 +289,9 @@ function ComposerView({
                       : "bg-(--bg-primary) text-(--text-primary) self-start rounded-bl-sm border border-(--border)"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap wrap-break-word">{msg.body}</p>
+                  <p className="whitespace-pre-wrap wrap-break-word">
+                    {msg.body}
+                  </p>
                 </div>
               ))}
             </div>

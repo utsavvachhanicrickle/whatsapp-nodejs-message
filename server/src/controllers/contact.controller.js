@@ -6,7 +6,7 @@ import {
   updateContactByIdAndUserId,
   insertManyContacts,
   getContactsByPhonesAndUserId,
-  deleteManyContacts
+  deleteManyContacts,
 } from "../services/contact.service.js";
 import { MESSAGES } from "../utils/Messages.js";
 import AppError from "../utils/AppError.js";
@@ -22,7 +22,10 @@ export const addContectController = async (req, res, next) => {
 
     const trimmedPhoneNumber = String(phoneNumber).replace(/[\s-]/g, "");
 
-    const existingContact = await getContactByPhoneAndUserId(trimmedPhoneNumber, userId);
+    const existingContact = await getContactByPhoneAndUserId(
+      trimmedPhoneNumber,
+      userId,
+    );
 
     if (existingContact) {
       return next(new AppError(MESSAGES.CONTACTEXIST, 400));
@@ -62,7 +65,7 @@ export const deleteContactController = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.userId || req.user?.id;
-    
+
     const contact = await deleteContactByIdAndUserId(id, userId);
 
     if (!contact) {
@@ -85,13 +88,18 @@ export const updateContactController = async (req, res, next) => {
     const { id } = req.params;
     const { name, phoneNumber } = req.body;
     const userId = req.userId || req.user?.id;
-    
-    const contact = await updateContactByIdAndUserId(id, userId, name, phoneNumber);
-    
+
+    const contact = await updateContactByIdAndUserId(
+      id,
+      userId,
+      name,
+      phoneNumber,
+    );
+
     if (!contact) {
       return next(new AppError(MESSAGES.CONTACTNOTEXIST, 404));
     }
-    
+
     res.status(200).json({
       success: true,
       message: MESSAGES.UPDATECONTACTSUCCESS,
@@ -113,7 +121,7 @@ export const addMultipleContactController = async (req, res, next) => {
     }
 
     const validContacts = contactsArray.filter(
-      (c) => c.name && c.phoneNumber && /^\d{10}$/.test(c.phoneNumber)
+      (c) => c.name && c.phoneNumber && /^\d{10}$/.test(c.phoneNumber),
     );
 
     if (validContacts.length === 0) {
@@ -121,13 +129,16 @@ export const addMultipleContactController = async (req, res, next) => {
     }
 
     const validPhoneNumbers = validContacts.map((c) => c.phoneNumber);
-    const existing = await getContactsByPhonesAndUserId(validPhoneNumbers, userId);
-    
+    const existing = await getContactsByPhonesAndUserId(
+      validPhoneNumbers,
+      userId,
+    );
+
     const existingSet = new Set(existing.map((e) => e.phoneNumber));
 
-    const newContacts = validContacts.filter(
-      (c) => !existingSet.has(c.phoneNumber)
-    ).map(c => ({ name: c.name, phoneNumber: c.phoneNumber, userId }));
+    const newContacts = validContacts
+      .filter((c) => !existingSet.has(c.phoneNumber))
+      .map((c) => ({ name: c.name, phoneNumber: c.phoneNumber, userId }));
 
     const inserted = await insertManyContacts(newContacts);
 
@@ -146,14 +157,14 @@ export const addMultipleContactController = async (req, res, next) => {
 
 export const deleteMultipleContactController = async (req, res, next) => {
   try {
-    const contactsArray = req.body.contacts?.contacts || req.body.contacts;
+    const contactsArray = req.body.contacts;
     const userId = req.user?.id || req.userId;
 
     if (!contactsArray || !Array.isArray(contactsArray)) {
       return next(new AppError("Contacts array is required", 400));
     }
 
-    const ids = contactsArray.map((c) => c._id || c.id).filter(id => id);
+    const ids = contactsArray.map((c) => c._id || c.id).filter((id) => id);
 
     if (ids.length === 0) {
       return next(new AppError("No valid contact IDs provided", 400));

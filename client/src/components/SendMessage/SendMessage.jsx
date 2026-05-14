@@ -284,6 +284,7 @@ function SendMessage({ sessionId }) {
         groups={groups}
         multipleGroup={multipleGroup}
         setMultipleGroup={setMultipleGroup}
+        selectedContactWhatsappId={selectedContactWhatsappId}
       />
 
       {/* 2. CENTER: Composer Area */}
@@ -429,6 +430,7 @@ function SendMessage({ sessionId }) {
               selectedContactWhatsappId={selectedContactWhatsappId}
               fetchChatMessages={fetchChatMessages}
               isGroupBollean={isGroupBollean}
+              contacts={contacts}
             />
           ) : (
             <ComposerView
