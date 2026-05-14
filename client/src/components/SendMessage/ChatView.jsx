@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { Avatar } from "../Forms/Avatar";
 import SendIcon from "@mui/icons-material/Send";
 import GroupsIcon from "@mui/icons-material/Groups";
@@ -24,15 +24,15 @@ function ChatView({
 
   const resolveSenderName = (authorId) => {
     if (!authorId) return "Unknown";
+
     const cleanId = authorId.split("@")[0].replace(/\D/g, "");
 
     const contact = contacts.find((c) => {
-      const cId = (c.whatsappId || "").split("@")[0].replace(/\D/g, "");
-      const cPhone = (c.phoneNumber || "").replace(/\D/g, "");
-      return cId === cleanId || cPhone === cleanId;
-    });
+      const phoneKey = (c.phoneNumber || "").replace(/\D/g, "");
 
-    return contact?.name || authorId.split("@")[0];
+      return c.whatsappId === authorId || phoneKey === cleanId;
+    });
+    return contact?.name || cleanId;
   };
 
   useEffect(() => {
@@ -41,14 +41,6 @@ function ChatView({
         chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
-
-  const getInitials = () => {
-    if (name && name !== "Unknown") {
-      return name.charAt(0).toUpperCase();
-    }
-
-    return number?.slice(-2) || "U";
-  };
 
   return (
     <div className="w-full h-full max-w-5xl flex flex-col bg-(--bg-primary) rounded-3xl shadow-2xl overflow-hidden border border-(--border)">

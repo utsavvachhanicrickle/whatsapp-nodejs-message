@@ -430,6 +430,7 @@ function SendMessage({ sessionId }) {
               selectedContactWhatsappId={selectedContactWhatsappId}
               fetchChatMessages={fetchChatMessages}
               isGroupBollean={isGroupBollean}
+              contacts={contacts}
             />
           ) : (
             <ComposerView
