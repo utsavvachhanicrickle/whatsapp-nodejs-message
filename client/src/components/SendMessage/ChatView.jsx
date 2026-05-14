@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-
+import { Avatar } from "../Forms/Avatar";
 import SendIcon from "@mui/icons-material/Send";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PersonIcon from "@mui/icons-material/Person";
@@ -36,21 +36,6 @@ function ChatView({
     return number?.slice(-2) || "U";
   };
 
-  const getRandomGradient = (seed) => {
-    const gradients = [
-      "from-purple-500 to-pink-500",
-      "from-blue-500 to-cyan-500",
-      "from-green-500 to-emerald-500",
-      "from-orange-500 to-red-500",
-      "from-indigo-500 to-violet-500",
-      "from-teal-500 to-cyan-500",
-    ];
-
-    const index = (seed?.length || 0) % gradients.length;
-
-    return gradients[index];
-  };
-
   return (
     <div className="w-full h-full max-w-5xl flex flex-col bg-(--bg-primary) rounded-3xl shadow-2xl overflow-hidden border border-(--border)">
       {/* HEADER */}
@@ -58,25 +43,13 @@ function ChatView({
         <div className="flex items-center gap-4 min-w-0">
           {/* Avatar */}
           <div className="relative shrink-0">
-            <div
-              className={`w-13 h-13 rounded-full bg-linear-to-br ${getRandomGradient(
-                name || number,
-              )} flex items-center justify-center text-white font-bold text-lg shadow-lg`}
-            >
-              {getInitials()}
-            </div>
+            <Avatar name={name} className="w-13! h-13!" />
 
             <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-(--bg-primary) border border-(--border) flex items-center justify-center">
               {isGroupBollean ? (
-                <GroupsIcon
-                  sx={{ fontSize: 12 }}
-                  className="text-green-500"
-                />
+                <GroupsIcon sx={{ fontSize: 12 }} className="text-green-500" />
               ) : (
-                <PersonIcon
-                  sx={{ fontSize: 12 }}
-                  className="text-blue-500"
-                />
+                <PersonIcon sx={{ fontSize: 12 }} className="text-blue-500" />
               )}
             </div>
           </div>
@@ -123,9 +96,7 @@ function ChatView({
         {/* Background Pattern */}
         <div
           className={`absolute inset-0 pointer-events-none ${
-            darkMode
-              ? "opacity-[0.03] invert grayscale"
-              : "opacity-[0.04]"
+            darkMode ? "opacity-[0.03] invert grayscale" : "opacity-[0.04]"
           }`}
           style={{
             backgroundImage:
@@ -145,9 +116,7 @@ function ChatView({
               )}
             </div>
 
-            <p className="text-sm font-semibold">
-              No messages found
-            </p>
+            <p className="text-sm font-semibold">No messages found</p>
 
             <p className="text-xs mt-1 text-(--text-secondary)">
               Start the conversation
@@ -156,7 +125,9 @@ function ChatView({
         ) : (
           chatMessages.map((msg, idx) => {
             const isMine = msg.fromMe;
-            const BASE_URL = (import.meta.env.VITE_SERVER_URL || "http://localhost:3000").replace(/\/$/, "");
+            const BASE_URL = (
+              import.meta.env.VITE_SERVER_URL || "http://localhost:3000"
+            ).replace(/\/$/, "");
 
             const renderMediaContent = () => {
               const mediaUrl = msg.publicUrl ? BASE_URL + msg.publicUrl : null;
@@ -176,10 +147,7 @@ function ChatView({
 
               if (msgType === "video" && mediaUrl) {
                 return (
-                  <video
-                    controls
-                    className="rounded-xl max-w-[300px] w-full"
-                  >
+                  <video controls className="rounded-xl max-w-[300px] w-full">
                     <source src={mediaUrl} type={msg.mimeType || "video/mp4"} />
                     Your browser does not support video.
                   </video>
@@ -219,9 +187,23 @@ function ChatView({
               }
 
               // Media message but publicUrl not yet available (still processing)
-              const mediaTypes = ["image", "video", "document", "audio", "ptt", "sticker"];
+              const mediaTypes = [
+                "image",
+                "video",
+                "document",
+                "audio",
+                "ptt",
+                "sticker",
+              ];
               if (mediaTypes.includes(msgType) && !mediaUrl) {
-                const icons = { image: "🖼️", video: "🎥", document: "📄", audio: "🎵", ptt: "🎤", sticker: "🎭" };
+                const icons = {
+                  image: "🖼️",
+                  video: "🎥",
+                  document: "📄",
+                  audio: "🎵",
+                  ptt: "🎤",
+                  sticker: "🎭",
+                };
                 return (
                   <span className="flex items-center gap-1.5 italic text-xs opacity-60">
                     {icons[msgType] || "📎"} {msgType} (processing...)
@@ -233,9 +215,7 @@ function ChatView({
               return (
                 <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed">
                   {msg.body || (
-                    <span className="italic opacity-50">
-                      Empty message
-                    </span>
+                    <span className="italic opacity-50">Empty message</span>
                   )}
                 </p>
               );
@@ -290,9 +270,7 @@ function ChatView({
                     </span>
 
                     {isMine && (
-                      <span className="text-[11px] text-blue-400">
-                        ✓✓
-                      </span>
+                      <span className="text-[11px] text-blue-400">✓✓</span>
                     )}
                   </div>
 
@@ -301,14 +279,10 @@ function ChatView({
                     className={`absolute top-0 w-3 h-3 ${
                       isMine
                         ? `-right-1 ${
-                            darkMode
-                              ? "bg-[#005c4b]"
-                              : "bg-[#dcf8c6]"
+                            darkMode ? "bg-[#005c4b]" : "bg-[#dcf8c6]"
                           } [clip-path:polygon(0_0,0_100%,100%_0)]`
                         : `-left-1 ${
-                            darkMode
-                              ? "bg-[#202c33]"
-                              : "bg-white"
+                            darkMode ? "bg-[#202c33]" : "bg-white"
                           } [clip-path:polygon(0_0,100%_100%,100%_0)]`
                     }`}
                   />
@@ -324,10 +298,7 @@ function ChatView({
         {isGroupBollean ? (
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
             <div className="w-10 h-10 rounded-full bg-yellow-500/15 flex items-center justify-center shrink-0">
-              <LockIcon
-                sx={{ fontSize: 18 }}
-                className="text-yellow-500"
-              />
+              <LockIcon sx={{ fontSize: 18 }} className="text-yellow-500" />
             </div>
 
             <div>

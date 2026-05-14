@@ -26,6 +26,7 @@ function UnifiedSidebar({
   groups,
   multipleGroup,
   setMultipleGroup,
+  selectedContactWhatsappId,
 }) {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -58,7 +59,7 @@ function UnifiedSidebar({
   };
 
   return (
-    <div className="w-80 h-full flex flex-col bg-(--sidebar) border-r border-(--border)">
+    <div className="w-84 h-full flex flex-col bg-(--sidebar) border-r border-(--border)">
       {/* 📌 TOP ACTIONS */}
       <div className="p-4 flex items-center justify-between bg-(--header)">
         <div className="flex items-center gap-1 bg-(--bg-secondary) p-1 rounded-full">
@@ -193,6 +194,8 @@ function UnifiedSidebar({
             onSelect={onSelect}
             search={search}
             setSearch={setSearch}
+            groups={groups}
+            selectedContactWhatsappId={selectedContactWhatsappId}
           />
         ) : (
           <ContactsSidebar
