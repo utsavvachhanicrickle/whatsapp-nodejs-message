@@ -1,4 +1,5 @@
 import express from "express";
+import fs from "fs";
 import path from "path";
 import http from "http";
 import { Server } from "socket.io";
@@ -39,6 +40,21 @@ app.get("/", (req, res) => {
 app.set("io", io);
 app.use("/api", apiRoute);
 
+const resourcesPath = path.join(process.cwd(), "resources");
+const subfolders = ["images", "videos", "docs", "audio", "stickers"];
+
+if (!fs.existsSync(resourcesPath)) {
+  fs.mkdirSync(resourcesPath, { recursive: true });
+}
+
+subfolders.forEach((folder) => {
+  const folderPath = path.join(resourcesPath, folder);
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
+  }
+});
+
+console.log("✅ Resources and subfolders initialized");
 // Static media files
 app.use("/resources", express.static(path.join(process.cwd(), "resources")));
 
