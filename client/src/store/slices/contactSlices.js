@@ -51,9 +51,9 @@ export const deleteContactSlice = createAsyncThunk(
 
 export const bulkUploadContactsSlice = createAsyncThunk(
   "contact/bulkUploadContacts",
-  async (contacts, thunkAPI) => {
+  async ({ contacts, sessionId }, thunkAPI) => {
     try {
-      const res = await contactModules.bulkUploadContacts({ contacts });
+      const res = await contactModules.bulkUploadContacts({ contacts, sessionId });
       return res.data;
     } catch (error) {
       return thunkAPI.rejectWithValue("Bulk upload failed");

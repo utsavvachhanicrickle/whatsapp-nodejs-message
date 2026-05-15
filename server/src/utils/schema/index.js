@@ -52,7 +52,7 @@ export const verifyAccessToken = async (accessToken) => {
   try {
     return jwt.verify(accessToken, process.env.ACCESSTOKEN_SECRET);
   } catch (error) {
-    throw new Error(MESSAGES.REFRESH_TOKEN_EXPIRED);
+    throw new Error(MESSAGES.ACCESS_TOKEN_EXPIRED);
   }
 };
 

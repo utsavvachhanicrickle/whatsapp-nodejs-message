@@ -4,6 +4,7 @@ export const MESSAGES = {
   ERROR_REMOVING_SESSION: "Error removing session",
   REFRESH_TOKEN: "Refresh token issued successfully",
   REFRESH_TOKEN_EXPIRED: "Refresh token expired",
+  ACCESS_TOKEN_EXPIRED: "Access token expired",
   REFRESH_TOKEN_INVALID: "Refresh token is invalid",
   REFRESH_TOKEN_ERROR: "Error refreshing token",
   MISSING_FIELDS: "Missing fields",

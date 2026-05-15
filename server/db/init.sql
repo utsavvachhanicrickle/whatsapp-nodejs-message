@@ -19,9 +19,10 @@ CREATE TABLE IF NOT EXISTS contacts (
     "pushName" VARCHAR(255),
     "phoneNumber" VARCHAR(20) NOT NULL,
     "userId" UUID NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    "sessionId" VARCHAR(255) NOT NULL,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE ("phoneNumber", "userId")
+    UNIQUE ("phoneNumber", "userId", "sessionId")
 );
 
 -- Default Messages Table
@@ -190,5 +191,31 @@ DO $$ BEGIN
             "fileSize" BIGINT,
             "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
+    END IF;
+END $$;
+
+-- Migration: Add sessionId to contacts if missing and update unique constraint
+DO $$ BEGIN
+    -- 1. Add sessionId column if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'contacts' AND column_name = 'sessionId'
+    ) THEN
+        ALTER TABLE contacts ADD COLUMN "sessionId" VARCHAR(255);
+        -- Update existing rows with a placeholder if any
+        UPDATE contacts SET "sessionId" = 'default' WHERE "sessionId" IS NULL;
+        -- Now make it NOT NULL
+        ALTER TABLE contacts ALTER COLUMN "sessionId" SET NOT NULL;
+    END IF;
+
+    -- 2. Update unique constraint
+    -- Drop old constraint if exists
+    ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_phoneNumber_userId_key;
+    -- Add new constraint
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_name = 'contacts' AND constraint_name = 'contacts_phone_user_session_key'
+    ) THEN
+        ALTER TABLE contacts ADD CONSTRAINT contacts_phone_user_session_key UNIQUE ("phoneNumber", "userId", "sessionId");
     END IF;
 END $$;

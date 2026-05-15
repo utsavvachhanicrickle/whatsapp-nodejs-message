@@ -68,9 +68,9 @@ export const removeUser = async (req, res, next) => {
     await deleteWhatsappSectionByNumberAndUserId(sessionId, userId);
     
     try {
-      const { deleteContactsByUserId } = await import("../services/contact.service.js");
-      await deleteContactsByUserId(userId);
-      console.log("🧹 Contacts cleared for user:", userId);
+      const { deleteContactsByUserIdAndSessionId } = await import("../services/contact.service.js");
+      await deleteContactsByUserIdAndSessionId(userId, sessionId);
+      console.log(`🧹 Contacts cleared for session ${sessionId} of user ${userId}`);
     } catch (err) {
       console.warn("Contact deletion error:", err.message);
     }

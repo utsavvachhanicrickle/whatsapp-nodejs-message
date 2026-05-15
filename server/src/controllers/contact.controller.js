@@ -13,10 +13,10 @@ import AppError from "../utils/AppError.js";
 
 export const addContectController = async (req, res, next) => {
   try {
-    const { name, phoneNumber } = req.body;
+    const { name, phoneNumber, sessionId } = req.body;
     const userId = req.userId || req.user?.id;
 
-    if (!name || !phoneNumber) {
+    if (!name || !phoneNumber || !sessionId) {
       return next(new AppError(MESSAGES.MISSING_FIELDS, 400));
     }
 
@@ -31,7 +31,7 @@ export const addContectController = async (req, res, next) => {
       return next(new AppError(MESSAGES.CONTACTEXIST, 400));
     }
 
-    const newContact = await createContact(name, trimmedPhoneNumber, userId);
+    const newContact = await createContact(name, trimmedPhoneNumber, userId, sessionId);
 
     res.status(200).json({
       success: true,
@@ -114,10 +114,11 @@ export const updateContactController = async (req, res, next) => {
 export const addMultipleContactController = async (req, res, next) => {
   try {
     const contactsArray = req.body.contacts?.contacts || req.body.contacts;
+    const sessionId = req.body.sessionId || req.body.contacts?.sessionId;
     const userId = req.user?.id || req.userId;
 
-    if (!contactsArray || !Array.isArray(contactsArray)) {
-      return next(new AppError("Contacts array is required", 400));
+    if (!contactsArray || !Array.isArray(contactsArray) || !sessionId) {
+      return next(new AppError("Contacts and Session ID are required", 400));
     }
 
     const validContacts = contactsArray.filter(
@@ -138,7 +139,7 @@ export const addMultipleContactController = async (req, res, next) => {
 
     const newContacts = validContacts
       .filter((c) => !existingSet.has(c.phoneNumber))
-      .map((c) => ({ name: c.name, phoneNumber: c.phoneNumber, userId }));
+      .map((c) => ({ name: c.name, phoneNumber: c.phoneNumber, userId, sessionId }));
 
     const inserted = await insertManyContacts(newContacts);
 

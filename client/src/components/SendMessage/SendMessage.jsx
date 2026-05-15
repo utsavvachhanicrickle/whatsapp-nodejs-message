@@ -211,7 +211,7 @@ function SendMessage({ sessionId }) {
     if (editContactId !== null) {
       dispatch(updateContactSlice({ id: editContactId, formData }));
     } else {
-      dispatch(addContactSlice(formData));
+      dispatch(addContactSlice({ ...formData, sessionId }));
     }
     handleCancle();
   };
@@ -230,7 +230,7 @@ function SendMessage({ sessionId }) {
     try {
       setLoading(true);
       const res = await dispatch(
-        bulkUploadContactsSlice(parsedContacts),
+        bulkUploadContactsSlice({ contacts: parsedContacts, sessionId }),
       ).unwrap();
       toast.success(`Created: ${res.created}, Failed: ${res.failed}`);
       handleCancle();

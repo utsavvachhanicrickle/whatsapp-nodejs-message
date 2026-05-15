@@ -8,10 +8,10 @@ export const getContactByPhoneAndUserId = async (phoneNumber, userId) => {
   return result.rows[0];
 };
 
-export const createContact = async (name, phoneNumber, userId) => {
+export const createContact = async (name, phoneNumber, userId, sessionId) => {
   const result = await pool.query(
-    'INSERT INTO contacts (name, "phoneNumber", "userId") VALUES ($1, $2, $3) RETURNING *',
-    [name, phoneNumber, userId]
+    'INSERT INTO contacts (name, "phoneNumber", "userId", "sessionId") VALUES ($1, $2, $3, $4) RETURNING *',
+    [name, phoneNumber, userId, sessionId]
   );
   return result.rows[0];
 };
@@ -49,11 +49,11 @@ export const insertManyContacts = async (contactsData) => {
   for (let i = 0; i < contactsData.length; i += CHUNK_SIZE) {
     const chunk = contactsData.slice(i, i + CHUNK_SIZE);
     const values = [];
-    let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId") VALUES ';
+    let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId", "sessionId") VALUES ';
     
     chunk.forEach((c, index) => {
-      queryStr += `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3}),`;
-      values.push(c.name, c.phoneNumber, c.userId);
+      queryStr += `($${index * 4 + 1}, $${index * 4 + 2}, $${index * 4 + 3}, $${index * 4 + 4}),`;
+      values.push(c.name, c.phoneNumber, c.userId, c.sessionId);
     });
     
     queryStr = queryStr.slice(0, -1) + ' RETURNING *';
@@ -91,16 +91,16 @@ export const upsertWhatsappContacts = async (contactsData) => {
   for (let i = 0; i < contactsData.length; i += CHUNK_SIZE) {
     const chunk = contactsData.slice(i, i + CHUNK_SIZE);
     const values = [];
-    let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId", "whatsappId", "pushName", lid) VALUES ';
+    let queryStr = 'INSERT INTO contacts (name, "phoneNumber", "userId", "whatsappId", "pushName", lid, "sessionId") VALUES ';
 
 
     chunk.forEach((c, index) => {
-      queryStr += `($${index * 6 + 1}, $${index * 6 + 2}, $${index * 6 + 3}, $${index * 6 + 4}, $${index * 6 + 5}, $${index * 6 + 6}),`;
-      values.push(c.name || null, c.phoneNumber, c.userId, c.whatsappId, c.pushName || null, c.lid || null);
+      queryStr += `($${index * 7 + 1}, $${index * 7 + 2}, $${index * 7 + 3}, $${index * 7 + 4}, $${index * 7 + 5}, $${index * 7 + 6}, $${index * 7 + 7}),`;
+      values.push(c.name || null, c.phoneNumber, c.userId, c.whatsappId, c.pushName || null, c.lid || null, c.sessionId);
     });
 
     queryStr = queryStr.slice(0, -1) + 
-      ' ON CONFLICT ("phoneNumber", "userId") DO UPDATE SET ' +
+      ' ON CONFLICT ("phoneNumber", "userId", "sessionId") DO UPDATE SET ' +
       '"whatsappId" = EXCLUDED."whatsappId", ' +
       '"lid" = EXCLUDED."lid", ' +
       '"pushName" = EXCLUDED."pushName", ' +
@@ -114,10 +114,10 @@ export const upsertWhatsappContacts = async (contactsData) => {
   return results;
 };
 
-export const deleteContactsByUserId = async (userId) => {
+export const deleteContactsByUserIdAndSessionId = async (userId, sessionId) => {
   const result = await pool.query(
-    'DELETE FROM contacts WHERE "userId" = $1',
-    [userId]
+    'DELETE FROM contacts WHERE "userId" = $1 AND "sessionId" = $2',
+    [userId, sessionId]
   );
   return result.rowCount;
 };

@@ -126,7 +126,7 @@ function WhatsappGroupMessageSidebar({
               <SearchIcon sx={{ fontSize: 48 }} className="mb-2" />
               <p className="text-sm mb-4">No groups found</p>
             </div>
-            {sessionId && (
+            {(sessionId && groups.length === 0) && (
               <button
                 onClick={() => dispatch(fetchGroups(sessionId))}
                 className="flex items-center gap-2 px-4 py-2 bg-(--primary) text-white text-xs font-bold rounded-lg hover:bg-(--primary-hover) transition-all shadow-sm active:scale-95"

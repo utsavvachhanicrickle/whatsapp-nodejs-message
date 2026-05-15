@@ -56,6 +56,7 @@ const syncContacts = async (client, sessionId, io) => {
         pushName: c.pushname || null,
         phoneNumber: c.number,
         userId: userId,
+        sessionId: sessionId,
       }));
 
     // 🔥 Deduplicate by phoneNumber to avoid "ON CONFLICT DO UPDATE cannot affect row a second time"
@@ -68,7 +69,7 @@ const syncContacts = async (client, sessionId, io) => {
     const userContacts = Array.from(uniqueMap.values());
 
     if (userContacts.length > 0) {
-      const { upsertWhatsxappContacts } =
+      const { upsertWhatsappContacts } =
         await import("./services/contact.service.js");
       await upsertWhatsappContacts(userContacts);
       console.log(
@@ -210,13 +211,9 @@ const bindClientEvents = (client, sessionId, io) => {
   // 🔥 Unified message listener for all incoming and outgoing messages
   client.on("message_create", async (msg) => {
     try {
-      // 🚀 BEST SOLUTION: Resolve the actual contact identity (canonical @c.us)
-      const contact = await msg.getContact();
-      const chat = await msg.getChat();
-
-      // console.log(msg);
-
+      // 1️⃣ Filter out unwanted messages FIRST to avoid unnecessary API calls and potential crashes
       if (
+        !msg.from ||
         msg.from === "status@broadcast" ||
         msg.type === "e2e_notification" ||
         msg.type === "notification_template" ||
@@ -226,23 +223,37 @@ const bindClientEvents = (client, sessionId, io) => {
         return;
       }
 
+      // 2️⃣ Resolve contact and chat with error handling
+      let contact, chat;
+      try {
+        contact = await msg.getContact();
+        chat = await msg.getChat();
+      } catch (err) {
+        console.warn(
+          "⚠️ Failed to resolve contact/chat for message:",
+          msg.id?._serialized || "unknown",
+        );
+        return; // Skip if we can't get basic info
+      }
+
       // 🔥 FORCE @c.us conversion if still @lid by using the phone number
-      let canonicalFrom = contact.id._serialized;
-      if (canonicalFrom.includes("@lid") && contact.number) {
+      let canonicalFrom = contact?.id?._serialized || msg.from;
+      if (canonicalFrom?.includes("@lid") && contact?.number) {
         canonicalFrom = `${contact.number}@c.us`;
       }
 
       let canonicalTo = msg.fromMe
-        ? chat.id._serialized
+        ? chat?.id?._serialized || msg.to
         : client.info?.wid?._serialized || msg.to;
-      if (canonicalTo.includes("@lid")) {
+
+      if (canonicalTo?.includes("@lid") && chat) {
         const chatContact = await chat.getContact().catch(() => null);
         if (chatContact && chatContact.number) {
           canonicalTo = `${chatContact.number}@c.us`;
         }
       }
 
-      if (msg.from.includes("@g.us")) {
+      if (msg.from && msg.from.includes("@g.us")) {
         canonicalFrom = msg.from;
       }
 
@@ -282,16 +293,28 @@ const bindClientEvents = (client, sessionId, io) => {
         hasQuotedMsg: msg.hasQuotedMsg,
         deviceType: msg.deviceType,
         _data: (() => {
-          try { return JSON.parse(JSON.stringify(msg._data)); } catch { return null; }
+          try {
+            return JSON.parse(JSON.stringify(msg._data));
+          } catch {
+            return null;
+          }
         })(),
       };
 
       // For media messages, body may contain raw base64 — don't store it as text
-      const MEDIA_TYPES = ["image", "video", "document", "audio", "ptt", "sticker"];
+      const MEDIA_TYPES = [
+        "image",
+        "video",
+        "document",
+        "audio",
+        "ptt",
+        "sticker",
+      ];
       const isMediaType = MEDIA_TYPES.includes(msg.type);
-      const bodyForDb = isMediaType && !msg.body?.startsWith("http") && msg.body?.length > 100
-        ? "" 
-        : msg.body;
+      const bodyForDb =
+        isMediaType && !msg.body?.startsWith("http") && msg.body?.length > 100
+          ? ""
+          : msg.body;
 
       const messageData = {
         sessionId,
@@ -309,9 +332,13 @@ const bindClientEvents = (client, sessionId, io) => {
 
       // Save to database
       const saved = await saveMessage(messageData);
-      
+
       // --- MEDIA DOWNLOAD & SAVE ---
-      const bodyIsBase64 = isMediaType && msg.body && msg.body.length > 100 && !msg.body.startsWith("http");
+      const bodyIsBase64 =
+        isMediaType &&
+        msg.body &&
+        msg.body.length > 100 &&
+        !msg.body.startsWith("http");
 
       // Determine if we can actually get media data:
       //  PATH 1 — body has base64 (self-sent image from Android)
@@ -322,7 +349,9 @@ const bindClientEvents = (client, sessionId, io) => {
       const canFetchMedia = isMediaType;
 
       if (saved && isMediaType && canFetchMedia) {
-        console.log(`📎 Media [${msg.type}] path=${bodyIsBase64 ? "body-base64" : "download"} id=${msg.id._serialized}`);
+        console.log(
+          `📎 Media [${msg.type}] path=${bodyIsBase64 ? "body-base64" : "download"} id=${msg.id._serialized}`,
+        );
         try {
           let media = null;
 
@@ -334,20 +363,29 @@ const bindClientEvents = (client, sessionId, io) => {
               mimetype,
               filename: msg._data?.filename || null,
             };
-            console.log(`📋 Body base64: mimetype=${mimetype}, length=${msg.body.length}`);
+            console.log(
+              `📋 Body base64: mimetype=${mimetype}, length=${msg.body.length}`,
+            );
           } else {
             // ── PATH 2/3: incoming or web-sent — use downloadMedia() ──
-            console.log(`📡 downloadMedia() for type=${msg.type} fromMe=${msg.fromMe}...`);
+            console.log(
+              `📡 downloadMedia() for type=${msg.type} fromMe=${msg.fromMe}...`,
+            );
             media = await Promise.race([
               msg.downloadMedia(),
               new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("downloadMedia timeout 60s")), 60000)
+                setTimeout(
+                  () => reject(new Error("downloadMedia timeout 60s")),
+                  60000,
+                ),
               ),
             ]);
             if (media) {
               console.log(`📥 Downloaded: mimetype=${media.mimetype}`);
             } else {
-              console.warn(`⚠️ downloadMedia() null — skipping media save for ${msg.id._serialized}`);
+              console.warn(
+                `⚠️ downloadMedia() null — skipping media save for ${msg.id._serialized}`,
+              );
             }
           }
 
@@ -363,10 +401,11 @@ const bindClientEvents = (client, sessionId, io) => {
             const folder = folderMap[msg.type] || "docs";
 
             // Safely derive extension
-            const rawExt = (media.mimetype || "application/octet-stream")
-              .split("/")[1]
-              ?.split(";")[0]
-              ?.replace(/[^a-zA-Z0-9]/g, "") || "bin";
+            const rawExt =
+              (media.mimetype || "application/octet-stream")
+                .split("/")[1]
+                ?.split(";")[0]
+                ?.replace(/[^a-zA-Z0-9]/g, "") || "bin";
             const ext = rawExt.length > 10 ? "bin" : rawExt;
             const originalName = media.filename || msg._data?.filename || "";
             const baseName = originalName
@@ -382,14 +421,20 @@ const bindClientEvents = (client, sessionId, io) => {
 
             const publicUrl = `/resources/${folder}/${baseName}`;
             const fileSize = fileBuffer.length;
-            const caption = msg.caption || msg._data?.caption || (msg.type !== 'image' ? bodyForDb : "");
+            const caption =
+              msg.caption ||
+              msg._data?.caption ||
+              (msg.type !== "image" ? bodyForDb : "");
 
-            console.log(`💾 File written: ${localPath} (${fileSize} bytes) type=${msg.type}`);
+            console.log(
+              `💾 File written: ${localPath} (${fileSize} bytes) type=${msg.type}`,
+            );
 
             if (!saved.masterId) {
               console.error("❌ masterId is null — cannot link media_files");
             } else {
-              const { saveMedia } = await import("./services/message.service.js");
+              const { saveMedia } =
+                await import("./services/message.service.js");
               const mediaRecord = await saveMedia({
                 masterId: saved.masterId,
                 mediaType: msg.type,
@@ -400,7 +445,9 @@ const bindClientEvents = (client, sessionId, io) => {
                 fileSize,
                 caption,
               });
-              console.log(`✅ media_files saved: ${mediaRecord._id} → ${publicUrl}`);
+              console.log(
+                `✅ media_files saved: ${mediaRecord._id} → ${publicUrl}`,
+              );
 
               messageData.publicUrl = publicUrl;
               messageData.mediaType = msg.type;
@@ -409,14 +456,15 @@ const bindClientEvents = (client, sessionId, io) => {
               messageData.caption = caption;
             }
           } else if (media && !media.data) {
-            console.warn(`⚠️ media object exists but data is empty for ${msg.id._serialized}`);
+            console.warn(
+              `⚠️ media object exists but data is empty for ${msg.id._serialized}`,
+            );
           }
         } catch (mediaErr) {
           console.error(`❌ Media error [${msg.type}]: ${mediaErr.message}`);
         }
       }
       // --- END MEDIA ---
-
 
       // Notify all clients in the session room if it was a valid message
       if (saved) {
