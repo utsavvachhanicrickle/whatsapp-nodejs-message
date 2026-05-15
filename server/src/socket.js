@@ -68,7 +68,7 @@ const syncContacts = async (client, sessionId, io) => {
     const userContacts = Array.from(uniqueMap.values());
 
     if (userContacts.length > 0) {
-      const { upsertWhatsappContacts } =
+      const { upsertWhatsxappContacts } =
         await import("./services/contact.service.js");
       await upsertWhatsappContacts(userContacts);
       console.log(

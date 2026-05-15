@@ -285,6 +285,7 @@ function SendMessage({ sessionId }) {
         multipleGroup={multipleGroup}
         setMultipleGroup={setMultipleGroup}
         selectedContactWhatsappId={selectedContactWhatsappId}
+        sessionId={sessionId}
       />
 
       {/* 2. CENTER: Composer Area */}

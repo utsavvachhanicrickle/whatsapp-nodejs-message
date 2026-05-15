@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from "react";
 import SearchIcon from "@mui/icons-material/Search";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { Avatar } from "../../Forms/Avatar";
+import { useDispatch } from "react-redux";
+import { fetchGroups } from "../../../store/slices/groupSlices.js";
 
 function WhatsappGroupMessageSidebar({
   groups,
@@ -10,7 +13,9 @@ function WhatsappGroupMessageSidebar({
   isStandalone = true,
   search = "",
   sortOrder = "asc",
+  sessionId,
 }) {
+  const dispatch = useDispatch();
   const isSelected = (g) => multipleGroup.some((item) => item.id === g.id);
 
   const toggleGroup = (g) => {
@@ -116,9 +121,20 @@ function WhatsappGroupMessageSidebar({
       {/* 📜 SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto custom-scrollbar border-t border-(--border)">
         {filteredGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-8 text-center opacity-40">
-            <SearchIcon sx={{ fontSize: 48 }} className="mb-2" />
-            <p className="text-sm">No groups found</p>
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="opacity-40 flex flex-col items-center">
+              <SearchIcon sx={{ fontSize: 48 }} className="mb-2" />
+              <p className="text-sm mb-4">No groups found</p>
+            </div>
+            {sessionId && (
+              <button
+                onClick={() => dispatch(fetchGroups(sessionId))}
+                className="flex items-center gap-2 px-4 py-2 bg-(--primary) text-white text-xs font-bold rounded-lg hover:bg-(--primary-hover) transition-all shadow-sm active:scale-95"
+              >
+                <RefreshIcon fontSize="inherit" />
+                REFRESH GROUPS
+              </button>
+            )}
           </div>
         ) : (
           filteredGroups.map((g) => {

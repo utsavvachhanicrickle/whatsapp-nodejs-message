@@ -155,10 +155,12 @@ function ChatView({
 
               if (msgType === "video" && mediaUrl) {
                 return (
+                  <a href={mediaUrl} target="_blank" rel="noopener noreferrer">
                   <video controls className="rounded-xl max-w-[300px] w-full">
                     <source src={mediaUrl} type={msg.mimeType || "video/mp4"} />
                     Your browser does not support video.
                   </video>
+                  </a>
                 );
               }
 

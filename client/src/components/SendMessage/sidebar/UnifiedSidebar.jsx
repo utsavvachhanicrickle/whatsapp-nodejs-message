@@ -27,6 +27,7 @@ function UnifiedSidebar({
   multipleGroup,
   setMultipleGroup,
   selectedContactWhatsappId,
+  sessionId,
 }) {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -186,6 +187,7 @@ function UnifiedSidebar({
             isStandalone={false}
             search={search}
             sortOrder={sortOrder}
+            sessionId={sessionId}
           />
         ) : viewMode === "chats" ? (
           <ChatsSidebar

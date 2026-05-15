@@ -279,7 +279,7 @@ function ComposerView({
               </button>
             </div>
 
-            <div className="flex flex-col gap-3 p-4 bg-(--bg-secondary)/40 rounded-3xl max-h-60 overflow-y-auto custom-scrollbar border border-(--border)">
+            <div className="flex flex-col gap-3 p-4 bg-(--bg-secondary)/40 rounded-3xl max-h-50 overflow-y-auto custom-scrollbar border border-(--border)">
               {chatMessages.slice(-5).map((msg, idx) => (
                 <div
                   key={idx}
