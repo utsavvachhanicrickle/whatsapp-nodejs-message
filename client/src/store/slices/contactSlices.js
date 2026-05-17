@@ -3,9 +3,9 @@ import { contactModules } from "../../modules/contactModules";
 
 export const fetchContactSlice = createAsyncThunk(
   "contact/fetchContact",
-  async (_, thunkAPI) => {
+  async (sessionId, thunkAPI) => {
     try {
-      const res = await contactModules.getContacts();
+      const res = await contactModules.getContacts(sessionId);
       return res.data.contacts;
     } catch (error) {
       return thunkAPI.rejectWithValue("Failed to fetch contacts");

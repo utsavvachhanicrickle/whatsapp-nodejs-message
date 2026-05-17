@@ -85,7 +85,7 @@ function SendMessage({ sessionId }) {
   useEffect(() => {
     if (sessionId) {
       console.log("Initial fetch for session:", sessionId);
-      dispatch(fetchContactSlice());
+      dispatch(fetchContactSlice(sessionId));
       dispatch(fetchDefaultMessage());
       dispatch(fetchGroups(sessionId));
       fetchChatsWithMessages();
@@ -141,14 +141,14 @@ function SendMessage({ sessionId }) {
       if (data.sessionId === sessionId) {
         console.log("Session ready, fetching groups...");
         dispatch(fetchGroups(sessionId));
-        dispatch(fetchContactSlice());
+        dispatch(fetchContactSlice(sessionId));
         fetchChatsWithMessages();
       }
     };
 
     const handleContactsSynced = (data) => {
       if (data.sessionId === sessionId) {
-        dispatch(fetchContactSlice());
+        dispatch(fetchContactSlice(sessionId));
         toast.success(`Synced ${data.count} contacts`);
       }
     };

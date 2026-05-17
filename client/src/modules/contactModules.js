@@ -4,7 +4,18 @@ import toast from "../utils/Toast";
 import { MESSAGES } from "../utils/Messages";
 
 export const contactModules = {
-  getContacts: () => API.get(APIENDPOINTS.GET_CONTACTS),
+  getContacts: async (sessionId) => {
+    try {
+      const url = sessionId
+        ? `${APIENDPOINTS.GET_CONTACTS}?sessionId=${sessionId}`
+        : APIENDPOINTS.GET_CONTACTS;
+      const res = await API.get(url);
+      return res;
+    } catch (err) {
+      toast.error(MESSAGES.CONTACT_FETCH_ERROR);
+      throw err;
+    }
+  },
 
   addContact: async (formData) => {
     try {
