@@ -332,6 +332,48 @@ const bindClientEvents = (client, sessionId, io) => {
 
       // Save to database
       const saved = await saveMessage(messageData);
+      // sharing replay of hi here the components will come in that sharing
+      const messageTypes = ["hi", "hey", "hello", "oyy", "hellooo"];
+      if (
+        messageTypes.includes(msg.body.toLowerCase().trim()) &&
+        msg.fromMe === false
+      ) {
+        let formatted = canonicalFrom;
+        const client = clients[sessionId];
+        if (!formatted.includes("@c.us")) {
+          const digits = formatted.replace(/\D/g, "");
+          if (digits.length === 10) {
+            formatted = `91${digits}@c.us`;
+          } else {
+            formatted = `${digits}@c.us`;
+          }
+        }
+
+        if (!formatted.includes("@g.us")) {
+          formatted = msg.from;
+        }
+
+        const message = `
+Dear Customer,
+
+Thank you for reaching out to us. Your message has been received successfully.
+
+Our team will connect with you as soon as possible.
+
+Thank you for your trust and patience.
+
+Sincerely,  
+Vachhani Utsav  
+📧 utsavvachhani.cs@gmail.com
+`;
+        await safeClientCall(client, "sendMessage", [formatted, message]);
+
+        console.log(
+          "this is result of auto shared replay of hi ",
+          msg.id._serialized,
+          canonicalFrom,
+        );
+      }
 
       // --- MEDIA DOWNLOAD & SAVE ---
       const bodyIsBase64 =
