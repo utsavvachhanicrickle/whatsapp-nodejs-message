@@ -44,6 +44,56 @@ function ChatView({
     }
   }, [chatMessages]);
 
+  
+  const formatWhatsAppText = (text) => {
+    if (!text) return "";
+
+    let formatted = text;
+
+    // Escape HTML
+    formatted = formatted
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    // Bold: *text*
+    formatted = formatted.replace(/\*(.*?)\*/g, "<strong>$1</strong>");
+
+    // Italic: _text_
+    formatted = formatted.replace(/_(.*?)_/g, "<em>$1</em>");
+
+    // Strike: ~text~
+    formatted = formatted.replace(/~(.*?)~/g, "<del>$1</del>");
+
+    // Monospace: ```text```
+    formatted = formatted.replace(
+      /```(.*?)```/gs,
+      `<pre class="bg-black/10 px-2 py-1 rounded-lg overflow-x-auto text-xs my-1"><code>$1</code></pre>`,
+    );
+
+    // URLs
+    formatted = formatted.replace(
+      /(https?:\/\/[^\s]+)/g,
+      `<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline break-all">$1</a>`,
+    );
+
+    // Emails
+    formatted = formatted.replace(
+      /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g,
+      `<a href="mailto:$1" class="text-blue-500 underline">$1</a>`,
+    );
+
+    // Indian phone numbers
+    formatted = formatted.replace(
+      /(?<!\d)(\+91[\s-]?)?[6-9]\d{9}(?!\d)/g,
+      `<a href="tel:$&" class="text-green-500 underline">$&</a>`,
+    );
+
+    // Line breaks
+    formatted = formatted.replace(/\n/g, "<br/>");
+
+    return formatted;
+  };
   return (
     <div className="w-full h-full max-w-5xl flex flex-col bg-(--bg-primary) rounded-3xl shadow-2xl overflow-hidden border border-(--border)">
       {/* HEADER */}
@@ -147,7 +197,7 @@ function ChatView({
                     <img
                       src={mediaUrl}
                       alt="Image"
-                      className="rounded-xl max-w-[250px] w-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      className="rounded-xl max-w-62.5 w-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                     />
                   </a>
                 );
@@ -156,10 +206,13 @@ function ChatView({
               if (msgType === "video" && mediaUrl) {
                 return (
                   <a href={mediaUrl} target="_blank" rel="noopener noreferrer">
-                  <video controls className="rounded-xl max-w-[300px] w-full">
-                    <source src={mediaUrl} type={msg.mimeType || "video/mp4"} />
-                    Your browser does not support video.
-                  </video>
+                    <video controls className="rounded-xl max-w-75 w-full">
+                      <source
+                        src={mediaUrl}
+                        type={msg.mimeType || "video/mp4"}
+                      />
+                      Your browser does not support video.
+                    </video>
                   </a>
                 );
               }
@@ -179,7 +232,7 @@ function ChatView({
 
               if ((msgType === "audio" || msgType === "ptt") && mediaUrl) {
                 return (
-                  <audio controls className="max-w-[250px] w-full rounded-lg">
+                  <audio controls className="max-w-62.5 w-full rounded-lg">
                     <source src={mediaUrl} type={msg.mimeType || "audio/ogg"} />
                     Your browser does not support audio.
                   </audio>
@@ -226,7 +279,7 @@ function ChatView({
                   msg.rawData?.isVideo ||
                   msg.body?.toLowerCase().includes("video");
                 return (
-                  <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-(--border) min-w-[180px]">
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-(--border) min-w-45">
                     <div
                       className={`p-2 rounded-full ${
                         isVideo
@@ -254,11 +307,14 @@ function ChatView({
 
               // Default: plain text
               return (
-                <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed">
-                  {msg.body || (
-                    <span className="italic opacity-50">Empty message</span>
-                  )}
-                </p>
+                <div
+                  className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed"
+                  dangerouslySetInnerHTML={{
+                    __html: msg.body
+                      ? formatWhatsAppText(msg.body)
+                      : `<span class="italic opacity-50">Empty message</span>`,
+                  }}
+                />
               );
             };
 
@@ -292,9 +348,14 @@ function ChatView({
 
                   {/* Caption (body shown below media if present) */}
                   {msg.publicUrl && (msg.caption || msg.body) && (
-                    <p className="text-sm mt-1 whitespace-pre-wrap wrap-break-word leading-relaxed">
-                      {msg.caption || msg.body}
-                    </p>
+                    <div
+                      className="text-sm mt-1 whitespace-pre-wrap wrap-break-word leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: formatWhatsAppText(
+                          msg.caption || msg.body || "",
+                        ),
+                      }}
+                    />
                   )}
 
                   {/* Footer */}
