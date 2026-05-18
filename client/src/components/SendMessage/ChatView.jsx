@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import { Avatar } from "../Forms/Avatar";
 import SendIcon from "@mui/icons-material/Send";
 import GroupsIcon from "@mui/icons-material/Groups";
@@ -7,6 +7,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import LockIcon from "@mui/icons-material/Lock";
 import CallIcon from "@mui/icons-material/Call";
 import VideocamIcon from "@mui/icons-material/Videocam";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CheckIcon from "@mui/icons-material/Check";
 
 function ChatView({
   name,
@@ -22,7 +24,14 @@ function ChatView({
   isGroupBollean,
   contacts = [],
 }) {
+  const [copiedId, setCopiedId] = useState(null);
   const chatContainerRef = useRef(null);
+
+  const handleCopy = (text, id) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const resolveSenderName = (authorId) => {
     if (!authorId) return "Unknown";
@@ -318,13 +327,30 @@ function ChatView({
               );
             };
 
+            const textToCopy = msg.caption || msg.body || "";
+
             return (
               <div
                 key={msg._id || idx}
-                className={`flex relative z-10 ${
+                className={`flex relative z-10 group items-center gap-2 ${
                   isMine ? "justify-end" : "justify-start"
                 }`}
               >
+                {/* Copy button for sent messages (appears on left) */}
+                {isMine && textToCopy && (
+                  <button
+                    onClick={() => handleCopy(textToCopy, msg._id || idx)}
+                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}
+                    title="Copy message"
+                  >
+                    {copiedId === (msg._id || idx) ? (
+                      <CheckIcon sx={{ fontSize: 16 }} />
+                    ) : (
+                      <ContentCopyIcon sx={{ fontSize: 16 }} />
+                    )}
+                  </button>
+                )}
+
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-md relative ${
                     isMine
@@ -389,6 +415,21 @@ function ChatView({
                     }`}
                   />
                 </div>
+
+                {/* Copy button for received messages (appears on right) */}
+                {!isMine && textToCopy && (
+                  <button
+                    onClick={() => handleCopy(textToCopy, msg._id || idx)}
+                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}
+                    title="Copy message"
+                  >
+                    {copiedId === (msg._id || idx) ? (
+                      <CheckIcon sx={{ fontSize: 16 }} />
+                    ) : (
+                      <ContentCopyIcon sx={{ fontSize: 16 }} />
+                    )}
+                  </button>
+                )}
               </div>
             );
           })
