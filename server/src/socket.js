@@ -168,7 +168,7 @@ const bindClientEvents = (client, sessionId, io) => {
   console.log(`🔗 Binding events for session ${sessionId}`);
 
   // 📞 Listen for incoming calls
-  client.on("call", async (call) => {
+  client.on("incoming_call", async (call) => {
     try {
       console.log(
         `📞 Incoming ${call.isVideo ? "Video" : "Voice"} call from ${call.from}`,
