@@ -258,10 +258,13 @@ const bindClientEvents = (client, sessionId, io) => {
         );
         return; // Skip if we can't get basic info
       }
+      // console.log(msg, "contacts", contact, "chat", chat);
 
-      // 🔥 FORCE @c.us conversion if still @lid by using the phone number
-      let canonicalFrom = contact?.id?._serialized || msg.from;
-      if (canonicalFrom?.includes("@lid") && contact?.number) {
+      // 🔥 FORCE @c.us conversion ONLY if we have a real phone number
+      let canonicalFrom = msg.from;
+      if (contact?.id?.server === "c.us") {
+        canonicalFrom = contact.id._serialized;
+      } else if (canonicalFrom?.includes("@lid") && contact?.number && contact.number !== contact.id.user) {
         canonicalFrom = `${contact.number}@c.us`;
       }
 
@@ -271,7 +274,9 @@ const bindClientEvents = (client, sessionId, io) => {
 
       if (canonicalTo?.includes("@lid") && chat) {
         const chatContact = await chat.getContact().catch(() => null);
-        if (chatContact && chatContact.number) {
+        if (chatContact?.id?.server === "c.us") {
+          canonicalTo = chatContact.id._serialized;
+        } else if (chatContact?.id?.server === "lid" && chatContact.number && chatContact.number !== chatContact.id.user) {
           canonicalTo = `${chatContact.number}@c.us`;
         }
       }
@@ -293,8 +298,12 @@ const bindClientEvents = (client, sessionId, io) => {
       if (msg.from.includes("@g.us")) {
         author = msg.author || msg._data?.participant || null;
         // Normalize @lid author to @c.us if possible
-        if (author?.includes("@lid") && contact.number) {
-          author = `${contact.number}@c.us`;
+        if (author?.includes("@lid")) {
+          if (contact?.id?.server === "c.us") {
+            author = contact.id._serialized;
+          } else if (contact?.number && contact.number !== contact?.id?.user) {
+            author = `${contact.number}@c.us`;
+          }
         }
       }
 
