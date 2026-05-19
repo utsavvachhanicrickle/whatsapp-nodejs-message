@@ -4,6 +4,8 @@ import VerticalNav from "../components/VerticalNav";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FormField from "../components/Forms/FormField";
 import VerifiedIcon from "@mui/icons-material/Verified";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -30,12 +32,14 @@ function DefaultKeywordsReplyePage() {
   // Local states for keywords and reply messages
   const [defaultWords, setDefaultWords] = useState([]);
   const [defaulWordsMessages, setDefaulWordsMessages] = useState([]);
+  const [defaultMessageId, setDefaultMessageId] = useState(null);
 
   // Fetch / Sync keywords and reply messages from localStorage depending on the active user session
   useEffect(() => {
     if (!activeUser) {
       setDefaultWords([]);
       setDefaulWordsMessages([]);
+      setDefaultMessageId(null);
       return;
     }
 
@@ -54,17 +58,31 @@ function DefaultKeywordsReplyePage() {
     }
 
     // Initialize or read reply messages for this session
+    let currentMessages = [];
     const savedMessages = localStorage.getItem(`messages_${activeUser}`);
     if (savedMessages) {
-      setDefaulWordsMessages(JSON.parse(savedMessages));
+      currentMessages = JSON.parse(savedMessages);
+      setDefaulWordsMessages(currentMessages);
     } else {
-      const initialMessages = [
+      currentMessages = [
         { _id: "1", defaulWordsMessages: "Hello! Welcome to our automated assistant. How can we help you today?" },
         { _id: "2", defaulWordsMessages: "Hi there! We will get back to you shortly." },
         { _id: "3", defaulWordsMessages: "Need help? Type 'info' or 'support' for options." },
       ];
-      setDefaulWordsMessages(initialMessages);
-      localStorage.setItem(`messages_${activeUser}`, JSON.stringify(initialMessages));
+      setDefaulWordsMessages(currentMessages);
+      localStorage.setItem(`messages_${activeUser}`, JSON.stringify(currentMessages));
+    }
+
+    const savedDefaultMsgId = localStorage.getItem(`defaultMessageId_${activeUser}`);
+    if (savedDefaultMsgId) {
+      setDefaultMessageId(savedDefaultMsgId);
+    } else {
+      if (currentMessages && currentMessages.length > 0) {
+        setDefaultMessageId(currentMessages[0]._id);
+        localStorage.setItem(`defaultMessageId_${activeUser}`, currentMessages[0]._id);
+      } else {
+        setDefaultMessageId(null);
+      }
     }
   }, [activeUser]);
 
@@ -154,6 +172,12 @@ function DefaultKeywordsReplyePage() {
           defaulWordsMessages: messageText,
         };
         updatedList = [...prev, newItem];
+
+        // If there was no default message, set this new one as default
+        if (!defaultMessageId) {
+          setDefaultMessageId(newItem._id);
+          localStorage.setItem(`defaultMessageId_${activeUser}`, newItem._id);
+        }
       }
       localStorage.setItem(`messages_${activeUser}`, JSON.stringify(updatedList));
       return updatedList;
@@ -168,11 +192,29 @@ function DefaultKeywordsReplyePage() {
     setUpdateDefaultkeyWordsMessageInputFieldsValue(dm);
   };
 
+  const handleSetDefaultMessage = (id) => {
+    if (!activeUser) return;
+    setDefaultMessageId(id);
+    localStorage.setItem(`defaultMessageId_${activeUser}`, id);
+  };
+
   const onDeletedefaulWordsMessages = (id) => {
     if (!activeUser) return;
     setDefaulWordsMessages((prev) => {
       const updatedList = prev.filter((item) => item._id !== id);
       localStorage.setItem(`messages_${activeUser}`, JSON.stringify(updatedList));
+
+      // Update default message if the deleted one was default
+      if (defaultMessageId === id) {
+        const nextDefaultId = updatedList[0]?._id || null;
+        setDefaultMessageId(nextDefaultId);
+        if (nextDefaultId) {
+          localStorage.setItem(`defaultMessageId_${activeUser}`, nextDefaultId);
+        } else {
+          localStorage.removeItem(`defaultMessageId_${activeUser}`);
+        }
+      }
+
       return updatedList;
     });
     if (defaultKeywordsMessageInputFieldId === id) {
@@ -288,7 +330,7 @@ function DefaultKeywordsReplyePage() {
               {/* Keyword Form */}
               <FormField
                 key={`keyword-form-${defaultKeywordsInputFieldId || "new"}`}
-                className="!max-w-none !m-0 flex flex-col flex-1 overflow-y-auto custom-scrollbar"
+                className="max-w-none! m-0! flex flex-col flex-1 overflow-y-auto custom-scrollbar"
                 header={
                   defaultKeywordsInputFieldId ? "Update Keyword" : "Add Keyword"
                 }
@@ -306,7 +348,7 @@ function DefaultKeywordsReplyePage() {
               {/* Message Form */}
               <FormField
                 key={`message-form-${defaultKeywordsMessageInputFieldId || "new"}`}
-                className="!max-w-none !m-0 flex flex-col flex-1 overflow-y-auto custom-scrollbar"
+                className="max-w-none! m-0! flex flex-col flex-1 overflow-y-auto custom-scrollbar"
                 header={
                   defaultKeywordsMessageInputFieldId
                     ? "Update Default Message"
@@ -383,11 +425,32 @@ function DefaultKeywordsReplyePage() {
                   defaulWordsMessages.map((dm, idx) => (
                     <div
                       key={dm._id || idx}
-                      className="group flex items-start justify-between p-4 rounded-lg bg-(--bg-secondary) border border-(--border) hover:border-(--primary) transition-all shrink-0"
+                      className={`group flex items-start justify-between p-4 rounded-lg bg-(--bg-secondary) border transition-all shrink-0 ${
+                        defaultMessageId === dm._id
+                          ? "border-(--primary) ring-1 ring-(--primary)/30"
+                          : "border-(--border) hover:border-(--primary)"
+                      }`}
                     >
-                      <p className="text-(--text-primary) text-sm whitespace-pre-wrap flex-1 mr-4">
-                        {dm.defaulWordsMessages}
-                      </p>
+                      <div className="flex items-start gap-2.5 flex-1 mr-4">
+                        <button
+                          onClick={() => handleSetDefaultMessage(dm._id)}
+                          className={`p-1 rounded-full transition-all shrink-0 cursor-pointer ${
+                            defaultMessageId === dm._id
+                              ? "text-yellow-500 hover:text-yellow-600 scale-110"
+                              : "text-gray-400 hover:text-yellow-500 opacity-60 group-hover:opacity-100"
+                          }`}
+                          title={defaultMessageId === dm._id ? "Default Start Message" : "Set as Default Start Message"}
+                        >
+                          {defaultMessageId === dm._id ? (
+                            <StarIcon fontSize="small" />
+                          ) : (
+                            <StarBorderIcon fontSize="small" />
+                          )}
+                        </button>
+                        <p className="text-(--text-primary) text-sm whitespace-pre-wrap flex-1 mt-0.5">
+                          {dm.defaulWordsMessages}
+                        </p>
+                      </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                         <button
                           onClick={(e) => {

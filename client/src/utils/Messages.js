@@ -32,6 +32,30 @@ export const MESSAGES = {
   DEFAULT_MESSAGE_UPDATED_SUCCESS: "Default message updated",
   DEFAULT_MESSAGE_DELETED_SUCCESS: "Default message deleted",
 
+  // Default Keywords
+  DEFAULTKEYWORD_ADDED_SUCCESS: "Default Keyword Added Successfully",
+  DEFAULTKEYWORD_ADDED_ERROR: "Failed to Add Default Keyword",
+  DEFAULTKEYWORD_UPDATE_SUCCESS: "Default Keyword Updated Successfully",
+  DEFAULTKEYWORD_UPDATE_ERROR: "Failed to Update Default Keyword",
+  DEFAULTKEYWORD_DELETE_SUCCESS: "Default Keyword Deleted Successfully",
+  DEFAULTKEYWORD_DELETE_ERROR: "Failed to Delete Default Keyword",
+
+  // Default Keywords Message
+  DEFAULTKEYWORDSMESSAGE_ADDED_SUCCESS:
+    "Default Keywords Message Added Successfully",
+  DEFAULTKEYWORDSMESSAGE_ADDED_ERROR: "Failed to Add Default Keywords Message",
+  DEFAULTKEYWORDSMESSAGE_UPDATE_SUCCESS:
+    "Default Keywords Message Updated Successfully",
+  DEFAULTKEYWORDSMESSAGE_UPDATE_ERROR:
+    "Failed to Update Default Keywords Message",
+  DEFAULTKEYWORDSMESSAGE_DELETE_SUCCESS:
+    "Default Keywords Message Deleted Successfully",
+  DEFAULTKEYWORDSMESSAGE_DELETE_ERROR:
+    "Failed to Delete Default Keywords Message",
+  DEFAULTKEYWORDSMESSAGE_STAR_SUCCESS:
+    "Default Keywords Message Starred Successfully",
+  DEFAULTKEYWORDSMESSAGE_STAR_ERROR: "Failed to Star Default Keywords Message",
+  
   // General
   FILL_ALL_FIELDS: "Please fill all fields",
   SOMETHING_WENT_WRONG: "Something went wrong. Please try again.",

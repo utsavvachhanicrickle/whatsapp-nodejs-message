@@ -30,5 +30,23 @@ export const APIENDPOINTS = {
   SEND_MULTIPLE_MESSAGES: "api/message/multiple-send",
   SEND_MULTIPLE_GROUP_MESSAGES: "api/group/send/multiples",
   GET_CHATS: (sessionId) => `api/message/${sessionId}/chats`,
-  GET_MESSAGES: (sessionId, contactWhatsappId) => `api/message/${sessionId}/messages/${contactWhatsappId}`,
+  GET_MESSAGES: (sessionId, contactWhatsappId) =>
+    `api/message/${sessionId}/messages/${contactWhatsappId}`,
+
+  // default KeyWord Endpoints
+  GET_DEFAULT_KEYWORDS: () => `api/defaultkeywords/sessionId/${sessionId}`,
+  ADD_DEFAULT_KEYWoRDS: () => `api/defaultkeywords/addsessionId/${sessionId}`,
+  UPDATE_DEFAULT_KEYWORDS: (id) =>
+    `api/defaultkeywords/sessionId/${sessionId}/pdate/${id}`,
+  DELETE_DEFAULT_KEYWORDS: (id) =>
+    `api/defaultkeywords/sessionId/${sessionId}/delete/${id}`,
+
+  GET_DEFAULT_KEYWORDS_MESSAGES: () => `api/defaultkeywordsmessages/sessionId/${sessionId}`,
+  ADD_DEFAULT_KEYWORDS_MESSAGES: () => `api/defaultkeywordsmessages/addsessionId/${sessionId}`,
+  UPDATE_DEFAULT_KEYWORDS_MESSAGES: (id) =>
+    `api/defaultkeywordsmessages/sessionId/${sessionId}/pdate/${id}`,
+  DELETE_DEFAULT_KEYWORDS_MESSAGES: (id) =>
+    `api/defaultkeywordsmessages/sessionId/${sessionId}/delete/${id}`,
+  STAR_DEFAULT_KEYWORDS_MESSAGES: (id) =>
+    `api/defaultkeywordsmessages/sessionId/${sessionId}/star/${id}`,
 };
