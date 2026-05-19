@@ -106,7 +106,7 @@ function InputField({
         value={value}
         name={name}
         onChange={(e) => onChange(name, e.target.value, type)}
-        row={row}
+        rows={row}
       />
     );
   }

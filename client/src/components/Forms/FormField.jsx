@@ -3,7 +3,14 @@ import InputField from "./InputField";
 import Button from "../Button";
 import { buttonInputTypes } from "../../utils/schema";
 
-function FormField({ header = "", fields, onSubmit, buttons, footer = {} }) {
+function FormField({
+  header = "",
+  className = "",
+  fields,
+  onSubmit,
+  buttons,
+  footer = {},
+}) {
   const initialData = Object.fromEntries(
     fields.map((field) => [
       field.name,
@@ -54,11 +61,10 @@ function FormField({ header = "", fields, onSubmit, buttons, footer = {} }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className=" rounded-2xl border p-6 shadow-xl w-full max-w-md
+      className={` rounded-2xl border p-6 shadow-xl w-full max-w-md
         bg-(--bg-primary)
         border-(--border)
-        text-(--text-primary)
-      "
+        text-(--text-primary) ${className}`}
     >
       {/* HEADER */}
       {header && (
@@ -81,6 +87,7 @@ function FormField({ header = "", fields, onSubmit, buttons, footer = {} }) {
             placeholder={field.placeholder}
             required={field.required || false}
             options={field.options}
+            row={field.row}
           />
         ))}
       </div>
