@@ -39,7 +39,21 @@ const syncContacts = async (client, sessionId, io) => {
 
     // Use safeClientCall with retries
     const contacts = await safeClientCall(client, "getContacts");
-    const userContactsRaw = contacts
+    // console.log(
+    //   contacts
+    //     .filter(
+    //       (c) =>
+    //         c.isUser &&
+    //         !c.isGroup &&
+    //         c.number &&
+    //         c.id._serialized.endsWith("@c.us") &&
+    //         c.name,
+    //     )
+    // );
+
+    const contactMap = new Map();
+
+    contacts
       .filter(
         (c) =>
           c.isUser &&
@@ -48,25 +62,34 @@ const syncContacts = async (client, sessionId, io) => {
           c.id._serialized.endsWith("@c.us") &&
           c.name,
       )
-      .filter((c) => c.number === c.id.user)
-      .map((c) => ({
-        whatsappId: c.id._serialized,
-        lid: c.id.lid || null,
-        name: c.name || null,
-        pushName: c.pushname || null,
-        phoneNumber: c.number,
-        userId: userId,
-        sessionId: sessionId,
-      }));
+      .forEach((c) => {
+        const realPhone = c.id.user;
 
-    // 🔥 Deduplicate by phoneNumber to avoid "ON CONFLICT DO UPDATE cannot affect row a second time"
-    const uniqueMap = new Map();
-    userContactsRaw.forEach((c) => {
-      if (!uniqueMap.has(c.phoneNumber)) {
-        uniqueMap.set(c.phoneNumber, c);
-      }
-    });
-    const userContacts = Array.from(uniqueMap.values());
+        if (!contactMap.has(realPhone)) {
+          contactMap.set(realPhone, {
+            whatsappId: c.id._serialized,
+            lid: null,
+            name: c.name || null,
+            pushName: c.pushname || null,
+            phoneNumber: realPhone, // Enforce the true phone number
+            userId: userId,
+            sessionId: sessionId,
+          });
+        }
+
+        const existing = contactMap.get(realPhone);
+
+        // If the number doesn't match the true phone, it's the LID
+        if (c.number !== realPhone) {
+          existing.lid = c.number;
+        }
+
+        // Merge names if needed
+        if (!existing.name && c.name) existing.name = c.name;
+        if (!existing.pushName && c.pushname) existing.pushName = c.pushname;
+      });
+
+    const userContacts = Array.from(contactMap.values());
 
     if (userContacts.length > 0) {
       const { upsertWhatsappContacts } =
