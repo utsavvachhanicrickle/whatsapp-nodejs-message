@@ -39,7 +39,6 @@ const syncContacts = async (client, sessionId, io) => {
 
     // Use safeClientCall with retries
     const contacts = await safeClientCall(client, "getContacts");
-
     const userContactsRaw = contacts
       .filter(
         (c) =>
@@ -49,6 +48,7 @@ const syncContacts = async (client, sessionId, io) => {
           c.id._serialized.endsWith("@c.us") &&
           c.name,
       )
+      .filter((c) => c.number === c.id.user)
       .map((c) => ({
         whatsappId: c.id._serialized,
         lid: c.id.lid || null,
