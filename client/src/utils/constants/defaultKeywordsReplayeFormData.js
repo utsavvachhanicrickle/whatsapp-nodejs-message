@@ -29,7 +29,7 @@ export const defaultKeywordsMessageFormData = {
       type: "textarea",
       name: "defaulWordsMessages",
       placeholder: "Enter Your Default Keyword Message",
-      value: editId !== null ? data.defaultKeyword : "",
+      value: editId !== null ? data.defaulWordsMessages : "",
       required: true,
       row: 6,
     },
