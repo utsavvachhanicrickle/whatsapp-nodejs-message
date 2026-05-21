@@ -11,14 +11,14 @@ export const defaultKeyWordsModules = {
   addDefaultKeyWords: async (sessionId, formData) => {
     try {
       const res = API.post(
-        APIENDPOINTS.ADD_DEFAULT_KEYWoRDS(sessionId),
+        APIENDPOINTS.ADD_DEFAULT_KEYWORDS(sessionId),
         formData,
       );
       toast.success(MESSAGES.DEFAULTKEYWORD_ADDED_SUCCESS);
       return res;
     } catch (error) {
       toast.error(MESSAGES.DEFAULTKEYWORD_ADDED_ERROR);
-      throw err;
+      throw error;
     }
   },
   updateDefaultKeyWords: async (sessionId, id, formData) => {
@@ -31,7 +31,7 @@ export const defaultKeyWordsModules = {
       return res;
     } catch (error) {
       toast.error(MESSAGES.DEFAULTKEYWORD_UPDATE_ERROR);
-      throw err;
+      throw error;
     }
   },
   deleteDefaultKeyWords: async (sessionId, id) => {
@@ -43,7 +43,7 @@ export const defaultKeyWordsModules = {
       return res;
     } catch (error) {
       toast.error(MESSAGES.DEFAULTKEYWORD_DELETE_ERROR);
-      throw err;
+      throw error;
     }
   },
 };

@@ -7,8 +7,7 @@ export const fetchDefaultKeywords = createAsyncThunk(
     try {
       const res =
         await defaultKeyWordsModules.getDefaultKeyWords(sessionId);
-
-      return res.data.defaultKeyWords;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to fetch Default Keywords",
@@ -27,7 +26,7 @@ export const addDefaultKeyWords = createAsyncThunk(
           formData,
         );
 
-      return res.data.defaultKeyWords;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to add Default Keywords",
@@ -47,7 +46,7 @@ export const updateDefaultKeyWords = createAsyncThunk(
           formData,
         );
 
-      return res.data.defaultKeyWords;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to update Default Keywords",
@@ -66,7 +65,7 @@ export const deleteDefaultKeyWords = createAsyncThunk(
           id,
         );
 
-      return res.data.defaultKeyWords;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to delete Default Keywords",
@@ -75,15 +74,16 @@ export const deleteDefaultKeyWords = createAsyncThunk(
   },
 );
 
-const initialState = {
-  defaultKeywords: [],
-  loading: false,
-  error: null,
-};
 
 const defaultKeyWordsSlice = createSlice({
   name: "defaultKeyWordsSlice",
-  initialState,
+
+  initialState: {
+    defaultKeywords: [],
+    loading: false,
+    error: null,
+  },
+
   reducers: {},
 
   extraReducers: (builder) => {
@@ -102,7 +102,6 @@ const defaultKeyWordsSlice = createSlice({
         state.error = action.payload;
       })
 
-
       .addCase(addDefaultKeyWords.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -116,26 +115,22 @@ const defaultKeyWordsSlice = createSlice({
         state.error = action.payload;
       })
 
-
       .addCase(updateDefaultKeyWords.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(updateDefaultKeyWords.fulfilled, (state, action) => {
         state.loading = false;
-
-        state.defaultKeywords =
-          state.defaultKeywords.map((item) =>
-            item._id === action.payload._id
-              ? action.payload
-              : item,
-          );
+        state.defaultKeywords = state.defaultKeywords.map((item) =>
+          item._id === action.payload._id
+            ? action.payload
+            : item
+        );
       })
       .addCase(updateDefaultKeyWords.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-
 
       .addCase(deleteDefaultKeyWords.pending, (state) => {
         state.loading = true;
@@ -143,10 +138,9 @@ const defaultKeyWordsSlice = createSlice({
       })
       .addCase(deleteDefaultKeyWords.fulfilled, (state, action) => {
         state.loading = false;
-
         state.defaultKeywords =
           state.defaultKeywords.filter(
-            (item) => item._id !== action.meta.arg.id,
+            (item) => item._id !== action.meta.arg.id
           );
       })
       .addCase(deleteDefaultKeyWords.rejected, (state, action) => {
