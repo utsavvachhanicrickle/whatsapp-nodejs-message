@@ -1,5 +1,8 @@
 import pkg from "whatsapp-web.js";
 import qrcode from "qrcode";
+import pool from '../config/db.js';
+import { getDefaultKeywordsServices } from "../src/services/defaultKeywords.service.js"
+import { getDefaultKeywordsMessagesServices } from "../src/services/defaultKeywordsMessages.service.js"
 import { safeClientCall } from "./utils/whatsappUtils.js";
 import fs from "fs";
 import path from "path";
@@ -364,8 +367,17 @@ const bindClientEvents = (client, sessionId, io) => {
 
       // Save to database
       const saved = await saveMessage(messageData);
+
+
       // sharing replay of hi here the components will come in that sharing
-      const messageTypes = ["hi", "hey", "hello", "oyy", "hellooo"];
+      const sectionQuery = `SELECT "userId" FROM whatsapp_sections WHERE "number" = $1 LIMIT 1`;
+      const { rows: sectionRows } = await pool.query(sectionQuery, [sessionId]);
+      const userId = sectionRows.length > 0 ? sectionRows[0].userId : null;
+
+      const messageTypesArray = await getDefaultKeywordsServices(sessionId, userId)
+      const messageTypes = messageTypesArray.map((item) => item.defaultkeyword.toLowerCase().trim());
+      // console.log("messageTypes", messageTypes);
+
       if (
         messageTypes.includes(msg.body.toLowerCase().trim()) &&
         msg.fromMe === false
@@ -384,20 +396,20 @@ const bindClientEvents = (client, sessionId, io) => {
         if (!formatted.includes("@g.us")) {
           formatted = msg.from;
         }
+        const messageArray = await getDefaultKeywordsMessagesServices(sessionId, userId);
+        let message = messageArray.find((mes) => mes.is_starred === true)?.defaulwordsmessages
+        // console.log("message", message);
 
-        const message = `
-Dear Customer,
+        if (!message) {
+          message = `Dear Customer,
 
-Thank you for reaching out to us. Your message has been received successfully.
-
-Our team will connect with you as soon as possible.
-
-Thank you for your trust and patience.
-
-Sincerely,  
-Vachhani Utsav  
-📧 utsavvachhani.cs@gmail.com
-`;
+          Thank you for reaching out to us. Your message has been received successfully.
+          
+          Our team will connect with you as soon as possible.
+          
+          Thank you for your trust and patience.
+          `;
+        }
         await safeClientCall(client, "sendMessage", [formatted, message]);
 
         console.log(
@@ -594,7 +606,7 @@ Vachhani Utsav
     console.log("❌ Auth failure:", sessionId);
     try {
       await client.destroy();
-    } catch (err) {}
+    } catch (err) { }
 
     delete clients[sessionId];
     io.emit("session-removed", { sessionId });

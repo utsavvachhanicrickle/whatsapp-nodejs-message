@@ -1,6 +1,7 @@
 export const MESSAGES = {
   SESSION_STARTED: "Session started",
   SESSION_REMOVED: "Session removed successfully",
+  SESSIONID_REQURIED: "Session Id Requried !!",
   ERROR_REMOVING_SESSION: "Error removing session",
   REFRESH_TOKEN: "Refresh token issued successfully",
   REFRESH_TOKEN_EXPIRED: "Refresh token expired",
@@ -11,6 +12,7 @@ export const MESSAGES = {
   ACCESS_DENIED: "Access denied",
   USER_UNVERIFIED: "User unverified",
   USER_NOT_FOUND: "User not found",
+  USER_ID_REQURIED: "User Id Requried !!",
 
   // Sign-up related messages
   USER_ALREADY_EXISTS: "User already exists",
@@ -57,4 +59,28 @@ export const MESSAGES = {
   DELETEDEFAULTMESSAGEERROR: "Error deleting default message",
   DELETEDEFAULTMESSAGESUCCESS: "Default message deleted successfully",
   DEFAULTMESSAGENOTFOUND: "Default message not found",
+
+  // default keywords related messages
+  GETDEFAULTKEYWORDSSUCCESS: "Default keywords fetched successfully",
+  GETDEFAULTKEYWORDSERROR: "Error fetching default keywords",
+  ADDDEFAULTKEYWORDSERROR: "Error adding default keywords",
+  ADDDEFAULTKEYWORDSSUCCESS: "Default keywords added successfully",
+  UPDATEDEFAULTKEYWORDSERROR: "Error updating default keywords",
+  UPDATEDEFAULTKEYWORDSSUCCESS: "Default keywords updated successfully",
+  DELETEDEFAULTKEYWORDSERROR: "Error deleting default keywords",
+  DELETEDEFAULTKEYWORDSSUCCESS: "Default keywords deleted successfully",
+  DEFAULTKEYWORDNOTFOUND: "Default keywords not found",
+
+  // default keywords Message related messages
+  GETDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords messages fetched successfully",
+  GETDEFAULTKEYWORDSMESSAGESERROR: "Error fetching default keywords messages",
+  ADDDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords message added successfully",
+  ADDDEFAULTKEYWORDSMESSAGESERROR: "Error adding default keywords message",
+  UPDATEDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords message updated successfully",
+  UPDATEDEFAULTKEYWORDSMESSAGESERROR: "Error updating default keywords message",
+  DELETEDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords message deleted successfully",
+  DELETEDEFAULTKEYWORDSMESSAGESERROR: "Error deleting default keywords message",
+  DEFAULTKEYWORDSMESSAGENOTFOUND: "Default keywords message not found",
+  STARDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords message starred successfully",
+  STARDEFAULTKEYWORDSMESSAGESERROR: "Error starring default keywords message",
 };

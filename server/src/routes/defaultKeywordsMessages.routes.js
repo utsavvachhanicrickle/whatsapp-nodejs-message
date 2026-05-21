@@ -1,20 +1,30 @@
 import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { addContectController } from "../controllers/contact.controller.js";
-
+import {
+  getDefaultKeywordsMessagesController,
+  addDefaultKeywordsMessageController,
+  updateDefaultKeywordMessageController,
+  deleteDefaultKeywordMessageController,
+  starDefaultKeywordMessageController
+} from "../controllers/defaultKeywordsMessages.controller.js"
 const router = express.Router();
 
-router.get("/sessionId/:id", authMiddleware, addContectController);
+router.get("/sessionId/:sessionId", authMiddleware, getDefaultKeywordsMessagesController);
 router.post(
-  "/addsessionId/sessionId/:id",
+  "/sessionId/:sessionId/add",
   authMiddleware,
-  addContectController,
+  addDefaultKeywordsMessageController,
 );
-router.put("/sessionId/:id/update/:id", authMiddleware, addContectController);
+router.put("/sessionId/:sessionId/update/:id", authMiddleware, updateDefaultKeywordMessageController);
 router.delete(
-  "/sessionId/:id/delete/:id",
+  "/sessionId/:sessionId/delete/:id",
   authMiddleware,
-  addContectController,
+  deleteDefaultKeywordMessageController,
 );
+router.put(
+  "/sessionId/:sessionId/star/:id",
+  authMiddleware,
+  starDefaultKeywordMessageController
+)
 
 export default router;
