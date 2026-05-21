@@ -14,6 +14,8 @@ import {
 } from "../utils/constants/defaultKeywordsReplayeFormData";
 import { logout } from "../store/slices/authSlices";
 import { SocketContext } from "../context/scoketContext";
+import { fetchDefaultKeywords, addDefaultKeyWords, updateDefaultKeyWords, deleteDefaultKeyWords } from "../store/slices/defaultKeyWordsSlice";
+import { fetchdefaultKeywordsMessages, adddefaultKeywordsMessages, updatedefaultKeywordsMessages, deletedefaultKeywordsMessages, stardefaultKeywordsMessages } from "../store/slices/defaultKeyWordsMessagesSlices";
 
 function DefaultKeywordsReplyePage() {
   const dispatch = useDispatch();
@@ -30,61 +32,24 @@ function DefaultKeywordsReplyePage() {
   }, [users, activeUser, switchUser]);
 
   // Local states for keywords and reply messages
-  const [defaultWords, setDefaultWords] = useState([]);
-  const [defaulWordsMessages, setDefaulWordsMessages] = useState([]);
+  const { defaultKeywords } = useSelector((state) => state.defaultKeyWords)
+  const { defaultKeyWordsMessages } = useSelector((state) => state.defaultKeyWordsMessages)
   const [defaultMessageId, setDefaultMessageId] = useState(null);
 
   // Fetch / Sync keywords and reply messages from localStorage depending on the active user session
   useEffect(() => {
-    if (!activeUser) {
-      setDefaultWords([]);
-      setDefaulWordsMessages([]);
-      setDefaultMessageId(null);
-      return;
-    }
+    if (!activeUser) return;
+    // Fetch keywords and messages from backend
+    dispatch(fetchDefaultKeywords(activeUser));
+    dispatch(fetchdefaultKeywordsMessages(activeUser));
+  }, [activeUser, dispatch]);
 
-    // Initialize or read keywords for this session
-    const savedKeywords = localStorage.getItem(`keywords_${activeUser}`);
-    if (savedKeywords) {
-      setDefaultWords(JSON.parse(savedKeywords));
-    } else {
-      const initialKeywords = [
-        { _id: "1", defaultKeyword: "hey" },
-        { _id: "2", defaultKeyword: "hi" },
-        { _id: "3", defaultKeyword: "oyy" },
-      ];
-      setDefaultWords(initialKeywords);
-      localStorage.setItem(`keywords_${activeUser}`, JSON.stringify(initialKeywords));
+  // Set default message ID when messages are loaded
+  useEffect(() => {
+    if (defaultKeyWordsMessages && defaultKeyWordsMessages.length > 0 && !defaultMessageId) {
+      setDefaultMessageId((defaultKeyWordsMessages.find((dm) => dm.is_starred === true))._id);
     }
-
-    // Initialize or read reply messages for this session
-    let currentMessages = [];
-    const savedMessages = localStorage.getItem(`messages_${activeUser}`);
-    if (savedMessages) {
-      currentMessages = JSON.parse(savedMessages);
-      setDefaulWordsMessages(currentMessages);
-    } else {
-      currentMessages = [
-        { _id: "1", defaulWordsMessages: "Hello! Welcome to our automated assistant. How can we help you today?" },
-        { _id: "2", defaulWordsMessages: "Hi there! We will get back to you shortly." },
-        { _id: "3", defaulWordsMessages: "Need help? Type 'info' or 'support' for options." },
-      ];
-      setDefaulWordsMessages(currentMessages);
-      localStorage.setItem(`messages_${activeUser}`, JSON.stringify(currentMessages));
-    }
-
-    const savedDefaultMsgId = localStorage.getItem(`defaultMessageId_${activeUser}`);
-    if (savedDefaultMsgId) {
-      setDefaultMessageId(savedDefaultMsgId);
-    } else {
-      if (currentMessages && currentMessages.length > 0) {
-        setDefaultMessageId(currentMessages[0]._id);
-        localStorage.setItem(`defaultMessageId_${activeUser}`, currentMessages[0]._id);
-      } else {
-        setDefaultMessageId(null);
-      }
-    }
-  }, [activeUser]);
+  }, [defaultKeyWordsMessages, defaultMessageId]);
 
   const [defaultKeywordsInputFieldId, setDefaultKeywordsInputFieldId] =
     useState(null);
@@ -95,33 +60,12 @@ function DefaultKeywordsReplyePage() {
 
   const handleSubmitDefaultKeywordsInputAdd = (formData) => {
     if (!activeUser) return;
-
-    const keywordText = formData.defaultKeyword;
-    if (!keywordText?.trim()) return;
-
-    setDefaultWords((prev) => {
-      let updatedList;
-      if (defaultKeywordsInputFieldId) {
-        // Update existing keyword
-        updatedList = prev.map((item) =>
-          item._id === defaultKeywordsInputFieldId
-            ? { ...item, defaultKeyword: keywordText }
-            : item
-        );
-      } else {
-        // Add new keyword
-        const newItem = {
-          _id: Date.now().toString(),
-          defaultKeyword: keywordText,
-        };
-        updatedList = [...prev, newItem];
-      }
-      localStorage.setItem(`keywords_${activeUser}`, JSON.stringify(updatedList));
-      return updatedList;
-    });
-
-    setDefaultKeywordsInputFieldId(null);
-    setUpdateDefaultkeyWordsInputFieldsValue([]);
+    if (defaultKeywordsInputFieldId) {
+      dispatch(updateDefaultKeyWords({ sessionId: activeUser, id: defaultKeywordsInputFieldId, formData }));
+    } else {
+      dispatch(addDefaultKeyWords({ sessionId: activeUser, formData }));
+    }
+    handleCancle();
   };
 
   const onEditDefaultKeyword = (d) => {
@@ -131,11 +75,7 @@ function DefaultKeywordsReplyePage() {
 
   const onDeleteDefaultKeyword = (id) => {
     if (!activeUser) return;
-    setDefaultWords((prev) => {
-      const updatedList = prev.filter((item) => item._id !== id);
-      localStorage.setItem(`keywords_${activeUser}`, JSON.stringify(updatedList));
-      return updatedList;
-    });
+    dispatch(deleteDefaultKeyWords({ sessionId: activeUser, id }));
     if (defaultKeywordsInputFieldId === id) {
       handleCancle();
     }
@@ -152,42 +92,16 @@ function DefaultKeywordsReplyePage() {
 
   const handleSubmitDefaultKeywordsMessageInputAdd = (formData) => {
     if (!activeUser) return;
-
-    const messageText = formData.defaulWordsMessages;
-    if (!messageText?.trim()) return;
-
-    setDefaulWordsMessages((prev) => {
-      let updatedList;
-      if (defaultKeywordsMessageInputFieldId) {
-        // Update existing message
-        updatedList = prev.map((item) =>
-          item._id === defaultKeywordsMessageInputFieldId
-            ? { ...item, defaulWordsMessages: messageText }
-            : item
-        );
-      } else {
-        // Add new message
-        const newItem = {
-          _id: Date.now().toString(),
-          defaulWordsMessages: messageText,
-        };
-        updatedList = [...prev, newItem];
-
-        // If there was no default message, set this new one as default
-        if (!defaultMessageId) {
-          setDefaultMessageId(newItem._id);
-          localStorage.setItem(`defaultMessageId_${activeUser}`, newItem._id);
-        }
-      }
-      localStorage.setItem(`messages_${activeUser}`, JSON.stringify(updatedList));
-      return updatedList;
-    });
-
+    if (defaultKeywordsMessageInputFieldId) {
+      dispatch(updatedefaultKeywordsMessages({ sessionId: activeUser, id: defaultKeywordsMessageInputFieldId, formData }));
+    } else {
+      dispatch(adddefaultKeywordsMessages({ sessionId: activeUser, formData }));
+    }
     setDefaultKeywordsMessageInputFieldId(null);
     setUpdateDefaultkeyWordsMessageInputFieldsValue([]);
   };
 
-  const onEditDefaulWordsMessages = (dm) => {
+  const onEditdefaultKeyWordsMessages = (dm) => {
     setDefaultKeywordsMessageInputFieldId(dm._id);
     setUpdateDefaultkeyWordsMessageInputFieldsValue(dm);
   };
@@ -195,28 +109,13 @@ function DefaultKeywordsReplyePage() {
   const handleSetDefaultMessage = (id) => {
     if (!activeUser) return;
     setDefaultMessageId(id);
+    dispatch(stardefaultKeywordsMessages({ sessionId: activeUser, id }));
     localStorage.setItem(`defaultMessageId_${activeUser}`, id);
   };
 
-  const onDeletedefaulWordsMessages = (id) => {
+  const onDeletedefaultKeyWordsMessages = (id) => {
     if (!activeUser) return;
-    setDefaulWordsMessages((prev) => {
-      const updatedList = prev.filter((item) => item._id !== id);
-      localStorage.setItem(`messages_${activeUser}`, JSON.stringify(updatedList));
-
-      // Update default message if the deleted one was default
-      if (defaultMessageId === id) {
-        const nextDefaultId = updatedList[0]?._id || null;
-        setDefaultMessageId(nextDefaultId);
-        if (nextDefaultId) {
-          localStorage.setItem(`defaultMessageId_${activeUser}`, nextDefaultId);
-        } else {
-          localStorage.removeItem(`defaultMessageId_${activeUser}`);
-        }
-      }
-
-      return updatedList;
-    });
+    dispatch(deletedefaultKeywordsMessages({ sessionId: activeUser, id }));
     if (defaultKeywordsMessageInputFieldId === id) {
       handleCancle();
     }
@@ -233,10 +132,6 @@ function DefaultKeywordsReplyePage() {
     switchUser(user);
   };
 
-  const handleDeleteUser = (e, user) => {
-    // Session deletion is disabled on Settings page, handled on Home Page
-  };
-
   const isConnected =
     status?.toLowerCase().includes("ready") ||
     status?.toLowerCase().includes("connected");
@@ -249,9 +144,9 @@ function DefaultKeywordsReplyePage() {
         users={users}
         activeUser={activeUser}
         onSwitchUser={handleSwitchUser}
-        onAddSession={() => {}}
+        onAddSession={() => { }}
         onLogout={() => dispatch(logout())}
-        onDeleteUser={handleDeleteUser}
+        onDeleteUser={() => { }}
         hideAddDelete={true}
       />
 
@@ -367,23 +262,23 @@ function DefaultKeywordsReplyePage() {
             </div>
 
             {/* Middle Column: Keywords List */}
-            <div className="bg-(--bg-primary) rounded-xl p-6 whatsapp-shadow border border-(--border) flex flex-col min-h-[300px] lg:min-h-0">
+            <div className="bg-(--bg-primary) rounded-xl p-6 whatsapp-shadow border border-(--border) flex flex-col min-h-75 lg:min-h-0">
               <h2 className="text-lg font-medium text-(--text-primary) mb-4 border-b border-(--border) pb-2 shrink-0">
                 Active Keywords
               </h2>
               <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                {defaultWords.length === 0 ? (
+                {defaultKeywords.length === 0 ? (
                   <p className="text-sm text-(--text-secondary) italic text-center py-4">
                     No keywords added yet.
                   </p>
                 ) : (
-                  defaultWords.map((d, idx) => (
+                  defaultKeywords.map((d, idx) => (
                     <div
                       key={d._id || idx}
                       className="group flex items-center justify-between p-3 rounded-lg bg-(--bg-secondary) border border-(--border) hover:border-(--primary) transition-all shrink-0"
                     >
                       <p className="text-(--text-primary) font-medium">
-                        {d.defaultKeyword}
+                        {d.defaultkeyword}
                       </p>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
@@ -412,33 +307,31 @@ function DefaultKeywordsReplyePage() {
             </div>
 
             {/* Right Column: Messages List */}
-            <div className="bg-(--bg-primary) rounded-xl p-6 whatsapp-shadow border border-(--border) flex flex-col min-h-[300px] lg:min-h-0">
+            <div className="bg-(--bg-primary) rounded-xl p-6 whatsapp-shadow border border-(--border) flex flex-col min-h-75 lg:min-h-0">
               <h2 className="text-lg font-medium text-(--text-primary) mb-4 border-b border-(--border) pb-2 shrink-0">
                 Active Reply Messages
               </h2>
               <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                {defaulWordsMessages.length === 0 ? (
+                {defaultKeyWordsMessages.length === 0 ? (
                   <p className="text-sm text-(--text-secondary) italic text-center py-4">
                     No messages added yet.
                   </p>
                 ) : (
-                  defaulWordsMessages.map((dm, idx) => (
+                  defaultKeyWordsMessages.map((dm, idx) => (
                     <div
                       key={dm._id || idx}
-                      className={`group flex items-start justify-between p-4 rounded-lg bg-(--bg-secondary) border transition-all shrink-0 ${
-                        defaultMessageId === dm._id
-                          ? "border-(--primary) ring-1 ring-(--primary)/30"
-                          : "border-(--border) hover:border-(--primary)"
-                      }`}
+                      className={`group flex items-start justify-between p-4 rounded-lg bg-(--bg-secondary) border transition-all shrink-0 ${defaultMessageId === dm._id
+                        ? "border-(--primary) ring-1 ring-(--primary)/30"
+                        : "border-(--border) hover:border-(--primary)"
+                        }`}
                     >
                       <div className="flex items-start gap-2.5 flex-1 mr-4">
                         <button
                           onClick={() => handleSetDefaultMessage(dm._id)}
-                          className={`p-1 rounded-full transition-all shrink-0 cursor-pointer ${
-                            defaultMessageId === dm._id
-                              ? "text-yellow-500 hover:text-yellow-600 scale-110"
-                              : "text-gray-400 hover:text-yellow-500 opacity-60 group-hover:opacity-100"
-                          }`}
+                          className={`p-1 rounded-full transition-all shrink-0 cursor-pointer ${defaultMessageId === dm._id
+                            ? "text-yellow-500 hover:text-yellow-600 scale-110"
+                            : "text-gray-400 hover:text-yellow-500 opacity-60 group-hover:opacity-100"
+                            }`}
                           title={defaultMessageId === dm._id ? "Default Start Message" : "Set as Default Start Message"}
                         >
                           {defaultMessageId === dm._id ? (
@@ -448,14 +341,14 @@ function DefaultKeywordsReplyePage() {
                           )}
                         </button>
                         <p className="text-(--text-primary) text-sm whitespace-pre-wrap flex-1 mt-0.5">
-                          {dm.defaulWordsMessages}
+                          {dm.defaulwordsmessages}
                         </p>
                       </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEditDefaulWordsMessages(dm);
+                            onEditdefaultKeyWordsMessages(dm);
                           }}
                           className="p-1.5 text-(--text-secondary) hover:text-(--primary) hover:bg-(--bg-primary) rounded-full shadow-sm transition-colors cursor-pointer"
                         >
@@ -464,7 +357,7 @@ function DefaultKeywordsReplyePage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onDeletedefaulWordsMessages(dm._id);
+                            onDeletedefaultKeyWordsMessages(dm._id);
                           }}
                           className="p-1.5 text-red-400 hover:text-red-600 hover:bg-(--bg-primary) rounded-full shadow-sm transition-colors cursor-pointer"
                         >
