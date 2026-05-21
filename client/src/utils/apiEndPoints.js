@@ -35,7 +35,7 @@ export const APIENDPOINTS = {
 
   // default KeyWord Endpoints
   GET_DEFAULT_KEYWORDS: () => `api/default-keywords/sessionId/${sessionId}`,
-  ADD_DEFAULT_KEYWoRDS: () => `api/default-keywords/addsessionId/${sessionId}`,
+  ADD_DEFAULT_KEYWoRDS: () => `api/default-keywords/sessionId/${sessionId}/add`,
   UPDATE_DEFAULT_KEYWORDS: (id) =>
     `api/default-keywords/sessionId/${sessionId}/update/${id}`,
   DELETE_DEFAULT_KEYWORDS: (id) =>
