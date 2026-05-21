@@ -8,13 +8,36 @@ export const getDefaultKeywordsMessagesServices = async (sessionId, userId) => {
     return result.rows;
 }
 
-export const addDefaultKeywordsMessagesServices = async (sessionId, userId, defaulWordsMessages) => {
-    const result = await pool.query(
-        'INSERT INTO default_keywords_messages ("sessionId", "userId", defaulwordsmessages) VALUES ($1,$2,$3) RETURNING *',
-        [sessionId, userId, defaulWordsMessages]
-    )
-    return result.rows[0];
-}
+export const addDefaultKeywordsMessagesServices = async (
+  sessionId,
+  userId,
+  defaulWordsMessages
+) => {
+
+  // Check if any message already exists
+  const existingMessage = await pool.query(
+    `SELECT _id 
+     FROM default_keywords_messages 
+     WHERE "sessionId" = $1 
+     AND "userId" = $2
+     LIMIT 1`,
+    [sessionId, userId]
+  );
+
+  // First message => true
+  // Otherwise => false
+  const isStarred = existingMessage.rows.length === 0;
+
+  const result = await pool.query(
+    `INSERT INTO default_keywords_messages 
+    ("sessionId", "userId", defaulwordsmessages, "is_starred") 
+    VALUES ($1, $2, $3, $4) 
+    RETURNING *`,
+    [sessionId, userId, defaulWordsMessages, isStarred]
+  );
+
+  return result.rows[0];
+};
 
 export const updateDefaultKeywordsMessagesServices = async (sessionId, userId, defaulWordsMessages, id) => {
     const result = await pool.query(

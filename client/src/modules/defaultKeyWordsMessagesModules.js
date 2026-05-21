@@ -51,10 +51,10 @@ export const defaultKeyWordsMessagesModules = {
       const res = API.put(
         APIENDPOINTS.STAR_DEFAULT_KEYWORDS_MESSAGES(sessionId, id),
       );
-      toast.success(MESSAGES.DEFAULTKEYWORD_DELETE_SUCCESS);
+      toast.success(MESSAGES.DEFAULTKEYWORDSMESSAGE_STAR_SUCCESS);
       return res;
     } catch (error) {
-      toast.error(MESSAGES.DEFAULTKEYWORD_DELETE_ERROR);
+      toast.error(MESSAGES.DEFAULTKEYWORDSMESSAGE_STAR_ERROR);
       throw error;
     }
   },

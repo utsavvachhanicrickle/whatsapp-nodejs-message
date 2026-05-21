@@ -47,7 +47,7 @@ function DefaultKeywordsReplyePage() {
   // Set default message ID when messages are loaded
   useEffect(() => {
     if (defaultKeyWordsMessages && defaultKeyWordsMessages.length > 0 && !defaultMessageId) {
-      setDefaultMessageId((defaultKeyWordsMessages.find((dm) => dm.is_starred === true))._id);
+      setDefaultMessageId((defaultKeyWordsMessages.find((dm) => dm.is_starred === true))?._id);
     }
   }, [defaultKeyWordsMessages, defaultMessageId]);
 
