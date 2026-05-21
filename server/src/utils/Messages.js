@@ -70,4 +70,17 @@ export const MESSAGES = {
   DELETEDEFAULTKEYWORDSERROR: "Error deleting default keywords",
   DELETEDEFAULTKEYWORDSSUCCESS: "Default keywords deleted successfully",
   DEFAULTKEYWORDNOTFOUND: "Default keywords not found",
+
+  // default keywords Message related messages
+  GETDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords messages fetched successfully",
+  GETDEFAULTKEYWORDSMESSAGESERROR: "Error fetching default keywords messages",
+  ADDDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords message added successfully",
+  ADDDEFAULTKEYWORDSMESSAGESERROR: "Error adding default keywords message",
+  UPDATEDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords message updated successfully",
+  UPDATEDEFAULTKEYWORDSMESSAGESERROR: "Error updating default keywords message",
+  DELETEDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords message deleted successfully",
+  DELETEDEFAULTKEYWORDSMESSAGESERROR: "Error deleting default keywords message",
+  DEFAULTKEYWORDSMESSAGENOTFOUND: "Default keywords message not found",
+  STARDEFAULTKEYWORDSMESSAGESSUCCESS: "Default keywords message starred successfully",
+  STARDEFAULTKEYWORDSMESSAGESERROR: "Error starring default keywords message",
 };

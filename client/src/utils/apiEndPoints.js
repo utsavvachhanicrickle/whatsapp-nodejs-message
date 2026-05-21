@@ -42,9 +42,9 @@ export const APIENDPOINTS = {
     `api/default-keywords/sessionId/${sessionId}/delete/${id}`,
 
   GET_DEFAULT_KEYWORDS_MESSAGES: () => `api/default-keywords-messages/sessionId/${sessionId}`,
-  ADD_DEFAULT_KEYWORDS_MESSAGES: () => `api/default-keywords-messages/addsessionId/${sessionId}`,
+  ADD_DEFAULT_KEYWORDS_MESSAGES: () => `api/default-keywords-messages/sessionId/${sessionId}/add`,
   UPDATE_DEFAULT_KEYWORDS_MESSAGES: (id) =>
-    `api/default-keywords-messages/sessionId/${sessionId}/pdate/${id}`,
+    `api/default-keywords-messages/sessionId/${sessionId}/update/${id}`,
   DELETE_DEFAULT_KEYWORDS_MESSAGES: (id) =>
     `api/default-keywords-messages/sessionId/${sessionId}/delete/${id}`,
   STAR_DEFAULT_KEYWORDS_MESSAGES: (id) =>
