@@ -5,7 +5,7 @@ export const getDefaultKeywordsServices = async (sessionId, userId) => {
         'SELECT * FROM default_keywords WHERE "sessionId" = $1 AND "userId" = $2',
         [sessionId, userId]
     );
-    return result.rows[0];
+    return result.rows;
 }
 
 export const addDefaultKeywordsServices = async (sessionId, userId, defaultKeyword) => {
