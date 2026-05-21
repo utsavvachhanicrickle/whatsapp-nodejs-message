@@ -18,7 +18,7 @@ export const defaultKeyWordsMessagesModules = {
       return res;
     } catch (error) {
       toast.error(MESSAGES.DEFAULTKEYWORD_ADDED_ERROR);
-      throw err;
+      throw error;
     }
   },
   updatedefaultKeyWordsMessages: async (sessionId, id, formData) => {
@@ -31,7 +31,7 @@ export const defaultKeyWordsMessagesModules = {
       return res;
     } catch (error) {
       toast.error(MESSAGES.DEFAULTKEYWORD_UPDATE_ERROR);
-      throw err;
+      throw error;
     }
   },
   deleteDefaultKeyWordsMessages: async (sessionId, id) => {
@@ -43,7 +43,7 @@ export const defaultKeyWordsMessagesModules = {
       return res;
     } catch (error) {
       toast.error(MESSAGES.DEFAULTKEYWORD_DELETE_ERROR);
-      throw err;
+      throw error;
     }
   },
   starDefaultKeyWordsMessages: async (sessionId, id) => {
@@ -55,7 +55,7 @@ export const defaultKeyWordsMessagesModules = {
       return res;
     } catch (error) {
       toast.error(MESSAGES.DEFAULTKEYWORD_DELETE_ERROR);
-      throw err;
+      throw error;
     }
   },
 };

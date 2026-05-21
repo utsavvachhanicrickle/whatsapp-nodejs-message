@@ -10,7 +10,7 @@ export const getDefaultKeywordsMessagesServices = async (sessionId, userId) => {
 
 export const addDefaultKeywordsMessagesServices = async (sessionId, userId, defaulWordsMessages) => {
     const result = await pool.query(
-        'INSERT INTO default_keywords_messages ("sessionId", "userId", defaulWordsMessages) VALUES ($1,$2,$3) RETURNING *',
+        'INSERT INTO default_keywords_messages ("sessionId", "userId", defaulwordsmessages) VALUES ($1,$2,$3) RETURNING *',
         [sessionId, userId, defaulWordsMessages]
     )
     return result.rows[0];
@@ -18,7 +18,7 @@ export const addDefaultKeywordsMessagesServices = async (sessionId, userId, defa
 
 export const updateDefaultKeywordsMessagesServices = async (sessionId, userId, defaulWordsMessages, id) => {
     const result = await pool.query(
-        'UPDATE default_keywords_messages set defaulWordsMessages= $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "sessionId" = $2 AND "userId" = $3 AND "_id" = $4 RETURNING *',
+        'UPDATE default_keywords_messages set defaulwordsmessages= $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "sessionId" = $2 AND "userId" = $3 AND "_id" = $4 RETURNING *',
         [defaulWordsMessages, sessionId, userId, id]
     )
     return result.rows[0];

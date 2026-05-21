@@ -11,7 +11,7 @@ export const fetchdefaultKeywordsMessages = createAsyncThunk(
           sessionId,
         );
 
-      return res.data.defaultKeyWordsMessages;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to fetch Default Keywords Messages",
@@ -31,7 +31,7 @@ export const adddefaultKeywordsMessages = createAsyncThunk(
           formData,
         );
 
-      return res.data.defaultKeywordsMessages;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to add Default Keywords Messages",
@@ -52,7 +52,7 @@ export const updatedefaultKeywordsMessages = createAsyncThunk(
           formData,
         );
 
-      return res.data.defaultKeywordsMessages;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to update Default Keywords Messages",
@@ -72,7 +72,7 @@ export const deletedefaultKeywordsMessages = createAsyncThunk(
           id,
         );
 
-      return res.data.defaultKeywordsMessages;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to delete Default Keywords Messages",
@@ -82,8 +82,8 @@ export const deletedefaultKeywordsMessages = createAsyncThunk(
 );
 
 // Star Default Keywords Message
-export const StardefaultKeywordsMessages = createAsyncThunk(
-  "defaultKeywordsMessages/StardefaultKeywordsMessages",
+export const stardefaultKeywordsMessages = createAsyncThunk(
+  "defaultKeywordsMessages/stardefaultKeywordsMessages",
   async ({ sessionId, id }, thunkAPI) => {
     try {
       const res =
@@ -92,7 +92,7 @@ export const StardefaultKeywordsMessages = createAsyncThunk(
           id,
         );
 
-      return res.data.defaultKeywordsMessages;
+      return res.data.result;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         "Failed to star Default Keywords Messages",
@@ -101,15 +101,13 @@ export const StardefaultKeywordsMessages = createAsyncThunk(
   },
 );
 
-const initialState = {
-  defaultKeywordsMessages: [],
-  loading: false,
-  error: null,
-};
-
 const defaultKeyWordsMessagesSlice = createSlice({
   name: "defaultKeyWordsMessagesSlice",
-  initialState,
+  initialState: {
+    defaultKeyWordsMessages: [],
+    loading: false,
+    error: null,
+  },
   reducers: {},
 
   extraReducers: (builder) => {
@@ -121,7 +119,7 @@ const defaultKeyWordsMessagesSlice = createSlice({
       })
       .addCase(fetchdefaultKeywordsMessages.fulfilled, (state, action) => {
         state.loading = false;
-        state.defaultKeywordsMessages = action.payload;
+        state.defaultKeyWordsMessages = action.payload;
       })
       .addCase(fetchdefaultKeywordsMessages.rejected, (state, action) => {
         state.loading = false;
@@ -129,13 +127,13 @@ const defaultKeyWordsMessagesSlice = createSlice({
       })
 
 
-	  .addCase(adddefaultKeywordsMessages.pending, (state) => {
+      .addCase(adddefaultKeywordsMessages.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(adddefaultKeywordsMessages.fulfilled, (state, action) => {
         state.loading = false;
-        state.defaultKeywordsMessages.push(action.payload);
+        state.defaultKeyWordsMessages.push(action.payload);
       })
       .addCase(adddefaultKeywordsMessages.rejected, (state, action) => {
         state.loading = false;
@@ -143,15 +141,15 @@ const defaultKeyWordsMessagesSlice = createSlice({
       })
 
 
-	  .addCase(updatedefaultKeywordsMessages.pending, (state) => {
+      .addCase(updatedefaultKeywordsMessages.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(updatedefaultKeywordsMessages.fulfilled, (state, action) => {
         state.loading = false;
 
-        state.defaultKeywordsMessages =
-          state.defaultKeywordsMessages.map((item) =>
+        state.defaultKeyWordsMessages =
+          state.defaultKeyWordsMessages.map((item) =>
             item._id === action.payload._id ? action.payload : item,
           );
       })
@@ -161,15 +159,15 @@ const defaultKeyWordsMessagesSlice = createSlice({
       })
 
 
-	  .addCase(deletedefaultKeywordsMessages.pending, (state) => {
+      .addCase(deletedefaultKeywordsMessages.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(deletedefaultKeywordsMessages.fulfilled, (state, action) => {
         state.loading = false;
 
-        state.defaultKeywordsMessages =
-          state.defaultKeywordsMessages.filter(
+        state.defaultKeyWordsMessages =
+          state.defaultKeyWordsMessages.filter(
             (item) => item._id !== action.meta.arg.id,
           );
       })
@@ -179,19 +177,19 @@ const defaultKeyWordsMessagesSlice = createSlice({
       })
 
 
-	  .addCase(StardefaultKeywordsMessages.pending, (state) => {
+      .addCase(stardefaultKeywordsMessages.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(StardefaultKeywordsMessages.fulfilled, (state, action) => {
+      .addCase(stardefaultKeywordsMessages.fulfilled, (state, action) => {
         state.loading = false;
 
-        state.defaultKeywordsMessages =
-          state.defaultKeywordsMessages.map((item) =>
+        state.defaultKeyWordsMessages =
+          state.defaultKeyWordsMessages.map((item) =>
             item._id === action.payload._id ? action.payload : item,
           );
       })
-      .addCase(StardefaultKeywordsMessages.rejected, (state, action) => {
+      .addCase(stardefaultKeywordsMessages.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
