@@ -6,6 +6,7 @@ import { safeClientCall } from "../utils/whatsappUtils.js";
 export const getGroupsController = async (req, res, next) => {
   try {
     const { sessionId } = req.params;
+    console.log("[groups] fetch called !! ", sessionId);
 
     const client = clients[sessionId];
 
@@ -19,7 +20,7 @@ export const getGroupsController = async (req, res, next) => {
     const chats = await safeClientCall(client, "getChats");
 
     const groups = chats
-      .filter((chat) => chat.isGroup)
+      .filter((chat) => chat.isGroup) 
       .map((g) => ({
         id: g.id._serialized,
         name: g.name,
