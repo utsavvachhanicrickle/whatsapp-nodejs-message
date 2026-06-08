@@ -92,7 +92,7 @@ function SendMessage({ sessionId }) {
   );
   const groups = useSelector((state) => state.groups.groups);
   const authData = useSelector((state) => state.auth.authData);
-  const currentUserId = authData?.user?.id;
+  const currentUserId = authData?.id || authData?._id || authData?.user?.id || authData?.user?._id;
 
   const fetchAssignedChats = async () => {
     const chats = await messageModules.getAssignedChats();
@@ -146,7 +146,10 @@ function SendMessage({ sessionId }) {
     const fetchUsersAndNotes = async () => {
       const targetSession = sessionId === "shared-chats" ? selectedChat?.sessionId : sessionId;
       const targetChat = selectedContactWhatsappId;
-      if (targetSession && targetChat && currentUserId) {
+      
+      // ONLY fetch notes users list if the logged-in user is the session owner (admin)
+      // Teammates in "shared-chats" mode only access their own notes directly, skipping this lookup.
+      if (sessionId !== "shared-chats" && targetSession && targetChat && currentUserId) {
         try {
           const usersList = await messageModules.getNotesUsers(targetSession, targetChat);
           setNotesUsers(usersList || []);
@@ -157,7 +160,7 @@ function SendMessage({ sessionId }) {
         }
       } else {
         setNotesUsers([]);
-        setSelectedNotesUserId(null);
+        setSelectedNotesUserId(currentUserId || null);
       }
     };
     fetchUsersAndNotes();
