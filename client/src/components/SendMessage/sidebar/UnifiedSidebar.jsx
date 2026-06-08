@@ -28,6 +28,7 @@ function UnifiedSidebar({
   setMultipleGroup,
   selectedContactWhatsappId,
   sessionId,
+  assignedChats = [],
 }) {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -63,47 +64,51 @@ function UnifiedSidebar({
     <div className="w-84 h-full flex flex-col bg-(--sidebar) border-r border-(--border)">
       {/* 📌 TOP ACTIONS */}
       <div className="p-4 flex items-center justify-between bg-(--header)">
-        <div className="flex items-center gap-1 bg-(--bg-secondary) p-1 rounded-full">
-          <button
-            onClick={() => {
-              setIsGroupMode(false);
-              setViewMode("all");
-            }}
-            className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all ${
-              !isGroupMode && viewMode === "all"
-                ? "bg-(--primary) text-white shadow-sm"
-                : "text-(--text-secondary) hover:bg-(--primary-hover) hover:text-white"
-            }`}
-          >
-            Contacts
-          </button>
-          <button
-            onClick={() => {
-              setIsGroupMode(false);
-              setViewMode("chats");
-            }}
-            className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all ${
-              !isGroupMode && viewMode === "chats"
-                ? "bg-(--primary) text-white shadow-sm"
-                : "text-(--text-secondary) hover:bg-(--primary-hover) hover:text-white"
-            }`}
-          >
-            Chats
-          </button>
-          <button
-            onClick={() => {
-              setIsGroupMode(true);
-            }}
-            className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all ${
-              isGroupMode
-                ? "bg-(--primary) text-white shadow-sm"
-                : "text-(--text-secondary) hover:bg-(--primary-hover) hover:text-white"
-            }`}
-          >
-            Groups
-          </button>
-        </div>
-        {!isGroupMode && (
+        {sessionId === "shared-chats" ? (
+          <h3 className="text-sm font-bold uppercase tracking-wider text-(--text-primary) px-2">Assigned Chats</h3>
+        ) : (
+          <div className="flex items-center gap-1 bg-(--bg-secondary) p-1 rounded-full">
+            <button
+              onClick={() => {
+                setIsGroupMode(false);
+                setViewMode("all");
+              }}
+              className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all ${
+                !isGroupMode && viewMode === "all"
+                  ? "bg-(--primary) text-white shadow-sm"
+                  : "text-(--text-secondary) hover:bg-(--primary-hover) hover:text-white"
+              }`}
+            >
+              Contacts
+            </button>
+            <button
+              onClick={() => {
+                setIsGroupMode(false);
+                setViewMode("chats");
+              }}
+              className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all ${
+                !isGroupMode && viewMode === "chats"
+                  ? "bg-(--primary) text-white shadow-sm"
+                  : "text-(--text-secondary) hover:bg-(--primary-hover) hover:text-white"
+              }`}
+            >
+              Chats
+            </button>
+            <button
+              onClick={() => {
+                setIsGroupMode(true);
+              }}
+              className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all ${
+                isGroupMode
+                  ? "bg-(--primary) text-white shadow-sm"
+                  : "text-(--text-secondary) hover:bg-(--primary-hover) hover:text-white"
+              }`}
+            >
+              Groups
+            </button>
+          </div>
+        )}
+        {sessionId !== "shared-chats" && !isGroupMode && (
           <div className="flex items-center gap-1">
             <button
               onClick={onAddContact}
@@ -139,30 +144,34 @@ function UnifiedSidebar({
           />
         </div>
 
-        {(isGroupMode || (!isGroupMode && viewMode === "all")) && (
+        {(isGroupMode || (!isGroupMode && viewMode === "all") || sessionId === "shared-chats") && (
           <div className="flex justify-between items-center px-1">
             <span className="text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) opacity-60">
-              {isGroupMode
-                ? multipleGroup.length > 0
-                  ? `${multipleGroup.length} selected`
-                  : `${groups.length} Groups`
-                : multipleNumber.length > 0
-                  ? `${multipleNumber.length} selected`
-                  : `${contacts.length} Contacts`}
+              {sessionId === "shared-chats"
+                ? `${assignedChats.length} Assigned`
+                : isGroupMode
+                  ? multipleGroup.length > 0
+                    ? `${multipleGroup.length} selected`
+                    : `${groups.length} Groups`
+                  : multipleNumber.length > 0
+                    ? `${multipleNumber.length} selected`
+                    : `${contacts.length} Contacts`}
             </span>
             <div className="flex gap-3 items-center">
-              <button
-                onClick={isGroupMode ? handleSelectAllGroups : handleSelectAll}
-                className="text-[10px] font-bold text-(--primary) hover:underline uppercase tracking-widest"
-              >
-                {isGroupMode
-                  ? multipleGroup.length === groups.length
-                    ? "None"
-                    : "All"
-                  : multipleNumber.length === contacts.length
-                    ? "None"
-                    : "All"}
-              </button>
+              {sessionId !== "shared-chats" && (
+                <button
+                  onClick={isGroupMode ? handleSelectAllGroups : handleSelectAll}
+                  className="text-[10px] font-bold text-(--primary) hover:underline uppercase tracking-widest"
+                >
+                  {isGroupMode
+                    ? multipleGroup.length === groups.length
+                      ? "None"
+                      : "All"
+                    : multipleNumber.length === contacts.length
+                      ? "None"
+                      : "All"}
+                </button>
+              )}
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
@@ -178,7 +187,18 @@ function UnifiedSidebar({
 
       {/* 📜 CONTENT AREA */}
       <div className="flex-1 overflow-hidden flex flex-col border-t border-(--border)">
-        {isGroupMode ? (
+        {sessionId === "shared-chats" ? (
+          <ChatsSidebar
+            chatsWithMessages={assignedChats}
+            contacts={contacts}
+            onSelect={onSelect}
+            search={search}
+            setSearch={setSearch}
+            groups={groups}
+            selectedContactWhatsappId={selectedContactWhatsappId}
+            sortOrder={sortOrder}
+          />
+        ) : isGroupMode ? (
           <WhatsappGroupMessageSidebar
             groups={groups}
             multipleGroup={multipleGroup}
@@ -198,6 +218,7 @@ function UnifiedSidebar({
             setSearch={setSearch}
             groups={groups}
             selectedContactWhatsappId={selectedContactWhatsappId}
+            sortOrder={sortOrder}
           />
         ) : (
           <ContactsSidebar

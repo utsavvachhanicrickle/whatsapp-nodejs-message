@@ -9,7 +9,10 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplyIcon from "@mui/icons-material/Reply";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import LockResetIcon from "@mui/icons-material/LockReset";
 import { DarkModeContext } from "../context/darkModeContext";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 function VerticalNav({ 
   users, 
@@ -22,6 +25,7 @@ function VerticalNav({
 }) {
   const { darkMode, setDarkMode } = useContext(DarkModeContext);
   const [showSettings, setShowSettings] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -78,6 +82,27 @@ function VerticalNav({
             <AddLinkIcon fontSize="small" />
           </button>
         )}
+
+        <div className="w-8 h-px bg-(--border) my-2 shrink-0" />
+
+        {/* Assigned to Me / Shared Chats button */}
+        <div className="group relative">
+          <button
+            onClick={() => onSwitchUser("shared-chats")}
+            className={`w-10 h-10 rounded-full transition-all flex items-center justify-center font-bold text-xs shadow-sm ${
+              activeUser === "shared-chats"
+                ? "bg-(--primary) text-white ring-2 ring-(--primary) ring-offset-2 ring-offset-(--bg-primary)"
+                : "bg-(--bg-secondary) text-(--text-secondary) hover:bg-(--bg-active)"
+            }`}
+            title="Assigned to Me"
+          >
+            <AssignmentIndIcon fontSize="small" />
+          </button>
+          
+          <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-2 bg-(--bg-primary) border border-(--border) px-3 py-1.5 rounded-lg shadow-xl z-100 whitespace-nowrap animate-fade-in">
+             <span className="text-xs font-semibold text-(--text-primary)">Assigned to Me</span>
+          </div>
+        </div>
       </div>
 
       {/* Bottom Section: Settings */}
@@ -103,6 +128,16 @@ function VerticalNav({
               >
                 {darkMode ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
                 {darkMode ? "Light Mode" : "Dark Mode"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowSettings(false);
+                  setIsPasswordModalOpen(true);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-(--bg-secondary) text-(--text-primary) transition-colors"
+              >
+                <LockResetIcon fontSize="small" />
+                Change Password
               </button>
               <button
                 onClick={() => {
@@ -138,6 +173,8 @@ function VerticalNav({
           )}
         </div>
       </div>
+
+      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
     </div>
   );
 }

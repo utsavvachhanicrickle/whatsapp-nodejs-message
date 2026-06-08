@@ -72,6 +72,24 @@ export const SocketContextProvider = () => {
   const switchUser = async (user) => {
     if (!user) return;
 
+    if (user === "shared-chats") {
+      setActiveUser(user);
+      activeSessionRef.current = user;
+      setQr(null);
+      setStatus("Viewing Shared Chats");
+      setLoading(false);
+
+      const waitForSocket = () =>
+        new Promise((resolve) => {
+          if (socket.connected) return resolve(socket.id);
+          socket.once("connect", () => resolve(socket.id));
+        });
+
+      const id = await waitForSocket();
+      setSocketId(id);
+      return;
+    }
+
     setLoading(true);
     setQr(null);
     setStatus(`Connecting: ${user}...`);

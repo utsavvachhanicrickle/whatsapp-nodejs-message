@@ -2,10 +2,54 @@ import { clients } from "../socket.js";
 import { MESSAGES } from "../utils/Messages.js";
 import AppError from "../utils/AppError.js";
 import { safeClientCall } from "../utils/whatsappUtils.js";
+import pool from "../../config/db.js";
+
+const checkAuthForSessionOrChat = async (userId, sessionId, chatId = null) => {
+  // 1. Check if user is the session owner
+  const ownerCheck = await pool.query(
+    'SELECT 1 FROM whatsapp_sections WHERE "number" = $1 AND "userId" = $2 LIMIT 1',
+    [sessionId, userId]
+  );
+  if (ownerCheck.rows.length > 0) {
+    return true;
+  }
+
+  // 2. If chatId is provided, check if it's assigned to this user
+  if (chatId) {
+    let normalizedChatId = chatId;
+    if (normalizedChatId && !normalizedChatId.includes("@")) {
+      normalizedChatId = `${normalizedChatId.replace(/\D/g, "")}@c.us`;
+    }
+    const assignCheck = await pool.query(
+      'SELECT 1 FROM chat_assignments WHERE "sessionId" = $1 AND "chatId" = $2 AND "assignedTo" = $3 LIMIT 1',
+      [sessionId, normalizedChatId, userId]
+    );
+    if (assignCheck.rows.length > 0) {
+      return true;
+    }
+  } else {
+    // Check if user has ANY chat assigned to them in this session
+    const anyAssignCheck = await pool.query(
+      'SELECT 1 FROM chat_assignments WHERE "sessionId" = $1 AND "assignedTo" = $2 LIMIT 1',
+      [sessionId, userId]
+    );
+    if (anyAssignCheck.rows.length > 0) {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 export const messageSendController = async (req, res, next) => {
   try {
     const { sessionId, number, message } = req.body;
+    const userId = req.userId;
+
+    const isAuth = await checkAuthForSessionOrChat(userId, sessionId, number);
+    if (!isAuth) {
+      return next(new AppError("Unauthorized access to this session/chat", 403));
+    }
 
     const client = clients[sessionId];
 
@@ -47,6 +91,13 @@ export const messageSendController = async (req, res, next) => {
 export const getMessagesController = async (req, res, next) => {
   try {
     const { sessionId, contactWhatsappId } = req.params;
+    const userId = req.userId;
+
+    const isAuth = await checkAuthForSessionOrChat(userId, sessionId, contactWhatsappId);
+    if (!isAuth) {
+      return next(new AppError("Unauthorized access to this session/chat", 403));
+    }
+
     const { getMessagesBySessionAndContact } = await import("../services/message.service.js");
     const messages = await getMessagesBySessionAndContact(sessionId, contactWhatsappId);
     res.json({ success: true, messages });
@@ -58,6 +109,13 @@ export const getMessagesController = async (req, res, next) => {
 export const getContactsWithMessagesController = async (req, res, next) => {
   try {
     const { sessionId } = req.params;
+    const userId = req.userId;
+
+    const isAuth = await checkAuthForSessionOrChat(userId, sessionId);
+    if (!isAuth) {
+      return next(new AppError("Unauthorized access to this session", 403));
+    }
+
     const { getContactsWithMessages } = await import("../services/message.service.js");
     const contactIds = await getContactsWithMessages(sessionId);
     res.json({ success: true, contactIds });
@@ -69,6 +127,16 @@ export const getContactsWithMessagesController = async (req, res, next) => {
 export const multipleMessageSendController = async (req, res, next) => {
   try {
     const { sessionId, multipleNumber, message } = req.body;
+    const userId = req.userId;
+
+    // Only session owners are allowed to do bulk messaging
+    const ownerCheck = await pool.query(
+      'SELECT 1 FROM whatsapp_sections WHERE "number" = $1 AND "userId" = $2 LIMIT 1',
+      [sessionId, userId]
+    );
+    if (ownerCheck.rows.length === 0) {
+      return next(new AppError("Only the session owner can send bulk messages", 403));
+    }
 
     if (!multipleNumber || !Array.isArray(multipleNumber)) {
       return next(new AppError("multipleNumber not present", 400));

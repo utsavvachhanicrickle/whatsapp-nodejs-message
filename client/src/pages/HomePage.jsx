@@ -28,7 +28,7 @@ function HomePage() {
   } = useContext(SocketContext);
 
   const dispatch = useDispatch();
-  const { users } = useSelector((state) => state.user);
+  const { users, loading: usersLoading } = useSelector((state) => state.user);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deletingUser, setDeletingUser] = useState(null);
@@ -39,10 +39,14 @@ function HomePage() {
 
   // Handle Initial User
   useEffect(() => {
-    if (!users?.length || activeUser) return;
-    const user = users[0];
-    handleSwitchUser(user);
-  }, [users]);
+    if (usersLoading || activeUser) return;
+    if (users && users.length > 0) {
+      const user = users[0];
+      handleSwitchUser(user);
+    } else if (users && users.length === 0) {
+      handleSwitchUser("shared-chats");
+    }
+  }, [users, usersLoading, activeUser]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -65,6 +69,14 @@ function HomePage() {
   };
 
   const handleSwitchUser = (user) => {
+    if (user === "shared-chats") {
+      switchUser(user);
+      setQr(null);
+      setStatus("Viewing Shared Chats");
+      setLoading(false);
+      return;
+    }
+
     if (user === activeUser && status.includes("Connected")) return;
 
     switchUser(user);
@@ -101,6 +113,7 @@ function HomePage() {
   };
 
   const isConnected =
+    activeUser === "shared-chats" ||
     status.toLowerCase().includes("ready") ||
     status.toLowerCase().includes("connected");
 
@@ -165,14 +178,16 @@ function HomePage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-(--text-secondary)">
-                <button
-                  onClick={(e) => handleDeleteUser(e, activeUser)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
-                  title="Remove Session & Data"
-                >
-                  <LogoutIcon sx={{ fontSize: 16 }} />
-                  <span>Remove Session</span>
-                </button>
+                {activeUser !== "shared-chats" && (
+                  <button
+                    onClick={(e) => handleDeleteUser(e, activeUser)}
+                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                    title="Remove Session & Data"
+                  >
+                    <LogoutIcon sx={{ fontSize: 16 }} />
+                    <span>Remove Session</span>
+                  </button>
+                )}
               </div>
             </div>
 

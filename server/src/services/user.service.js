@@ -25,3 +25,8 @@ export const updateUserRefreshToken = async (id, refreshToken) => {
   );
   return result.rows[0];
 };
+
+export const getAllRegisteredUsers = async () => {
+  const result = await pool.query('SELECT _id, name, email FROM users ORDER BY name ASC');
+  return result.rows;
+};

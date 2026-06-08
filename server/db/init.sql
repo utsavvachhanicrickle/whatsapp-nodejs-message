@@ -348,3 +348,35 @@ ADD
 END IF;
 
 END $$;
+
+-- Migration: Create chat_assignments table if not exists
+CREATE TABLE IF NOT EXISTS chat_assignments (
+    _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "sessionId" VARCHAR(255) NOT NULL,
+    "chatId" VARCHAR(255) NOT NULL,
+    "assignedTo" UUID NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    "assignedBy" UUID NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("sessionId", "chatId")
+);
+
+-- Migration: Create chat_notes table if not exists
+CREATE TABLE IF NOT EXISTS chat_notes (
+    _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "sessionId" VARCHAR(255) NOT NULL,
+    "chatId" VARCHAR(255) NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    "updatedBy" UUID REFERENCES users(_id) ON DELETE SET NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("sessionId", "chatId")
+);
+
+-- Migration: Normalize existing chatIds in chat_assignments and chat_notes to append @c.us if they do not contain @
+UPDATE chat_assignments 
+SET "chatId" = "chatId" || '@c.us' 
+WHERE "chatId" NOT LIKE '%@%';
+
+UPDATE chat_notes 
+SET "chatId" = "chatId" || '@c.us' 
+WHERE "chatId" NOT LIKE '%@%';

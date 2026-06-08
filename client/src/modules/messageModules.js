@@ -52,4 +52,51 @@ export const messageModules = {
       return [];
     }
   },
+  assignChat: async (sessionId, chatId, email) => {
+    try {
+      const res = await API.post("/api/assignment/assign", { sessionId, chatId, email });
+      toast.success(res.data.message);
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to assign chat");
+      throw error;
+    }
+  },
+  getChatAssignment: async (sessionId, chatId) => {
+    try {
+      const res = await API.get(`/api/assignment/assignment/${sessionId}/${chatId}`);
+      return res.data.assignment;
+    } catch (error) {
+      console.error("Error fetching chat assignment:", error);
+      return null;
+    }
+  },
+  getAssignedChats: async () => {
+    try {
+      const res = await API.get("/api/assignment/assignments/me");
+      return res.data.chats;
+    } catch (error) {
+      console.error("Error fetching assigned chats:", error);
+      return [];
+    }
+  },
+  getNotes: async (sessionId, chatId) => {
+    try {
+      const res = await API.get(`/api/assignment/notes/${sessionId}/${chatId}`);
+      return res.data.notes;
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+      return "";
+    }
+  },
+  saveNotes: async (sessionId, chatId, notes) => {
+    try {
+      const res = await API.post("/api/assignment/notes", { sessionId, chatId, notes });
+      toast.success("Notes saved successfully");
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to save notes");
+      throw error;
+    }
+  },
 };

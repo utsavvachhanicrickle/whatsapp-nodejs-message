@@ -12,6 +12,7 @@ function ChatsSidebar({
   onSelect,
   search = "",
   selectedContactWhatsappId,
+  sortOrder = "asc",
 }) {
   const filteredChats = useMemo(() => {
     const contactMap = new Map();
@@ -59,6 +60,7 @@ function ChatsSidebar({
           : existingContact?.name || chat.name || cleanNumber || "Unknown",
 
         lastChat: chat,
+        sessionId: chat.sessionId || null,
       };
     });
 
@@ -76,7 +78,7 @@ function ChatsSidebar({
       return true;
     });
 
-    return uniqueChats.filter((chat) => {
+    const sorted = uniqueChats.filter((chat) => {
       const value = search.toLowerCase();
 
       const name = chat.name?.toLowerCase() || "";
@@ -84,7 +86,16 @@ function ChatsSidebar({
 
       return name.includes(value) || phone.includes(value);
     });
-  }, [chatsWithMessages, contacts, search]);
+
+    sorted.sort((a, b) => {
+      const nameA = (a.name || "").toLowerCase();
+      const nameB = (b.name || "").toLowerCase();
+      if (sortOrder === "asc") return nameA.localeCompare(nameB);
+      return nameB.localeCompare(nameA);
+    });
+
+    return sorted;
+  }, [chatsWithMessages, contacts, search, sortOrder]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -135,9 +146,9 @@ function ChatsSidebar({
                     </h4>
 
                     <span className="text-[10px] text-(--text-secondary) shrink-0">
-                      {chat.lastChat?.timestamp
+                      {(chat.lastChat?.timestamp || chat.lastChat?.lastMessageTimestamp)
                         ? new Date(
-                            Number(chat.lastChat.timestamp) * 1000,
+                            Number(chat.lastChat?.timestamp || chat.lastChat?.lastMessageTimestamp) * 1000,
                           ).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -149,22 +160,33 @@ function ChatsSidebar({
                   {/* MIDDLE */}
                   <div className="flex items-center gap-1.5 mt-1 overflow-hidden">
                     <p className="text-xs truncate text-(--text-secondary) flex items-center gap-1.5 min-w-0">
-                      {chat.lastChat?.type === "image" && "📷 "}
-                      {chat.lastChat?.type === "video" && "🎥 "}
-                      {chat.lastChat?.type === "audio" && "🎵 "}
-                      {chat.lastChat?.type === "ptt" && "🎤 "}
-                      {chat.lastChat?.type === "document" && "📄 "}
-                      {chat.lastChat?.type === "sticker" && "🎭 "}
+                      {(chat.lastChat?.type === "image" || chat.lastChat?.lastMessageType === "image") && "📷 "}
+                      {(chat.lastChat?.type === "video" || chat.lastChat?.lastMessageType === "video") && "🎥 "}
+                      {(chat.lastChat?.type === "audio" || chat.lastChat?.lastMessageType === "audio") && "🎵 "}
+                      {(chat.lastChat?.type === "ptt" || chat.lastChat?.lastMessageType === "ptt") && "🎤 "}
+                      {(chat.lastChat?.type === "document" || chat.lastChat?.lastMessageType === "document") && "📄 "}
+                      {(chat.lastChat?.type === "sticker" || chat.lastChat?.lastMessageType === "sticker") && "🎭 "}
                       
                       <span className="truncate">
-                        {chat.lastChat?.caption || chat.lastChat?.body || (chat.lastChat?.type !== "chat" ? chat.lastChat?.type : "No messages")}
+                        {chat.lastChat?.caption || 
+                         chat.lastChat?.body || 
+                         chat.lastChat?.lastMessageBody || 
+                         ((chat.lastChat?.type || chat.lastChat?.lastMessageType) && 
+                          (chat.lastChat?.type || chat.lastChat?.lastMessageType) !== "chat" 
+                           ? (chat.lastChat?.type || chat.lastChat?.lastMessageType) 
+                           : "No messages")}
                       </span>
                     </p>
                   </div>
 
                   {/* CHAT ID */}
-                  <p className="text-[10px] mt-1 truncate text-(--text-secondary)/70">
-                    {chat.chatId}
+                  <p className="text-[10px] mt-1 truncate text-(--text-secondary)/70 flex items-center justify-between gap-1">
+                    <span className="truncate">{chat.chatId}</span>
+                    {chat.sessionId && (
+                      <span className="text-[9px] shrink-0 font-semibold bg-(--primary)/10 text-(--primary) px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                        via {chat.sessionId}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

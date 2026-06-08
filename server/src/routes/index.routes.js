@@ -6,6 +6,7 @@ import defaultMessageRoute from "./defaultMessage.routes.js";
 import defaultKeywordsRoute from "./defaultKeywords.routes.js";
 import defaultKeywordsMessagesRoute from "./defaultKeywordsMessages.routes.js";
 import groupRoute from "./group.routes.js";
+import assignmentRoute from "./assignment.routes.js";
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use("/default-message", defaultMessageRoute);
 router.use("/default-keywords", defaultKeywordsRoute);
 router.use("/default-keywords-messages", defaultKeywordsMessagesRoute);
 router.use("/group", groupRoute);
+router.use("/assignment", assignmentRoute);
 
 export default router;

@@ -8,6 +8,8 @@ import {
   loginController,
   logoutController,
   refreshTokenController,
+  getTeammatesController,
+  changePasswordController,
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -19,6 +21,8 @@ router.get("/refresh", refreshTokenController);
 
 router.post("/add", authMiddleware, addUser);
 router.get("/getAllUsers", authMiddleware, getAllUsers);
+router.get("/teammates", authMiddleware, getTeammatesController);
+router.post("/change-password", authMiddleware, changePasswordController);
 router.delete("/remove/:phone", authMiddleware, removeUser);
 
 export default router;

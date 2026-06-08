@@ -1,4 +1,4 @@
-import { createUser, getUserByEmail, getUserById, updateUserRefreshToken } from "../services/user.service.js";
+import { createUser, getUserByEmail, getUserById, updateUserRefreshToken, getAllRegisteredUsers } from "../services/user.service.js";
 import { 
   createWhatsappSection, 
   getWhatsappSectionsByUserId, 
@@ -248,5 +248,46 @@ export const refreshTokenController = async (req, res, next) => {
   } catch (error) {
     console.error("Refresh token error:", error);
     return next(new AppError(MESSAGES.REFRESH_TOKEN_ERROR, 500));
+  }
+};
+
+export const getTeammatesController = async (req, res, next) => {
+  try {
+    const teammates = await getAllRegisteredUsers();
+    // Exclude current user from teammates list
+    const filtered = teammates.filter(u => u._id !== req.userId);
+    res.json({ success: true, teammates: filtered });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const changePasswordController = async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.userId;
+
+    if (!oldPassword || !newPassword) {
+      return next(new AppError("Missing old or new password fields", 400));
+    }
+
+    const user = await getUserById(userId);
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+
+    const isMatch = await comparePassword(oldPassword, user.password);
+    if (!isMatch) {
+      return next(new AppError("Current password is incorrect", 400));
+    }
+
+    const newHashedPassword = await createPassword(newPassword);
+    const pool = (await import("../../config/db.js")).default;
+    await pool.query('UPDATE users SET password = $1 WHERE _id = $2', [newHashedPassword, userId]);
+
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Change password error:", error);
+    return next(new AppError("Failed to update password", 500));
   }
 };

@@ -1,3 +1,4 @@
+
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -73,11 +74,17 @@ io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
   socket.join(socket.id);
   socket.on("start-session", async ({ sessionId, socketId }) => {
+    if (sessionId === "shared-chats") return;
     try {
       await startWhatsAppSession({ sessionId, socketId, io });
     } catch (err) {
       console.log("Start session error:", err.message);
     }
+  });
+
+  socket.on("join-room", ({ room }) => {
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined room ${room}`);
   });
 
   socket.on("disconnect", () => {

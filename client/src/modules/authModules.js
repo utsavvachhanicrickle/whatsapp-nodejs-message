@@ -42,4 +42,25 @@ export const authModules = {
   addUser: (formData) => API.post(APIENDPOINTS.ADD_USER, formData),
 
   removeUser: (phone) => API.delete(APIENDPOINTS.REMOVE_USER(phone)),
+
+  getTeammates: async () => {
+    try {
+      const res = await API.get("/api/user/teammates");
+      return res.data.teammates;
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  },
+
+  changePassword: async (formData) => {
+    try {
+      const res = await API.post("/api/user/change-password", formData);
+      toast.success("Password changed successfully");
+      return res;
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to change password");
+      throw err;
+    }
+  },
 };

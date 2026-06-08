@@ -9,6 +9,8 @@ import CallIcon from "@mui/icons-material/Call";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
+import { authModules } from "../../modules/authModules";
+import { messageModules } from "../../modules/messageModules";
 
 function ChatView({
   name,
@@ -23,9 +25,30 @@ function ChatView({
   fetchChatMessages,
   isGroupBollean,
   contacts = [],
+  sessionId,
+  isSharedChatsMode = false,
 }) {
   const [copiedId, setCopiedId] = useState(null);
   const chatContainerRef = useRef(null);
+  const [teammates, setTeammates] = useState([]);
+  const [assignment, setAssignment] = useState(null);
+
+  useEffect(() => {
+    const loadTeammatesAndAssignment = async () => {
+      if (!sessionId || !selectedContactWhatsappId || isSharedChatsMode) return;
+      try {
+        const [teammatesList, currentAssignment] = await Promise.all([
+          authModules.getTeammates(),
+          messageModules.getChatAssignment(sessionId, selectedContactWhatsappId),
+        ]);
+        setTeammates(teammatesList || []);
+        setAssignment(currentAssignment);
+      } catch (err) {
+        console.error("Failed to load teammates or assignment:", err);
+      }
+    };
+    loadTeammatesAndAssignment();
+  }, [sessionId, selectedContactWhatsappId, isSharedChatsMode]);
 
   const handleCopy = (text, id) => {
     navigator.clipboard.writeText(text);
@@ -146,13 +169,62 @@ function ChatView({
         </div>
 
         {/* Actions */}
-        <button
-          onClick={() => fetchChatMessages(selectedContactWhatsappId)}
-          className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-(--bg-primary) hover:bg-(--primary)/10 border border-(--border) transition-all text-xs font-semibold text-(--text-primary)"
-        >
-          <RefreshIcon sx={{ fontSize: 16 }} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-4 shrink-0">
+          {!isSharedChatsMode && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-(--text-secondary) uppercase tracking-wide">Assign To:</span>
+              <select
+                value={assignment?.assignedToEmail || ""}
+                onChange={async (e) => {
+                  const email = e.target.value;
+                  if (email === "new-email") {
+                    const newEmail = prompt("Enter teammate's email to assign and register:");
+                    if (newEmail) {
+                      try {
+                        await messageModules.assignChat(sessionId, selectedContactWhatsappId, newEmail);
+                        setAssignment({ assignedToEmail: newEmail, assignedToName: newEmail.split("@")[0] });
+                        // Reload teammates list in case a new teammate was registered
+                        const teammatesList = await authModules.getTeammates();
+                        setTeammates(teammatesList || []);
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }
+                  } else {
+                    try {
+                      await messageModules.assignChat(sessionId, selectedContactWhatsappId, email || null);
+                      if (email) {
+                        const teammate = teammates.find(t => t.email === email);
+                        setAssignment({ assignedToEmail: email, assignedToName: teammate?.name || email.split("@")[0] });
+                      } else {
+                        setAssignment(null);
+                      }
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }
+                }}
+                className="px-3 py-1.5 text-xs font-semibold border border-(--border) rounded-xl bg-(--bg-primary) text-(--text-primary) outline-none focus:ring-1 focus:ring-(--primary) cursor-pointer"
+              >
+                <option value="">Unassigned</option>
+                {teammates.map((t) => (
+                  <option key={t._id} value={t.email}>
+                    {t.name || t.email}
+                  </option>
+                ))}
+                <option value="new-email">+ New Teammate...</option>
+              </select>
+            </div>
+          )}
+
+          <button
+            onClick={() => fetchChatMessages(selectedContactWhatsappId)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-(--bg-primary) hover:bg-(--primary)/10 border border-(--border) transition-all text-xs font-semibold text-(--text-primary)"
+          >
+            <RefreshIcon sx={{ fontSize: 16 }} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* CHAT AREA */}
