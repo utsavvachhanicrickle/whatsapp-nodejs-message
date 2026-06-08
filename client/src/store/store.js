@@ -1,0 +1,21 @@
+import { configureStore } from "@reduxjs/toolkit";
+
+import authReducer from "./slices/authSlices";
+import userReducer from "./slices/userSlice";
+import contactReducer from "./slices/contactSlices";
+import defaultMessagesReducer from "./slices/defaultMessagesSlices";
+import GroupsReducer from "./slices/groupSlices";
+import defaultKeyWordsReducer from "./slices/defaultKeyWordsSlice";
+import defaultKeyWordsMessagesReducer from "./slices/defaultKeyWordsMessagesSlices";
+
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
+    user: userReducer,
+    contact: contactReducer,
+    defaultMessages: defaultMessagesReducer,
+    groups: GroupsReducer,
+    defaultKeyWords: defaultKeyWordsReducer,
+    defaultKeyWordsMessages: defaultKeyWordsMessagesReducer,
+  },
+});

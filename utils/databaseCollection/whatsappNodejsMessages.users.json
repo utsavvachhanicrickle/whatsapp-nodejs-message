@@ -1,0 +1,13 @@
+[{
+  "_id": {
+    "$oid": "69e8a33fc707cc1de154caf3"
+  },
+  "email": "vachhaniutsav2@gmail.com",
+  "password": "$2b$12$Bk8OOJwpfbmFalO3Mcf98uhmLHqNi9WhkGlVEfkCaKUUtrEtS8Gai",
+  "name": "utsav",
+  "createdAt": {
+    "$date": "2026-04-22T10:30:01.311Z"
+  },
+  "__v": 0,
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InZhY2hoYW5pdXRzYXYyQGdtYWlsLmNvbSIsImlkIjoiNjllOGEzM2ZjNzA3Y2MxZGUxNTRjYWYzIiwiaWF0IjoxNzc3MjYwNTA0LCJleHAiOjE3Nzc4NjUzMDR9.kLZrSLt8_xigmS0lXhL4L7bTzjnWvyH5aMElF5yJ0ug"
+}]

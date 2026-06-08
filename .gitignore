@@ -22,6 +22,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+.wwebjs_cache   
+**/.wwebjs_cache
+
 # Build folders (optional, common for Node apps)
 dist/
 build/
