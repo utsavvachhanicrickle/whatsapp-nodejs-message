@@ -88,6 +88,11 @@ function ChatsSidebar({
     });
 
     sorted.sort((a, b) => {
+      if (sortOrder === "recent") {
+        const timeA = Number(a.lastChat?.timestamp || a.lastChat?.lastMessageTimestamp || 0);
+        const timeB = Number(b.lastChat?.timestamp || b.lastChat?.lastMessageTimestamp || 0);
+        return timeB - timeA;
+      }
       const nameA = (a.name || "").toLowerCase();
       const nameB = (b.name || "").toLowerCase();
       if (sortOrder === "asc") return nameA.localeCompare(nameB);

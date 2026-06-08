@@ -366,10 +366,11 @@ CREATE TABLE IF NOT EXISTS chat_notes (
     _id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "sessionId" VARCHAR(255) NOT NULL,
     "chatId" VARCHAR(255) NOT NULL,
+    "userId" UUID NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
     notes TEXT NOT NULL DEFAULT '',
     "updatedBy" UUID REFERENCES users(_id) ON DELETE SET NULL,
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE ("sessionId", "chatId")
+    UNIQUE ("sessionId", "chatId", "userId")
 );
 
 -- Migration: Normalize existing chatIds in chat_assignments and chat_notes to append @c.us if they do not contain @
@@ -380,3 +381,32 @@ WHERE "chatId" NOT LIKE '%@%';
 UPDATE chat_notes 
 SET "chatId" = "chatId" || '@c.us' 
 WHERE "chatId" NOT LIKE '%@%';
+
+-- Migration: Alter chat_notes to support per-user notes if table already exists without userId
+DO $$ 
+BEGIN 
+  -- 1. Add userId column if not exists
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'chat_notes' AND column_name = 'userId'
+  ) THEN
+    ALTER TABLE chat_notes ADD COLUMN "userId" UUID REFERENCES users(_id) ON DELETE CASCADE;
+
+    -- 2. Populate userId from updatedBy or session owner
+    UPDATE chat_notes cn
+    SET "userId" = COALESCE(
+      cn."updatedBy",
+      (SELECT ws."userId" FROM whatsapp_sections ws WHERE ws."number" = cn."sessionId" LIMIT 1),
+      (SELECT _id FROM users ORDER BY "createdAt" ASC LIMIT 1)
+    );
+
+    -- 3. Set userId to NOT NULL
+    ALTER TABLE chat_notes ALTER COLUMN "userId" SET NOT NULL;
+
+    -- 4. Drop old unique constraint (typically chat_notes_sessionId_chatId_key or chat_notes_sessionId_chatId_uniq)
+    ALTER TABLE chat_notes DROP CONSTRAINT IF EXISTS "chat_notes_sessionId_chatId_key";
+
+    -- 5. Add new unique constraint
+    ALTER TABLE chat_notes ADD CONSTRAINT chat_notes_session_chat_user_key UNIQUE ("sessionId", "chatId", "userId");
+  END IF;
+END $$;

@@ -81,6 +81,8 @@ function SendMessage({ sessionId }) {
   // Right Sidebar State
   const [activeRightTab, setActiveRightTab] = useState("templates");
   const [chatNotes, setChatNotes] = useState("");
+  const [notesUsers, setNotesUsers] = useState([]);
+  const [selectedNotesUserId, setSelectedNotesUserId] = useState(null);
 
   const { darkMode } = useContext(DarkModeContext);
   const dispatch = useDispatch();
@@ -89,6 +91,8 @@ function SendMessage({ sessionId }) {
     (state) => state.defaultMessages.defaultMessages,
   );
   const groups = useSelector((state) => state.groups.groups);
+  const authData = useSelector((state) => state.auth.authData);
+  const currentUserId = authData?.user?.id;
 
   const fetchAssignedChats = async () => {
     const chats = await messageModules.getAssignedChats();
@@ -137,27 +141,55 @@ function SendMessage({ sessionId }) {
     return `${clean}@c.us`;
   };
 
+  // Effect to fetch the list of users associated with notes for this chat (only if admin/session owner)
+  useEffect(() => {
+    const fetchUsersAndNotes = async () => {
+      const targetSession = sessionId === "shared-chats" ? selectedChat?.sessionId : sessionId;
+      const targetChat = selectedContactWhatsappId;
+      if (targetSession && targetChat && currentUserId) {
+        try {
+          const usersList = await messageModules.getNotesUsers(targetSession, targetChat);
+          setNotesUsers(usersList || []);
+          setSelectedNotesUserId(currentUserId);
+        } catch (err) {
+          setNotesUsers([]);
+          setSelectedNotesUserId(currentUserId);
+        }
+      } else {
+        setNotesUsers([]);
+        setSelectedNotesUserId(null);
+      }
+    };
+    fetchUsersAndNotes();
+  }, [sessionId, selectedContactWhatsappId, selectedChat, currentUserId]);
+
   // Sync Notes Effect
   useEffect(() => {
     const loadNotes = async () => {
       const targetSession = sessionId === "shared-chats" ? selectedChat?.sessionId : sessionId;
       const targetChat = selectedContactWhatsappId;
-      if (targetSession && targetChat) {
-        const notesText = await messageModules.getNotes(targetSession, targetChat);
+      const fetchUserId = notesUsers.length > 0 ? selectedNotesUserId : currentUserId;
+      if (targetSession && targetChat && fetchUserId) {
+        const notesText = await messageModules.getNotes(targetSession, targetChat, fetchUserId);
         setChatNotes(notesText || "");
       } else {
         setChatNotes("");
       }
     };
     loadNotes();
-  }, [sessionId, selectedContactWhatsappId, selectedChat]);
+  }, [sessionId, selectedContactWhatsappId, selectedChat, selectedNotesUserId, notesUsers.length, currentUserId]);
 
   // Socket Note Updates
   useEffect(() => {
     const handleNotesUpdated = (data) => {
       const targetSession = sessionId === "shared-chats" ? selectedChat?.sessionId : sessionId;
       const targetChat = selectedContactWhatsappId;
-      if (data.sessionId === targetSession && data.chatId === targetChat) {
+      const viewUserId = notesUsers.length > 0 ? selectedNotesUserId : currentUserId;
+      if (
+        data.sessionId === targetSession && 
+        data.chatId === targetChat && 
+        data.userId === viewUserId
+      ) {
         setChatNotes(data.notes || "");
       }
     };
@@ -165,7 +197,7 @@ function SendMessage({ sessionId }) {
     return () => {
       socket.off("notes-updated", handleNotesUpdated);
     };
-  }, [sessionId, selectedContactWhatsappId, selectedChat]);
+  }, [sessionId, selectedContactWhatsappId, selectedChat, selectedNotesUserId, notesUsers.length, currentUserId]);
 
   useEffect(() => {
     const handleNewMessage = (msg) => {
@@ -205,8 +237,6 @@ function SendMessage({ sessionId }) {
     };
   }, [sessionId, selectedContactWhatsappId, selectedChat]);
 
-  const authData = useSelector((state) => state.auth.authData);
-  const currentUserId = authData?.user?.id;
 
   // Join user-specific socket room
   useEffect(() => {
@@ -238,6 +268,22 @@ function SendMessage({ sessionId }) {
             toast.info("This chat assignment has been removed by the administrator.");
           }
         }
+      }
+
+      // Refetch the notes users list when assignments change for the active chat
+      const targetSession = sessionId === "shared-chats" ? selectedChat?.sessionId : sessionId;
+      const targetChat = selectedContactWhatsappId;
+      if (
+        targetSession && 
+        targetChat && 
+        data.sessionId === targetSession && 
+        normalizeId(data.chatId) === normalizeId(targetChat)
+      ) {
+        messageModules.getNotesUsers(targetSession, targetChat).then(usersList => {
+          setNotesUsers(usersList || []);
+        }).catch(() => {
+          setNotesUsers([]);
+        });
       }
     };
 
@@ -661,15 +707,39 @@ function SendMessage({ sessionId }) {
             </div>
           ) : (
             <div className="p-5 flex flex-col gap-4 h-full overflow-y-auto">
-              <h3 className="font-semibold text-sm text-(--text-primary)">
-                Notes for {name || number || "Selected Chat"}
-              </h3>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-semibold text-sm text-(--text-primary)">
+                  Notes for {name || number || "Selected Chat"}
+                </h3>
+                {selectedContactWhatsappId && notesUsers.length > 0 && (
+                  <div className="flex flex-col gap-1.5 mt-2 shrink-0">
+                    <label className="text-[10px] font-bold text-(--text-secondary) uppercase tracking-wider">
+                      View Notes of:
+                    </label>
+                    <select
+                      value={selectedNotesUserId || ""}
+                      onChange={(e) => setSelectedNotesUserId(e.target.value)}
+                      className="w-full p-2.5 text-xs border border-(--border) rounded-xl bg-(--bg-secondary) outline-none text-(--text-primary) cursor-pointer"
+                    >
+                      {notesUsers.map((u) => (
+                        <option key={u._id} value={u._id}>
+                          {u.name} {u._id === currentUserId ? "(Me)" : ""} {u.isAdmin ? "[Admin]" : u.isAssigned ? "[Assigned]" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
               {selectedContactWhatsappId ? (
                 <div className="flex-1 flex flex-col gap-3 min-h-0">
                   <textarea
                     value={chatNotes}
                     onChange={(e) => setChatNotes(e.target.value)}
-                    placeholder="Write shared notes here... (Visible to everyone assigned to this chat)"
+                    placeholder={
+                      notesUsers.length > 0 && selectedNotesUserId !== currentUserId
+                        ? `Write notes for ${notesUsers.find(u => u._id === selectedNotesUserId)?.name || "selected user"}...`
+                        : "Write notes here..."
+                    }
                     className="w-full flex-1 p-4 text-sm border border-(--border) rounded-2xl bg-(--bg-secondary) focus:ring-1 focus:ring-(--primary) outline-none text-(--text-primary) resize-none min-h-60 custom-scrollbar"
                   />
                   <div className="flex justify-between items-center text-xs text-(--text-secondary) px-1 shrink-0">
@@ -685,9 +755,10 @@ function SendMessage({ sessionId }) {
                     onClick={async () => {
                       const targetSession = sessionId === "shared-chats" ? selectedChat?.sessionId : sessionId;
                       const targetChat = selectedContactWhatsappId;
-                      if (targetSession && targetChat) {
+                      const saveUserId = notesUsers.length > 0 ? selectedNotesUserId : currentUserId;
+                      if (targetSession && targetChat && saveUserId) {
                         try {
-                          await messageModules.saveNotes(targetSession, targetChat, chatNotes);
+                          await messageModules.saveNotes(targetSession, targetChat, chatNotes, saveUserId);
                         } catch (err) {
                           console.error(err);
                         }

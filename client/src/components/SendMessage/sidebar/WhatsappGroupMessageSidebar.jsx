@@ -34,9 +34,10 @@ function WhatsappGroupMessageSidebar({
     );
 
     filtered.sort((a, b) => {
-      return sortOrder === "asc"
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name);
+      if (sortOrder === "desc") {
+        return b.name.localeCompare(a.name);
+      }
+      return a.name.localeCompare(b.name);
     });
 
     return filtered;

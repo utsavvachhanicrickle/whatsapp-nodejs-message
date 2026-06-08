@@ -26,9 +26,10 @@ function ContactsSidebar({
     filtered.sort((a, b) => {
       const nameA = a.name || "";
       const nameB = b.name || "";
-      return sortOrder === "asc"
-        ? nameA.localeCompare(nameB)
-        : nameB.localeCompare(nameA);
+      if (sortOrder === "desc") {
+        return nameB.localeCompare(nameA);
+      }
+      return nameA.localeCompare(nameB);
     });
 
     return filtered;

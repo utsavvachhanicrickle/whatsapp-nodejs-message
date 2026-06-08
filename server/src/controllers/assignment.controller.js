@@ -192,11 +192,30 @@ export const getAssignedChats = async (req, res, next) => {
 export const getChatNotes = async (req, res, next) => {
   try {
     const { sessionId, chatId } = req.params;
+    const loggedInUserId = req.userId;
+    const targetUserId = req.query.userId || loggedInUserId;
+
+    if (!sessionId || !chatId) {
+      return next(new AppError("Missing sessionId or chatId", 400));
+    }
+
     const normalizedChatId = normalizeChatId(chatId);
 
+    // Check if loggedInUserId is the session owner (admin)
+    const ownerCheck = await pool.query(
+      'SELECT 1 FROM whatsapp_sections WHERE "number" = $1 AND "userId" = $2 LIMIT 1',
+      [sessionId, loggedInUserId]
+    );
+    const isAdmin = ownerCheck.rows.length > 0;
+
+    // If not admin, they can only get their own notes
+    if (!isAdmin && targetUserId !== loggedInUserId) {
+      return next(new AppError("Unauthorized to access other user's notes", 403));
+    }
+
     const result = await pool.query(
-      'SELECT notes FROM chat_notes WHERE "sessionId" = $1 AND "chatId" = $2',
-      [sessionId, normalizedChatId]
+      'SELECT notes FROM chat_notes WHERE "sessionId" = $1 AND "chatId" = $2 AND "userId" = $3',
+      [sessionId, normalizedChatId, targetUserId]
     );
 
     const notes = result.rows.length > 0 ? result.rows[0].notes : "";
@@ -209,8 +228,9 @@ export const getChatNotes = async (req, res, next) => {
 
 export const saveChatNotes = async (req, res, next) => {
   try {
-    const { sessionId, chatId, notes } = req.body;
-    const userId = req.userId;
+    const { sessionId, chatId, notes, userId } = req.body;
+    const loggedInUserId = req.userId;
+    const targetUserId = userId || loggedInUserId;
 
     if (!sessionId || !chatId) {
       return next(new AppError("Missing sessionId or chatId", 400));
@@ -218,23 +238,85 @@ export const saveChatNotes = async (req, res, next) => {
 
     const normalizedChatId = normalizeChatId(chatId);
 
+    // Check if loggedInUserId is the session owner (admin)
+    const ownerCheck = await pool.query(
+      'SELECT 1 FROM whatsapp_sections WHERE "number" = $1 AND "userId" = $2 LIMIT 1',
+      [sessionId, loggedInUserId]
+    );
+    const isAdmin = ownerCheck.rows.length > 0;
+
+    // If not admin, they can only save their own notes
+    if (!isAdmin && targetUserId !== loggedInUserId) {
+      return next(new AppError("Unauthorized to save other user's notes", 403));
+    }
+
     await pool.query(
-      `INSERT INTO chat_notes ("sessionId", "chatId", notes, "updatedBy")
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT ("sessionId", "chatId")
+      `INSERT INTO chat_notes ("sessionId", "chatId", "userId", notes, "updatedBy")
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT ("sessionId", "chatId", "userId")
        DO UPDATE SET notes = EXCLUDED.notes, "updatedBy" = EXCLUDED."updatedBy", "updatedAt" = CURRENT_TIMESTAMP`,
-      [sessionId, normalizedChatId, notes || "", userId]
+      [sessionId, normalizedChatId, targetUserId, notes || "", loggedInUserId]
     );
 
     // Emit notes-updated to active session room
     const io = req.app.get("io");
     if (io) {
-      io.to(`session_${sessionId}`).emit("notes-updated", { sessionId, chatId: normalizedChatId, notes });
+      io.to(`session_${sessionId}`).emit("notes-updated", { 
+        sessionId, 
+        chatId: normalizedChatId, 
+        userId: targetUserId,
+        notes 
+      });
     }
 
     return res.json({ success: true, message: "Notes saved successfully" });
   } catch (error) {
     console.error("Save chat notes error:", error);
     return next(new AppError("Failed to save notes", 500));
+  }
+};
+
+export const getChatNotesUsers = async (req, res, next) => {
+  try {
+    const { sessionId, chatId } = req.params;
+    const loggedInUserId = req.userId;
+
+    if (!sessionId || !chatId) {
+      return next(new AppError("Missing sessionId or chatId", 400));
+    }
+
+    const normalizedChatId = normalizeChatId(chatId);
+
+    // Verify if loggedInUserId is the session owner (admin)
+    const ownerCheck = await pool.query(
+      'SELECT 1 FROM whatsapp_sections WHERE "number" = $1 AND "userId" = $2 LIMIT 1',
+      [sessionId, loggedInUserId]
+    );
+    const isAdmin = ownerCheck.rows.length > 0;
+
+    if (!isAdmin) {
+      return next(new AppError("Unauthorized. Only the administrator can view all notes users.", 403));
+    }
+
+    // Query distinct users who:
+    // 1. Are the session owner (admin)
+    // 2. Are currently assigned to this chat
+    // 3. Have written a note for this chat
+    const query = `
+      SELECT DISTINCT u._id, u.name, u.email,
+        CASE WHEN ws._id IS NOT NULL THEN true ELSE false END as "isAdmin",
+        CASE WHEN ca._id IS NOT NULL THEN true ELSE false END as "isAssigned"
+      FROM users u
+      LEFT JOIN whatsapp_sections ws ON (ws."userId" = u._id AND ws."number" = $1)
+      LEFT JOIN chat_assignments ca ON (ca."assignedTo" = u._id AND ca."sessionId" = $1 AND ca."chatId" = $2)
+      LEFT JOIN chat_notes cn ON (cn."userId" = u._id AND cn."sessionId" = $1 AND cn."chatId" = $2)
+      WHERE ws._id IS NOT NULL OR ca._id IS NOT NULL OR cn._id IS NOT NULL
+      ORDER BY "isAdmin" DESC, u.name ASC
+    `;
+    const result = await pool.query(query, [sessionId, normalizedChatId]);
+    return res.json({ success: true, users: result.rows });
+  } catch (error) {
+    console.error("Get chat notes users error:", error);
+    return next(new AppError("Failed to fetch notes users", 500));
   }
 };

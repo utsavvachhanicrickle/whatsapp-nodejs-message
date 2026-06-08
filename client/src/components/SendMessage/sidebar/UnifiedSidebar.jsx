@@ -31,7 +31,7 @@ function UnifiedSidebar({
   assignedChats = [],
 }) {
   const [search, setSearch] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortOrder, setSortOrder] = useState("recent");
 
   const isSelected = (contact) =>
     multipleNumber.some((c) => c._id === contact._id);
@@ -144,7 +144,7 @@ function UnifiedSidebar({
           />
         </div>
 
-        {(isGroupMode || (!isGroupMode && viewMode === "all") || sessionId === "shared-chats") && (
+        {(isGroupMode || !isGroupMode || sessionId === "shared-chats") && (
           <div className="flex justify-between items-center px-1">
             <span className="text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) opacity-60">
               {sessionId === "shared-chats"
@@ -153,12 +153,14 @@ function UnifiedSidebar({
                   ? multipleGroup.length > 0
                     ? `${multipleGroup.length} selected`
                     : `${groups.length} Groups`
-                  : multipleNumber.length > 0
-                    ? `${multipleNumber.length} selected`
-                    : `${contacts.length} Contacts`}
+                  : viewMode === "chats"
+                    ? `${chatsWithMessages.length} Chats`
+                    : multipleNumber.length > 0
+                      ? `${multipleNumber.length} selected`
+                      : `${contacts.length} Contacts`}
             </span>
             <div className="flex gap-3 items-center">
-              {sessionId !== "shared-chats" && (
+              {sessionId !== "shared-chats" && viewMode !== "chats" && (
                 <button
                   onClick={isGroupMode ? handleSelectAllGroups : handleSelectAll}
                   className="text-[10px] font-bold text-(--primary) hover:underline uppercase tracking-widest"
@@ -177,6 +179,7 @@ function UnifiedSidebar({
                 onChange={(e) => setSortOrder(e.target.value)}
                 className="text-[10px] font-bold bg-transparent border-none outline-none text-(--text-secondary) uppercase tracking-widest cursor-pointer"
               >
+                <option value="recent">Recent</option>
                 <option value="asc">A-Z</option>
                 <option value="desc">Z-A</option>
               </select>

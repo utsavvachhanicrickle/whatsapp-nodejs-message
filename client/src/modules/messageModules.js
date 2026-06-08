@@ -80,22 +80,36 @@ export const messageModules = {
       return [];
     }
   },
-  getNotes: async (sessionId, chatId) => {
+  getNotes: async (sessionId, chatId, userId = null) => {
     try {
-      const res = await API.get(`/api/assignment/notes/${sessionId}/${chatId}`);
+      const url = userId
+        ? `/api/assignment/notes/${sessionId}/${chatId}?userId=${userId}`
+        : `/api/assignment/notes/${sessionId}/${chatId}`;
+      const res = await API.get(url);
       return res.data.notes;
     } catch (error) {
       console.error("Error fetching notes:", error);
       return "";
     }
   },
-  saveNotes: async (sessionId, chatId, notes) => {
+  saveNotes: async (sessionId, chatId, notes, userId = null) => {
     try {
-      const res = await API.post("/api/assignment/notes", { sessionId, chatId, notes });
+      const payload = { sessionId, chatId, notes };
+      if (userId) payload.userId = userId;
+      const res = await API.post("/api/assignment/notes", payload);
       toast.success("Notes saved successfully");
       return res.data;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to save notes");
+      throw error;
+    }
+  },
+  getNotesUsers: async (sessionId, chatId) => {
+    try {
+      const res = await API.get(`/api/assignment/notes/users/${sessionId}/${chatId}`);
+      return res.data.users;
+    } catch (error) {
+      console.error("Error fetching notes users:", error);
       throw error;
     }
   },
