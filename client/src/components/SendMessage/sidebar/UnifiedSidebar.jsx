@@ -29,6 +29,7 @@ function UnifiedSidebar({
   selectedContactWhatsappId,
   sessionId,
   assignedChats = [],
+  isMultiple,
 }) {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("recent");
@@ -234,6 +235,7 @@ function UnifiedSidebar({
             onDelete={onDelete}
             search={search}
             sortOrder={sortOrder}
+            isMultiple={isMultiple}
           />
         )}
       </div>

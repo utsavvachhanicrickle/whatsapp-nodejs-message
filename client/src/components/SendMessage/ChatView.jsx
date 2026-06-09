@@ -510,56 +510,38 @@ function ChatView({
 
       {/* INPUT AREA */}
       <div className="p-4 bg-(--bg-secondary)/70 backdrop-blur-xl border-t border-(--border)">
-        {isGroupBollean ? (
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
-            <div className="w-10 h-10 rounded-full bg-yellow-500/15 flex items-center justify-center shrink-0">
-              <LockIcon sx={{ fontSize: 18 }} className="text-yellow-500" />
-            </div>
+        <div className="flex items-end gap-3">
+          <textarea
+            placeholder="Type a message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
 
-            <div>
-              <p className="text-sm font-semibold text-yellow-500">
-                Group sending disabled
-              </p>
-
-              <p className="text-xs text-(--text-secondary)">
-                Messages can only be viewed in group mode right now
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-end gap-3">
-            <textarea
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-
-                  if (message.trim()) {
-                    sendMessage();
-                  }
+                if (message.trim()) {
+                  sendMessage();
                 }
-              }}
-              rows={1}
-              className={`flex-1 p-4 text-sm border-none rounded-2xl bg-(--bg-primary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) resize-none min-h-14 max-h-35 overflow-y-auto ${
-                darkMode ? "text-white" : "text-gray-800"
-              }`}
-            />
+              }
+            }}
+            rows={1}
+            className={`flex-1 p-4 text-sm border-none rounded-2xl bg-(--bg-primary) focus:ring-2 focus:ring-(--primary)/20 outline-none text-(--text-primary) resize-none min-h-14 max-h-35 overflow-y-auto ${
+              darkMode ? "text-white" : "text-gray-800"
+            }`}
+          />
 
-            <button
-              onClick={sendMessage}
-              disabled={!message?.trim() || messageSending}
-              className="w-14 h-14 shrink-0 bg-(--primary) text-white rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
-            >
-              {messageSending ? (
-                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <SendIcon fontSize="small" />
-              )}
-            </button>
-          </div>
-        )}
+          <button
+            onClick={sendMessage}
+            disabled={!message?.trim() || messageSending}
+            className="w-14 h-14 shrink-0 bg-(--primary) text-white rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
+          >
+            {messageSending ? (
+              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <SendIcon fontSize="small" />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

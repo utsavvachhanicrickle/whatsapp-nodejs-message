@@ -14,6 +14,7 @@ function ContactsSidebar({
   onDelete,
   search,
   sortOrder,
+  isMultiple,
 }) {
   const filteredContacts = useMemo(() => {
     let filtered = contacts.filter((c) => {
@@ -48,22 +49,30 @@ function ContactsSidebar({
           return (
             <div
               key={c._id || i}
-              onClick={() => onSelect(c)}
+              onClick={() => {
+                if (isMultiple) {
+                  handleCheckboxChange(c);
+                } else {
+                  onSelect(c);
+                }
+              }}
               className={`group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-(--border)/50 transition-all
-                ${selected ? "bg-(--bg-active)" : "hover:bg-(--bg-secondary)"}`}
+                ${(isMultiple && selected) ? "bg-(--bg-active)" : "hover:bg-(--bg-secondary)"}`}
             >
-              <div className="relative flex items-center justify-center">
-                <input
-                  type="checkbox"
-                  checked={selected}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    handleCheckboxChange(c);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-4 h-4 cursor-pointer accent-(--primary) rounded"
-                />
-              </div>
+              {isMultiple && (
+                <div className="relative flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleCheckboxChange(c);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 cursor-pointer accent-(--primary) rounded"
+                  />
+                </div>
+              )}
 
               <Avatar name={c.name} className="w-10! h-10!" />
 

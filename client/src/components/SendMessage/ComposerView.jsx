@@ -56,7 +56,9 @@ function ComposerView({
   };
 
   return (
-    <div className="w-full max-w-3xl bg-(--bg-primary) rounded-3xl shadow-2xl overflow-hidden border border-(--border)">
+    <div className={`w-full transition-all duration-300 bg-(--bg-primary) rounded-3xl shadow-2xl overflow-hidden border border-(--border) ${
+      (activeMode === "multiple" || activeMode === "group") ? "max-w-4xl" : "max-w-3xl"
+    }`}>
       {/* HEADER */}
       <div className="px-6 py-5 bg-(--bg-secondary)/70 backdrop-blur-xl border-b border-(--border) flex items-center justify-between">
         <div className="flex items-center gap-3">

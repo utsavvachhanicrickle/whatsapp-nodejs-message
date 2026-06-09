@@ -122,6 +122,7 @@ function HomePage() {
       <VerticalNav
         users={users}
         activeUser={activeUser}
+        isConnected={isConnected}
         onSwitchUser={handleSwitchUser}
         onAddSession={() => setIsAddModalOpen(true)}
         onLogout={handleLogout}

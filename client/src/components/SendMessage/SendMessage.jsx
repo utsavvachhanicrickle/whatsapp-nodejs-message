@@ -325,9 +325,18 @@ function SendMessage({ sessionId }) {
     if (!number || !message) return toast.error("Fill all fields");
     setMessageSEnding(true);
     const targetSession = sessionId === "shared-chats" ? selectedChat?.sessionId : sessionId;
-    await messageModules.sendMessage(targetSession, number, message);
+    if (isGroupBollean) {
+      await messageModules.sendMultipleGroupMessages(
+        targetSession,
+        [{ id: number }],
+        message
+      );
+    } else {
+      await messageModules.sendMessage(targetSession, number, message);
+    }
     setMessageSEnding(false);
     setMessage("");
+    fetchChatMessages(number, targetSession);
   };
 
   const sendMultipleMessages = async () => {
@@ -411,6 +420,7 @@ function SendMessage({ sessionId }) {
         contacts={contacts}
         multipleNumber={multipleNumber}
         setMultipleNumber={setMultipleNumber}
+        isMultiple={isMultiple}
         onSelect={(c) => {
           setIsMultiple(false);
           setName(c.name);
